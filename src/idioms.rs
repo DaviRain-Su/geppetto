@@ -23,27 +23,69 @@
 //!
 //! ---
 //!
-//! ### Entrypoint Selection
+//! ### Entrypoint Selection (CRITICAL — get this wrong and SBF build fails)
 //!
-//! Pinocchio provides three entrypoint macros. Choose based on your program's
-//! needs:
+//! Pinocchio provides three entrypoint macros:
 //!
-//! | Macro | When to use |
-//! |-------|-------------|
-//! | `entrypoint!` | Standard choice. Includes allocator + panic handler. Use if you need heap allocation. |
-//! | `program_entrypoint!` | `#![no_std]` zero-allocation programs. Pair with `no_allocator!()` and `nostd_panic_handler!()`. |
-//! | `lazy_program_entrypoint!` | High-performance paths where you only need a subset of accounts. Receives `InstructionContext`. |
+//! | Macro | What it sets up | When to use |
+//! |-------|-----------------|-------------|
+//! | `entrypoint!` | `program_entrypoint!` + `default_allocator!` + `default_panic_handler!` | Programs that need heap allocation (`Vec`, `String`, etc.) |
+//! | `program_entrypoint!` | Just the entrypoint function | `#![no_std]` programs — you MUST also add allocator + panic handler manually |
+//! | `lazy_program_entrypoint!` | Lazy entrypoint with `InstructionContext` | High-performance; accounts parsed on demand |
 //!
-//! #### Standard `#![no_std]` template
+//! #### WARNING: `entrypoint!` vs `program_entrypoint!` + `nostd_panic_handler!`
+//!
+//! `entrypoint!` calls `default_panic_handler!` which provides a `custom_panic`
+//! hook — but this is NOT a `#[panic_handler]`. On some toolchain configurations,
+//! `cargo build-sbf` will fail with:
+//!
+//! ```text
+//! error: `#[panic_handler]` function required, but not found
+//! ```
+//!
+//! **Fix**: Use `program_entrypoint!` + `default_allocator!` + `nostd_panic_handler!`
+//! instead. `nostd_panic_handler!` provides the actual `#[panic_handler]` attribute.
+//!
+//! #### Recommended template (works reliably with `cargo build-sbf`)
 //!
 //! ```rust,ignore
 //! #![no_std]
 //!
-//! use pinocchio::{no_allocator, nostd_panic_handler, program_entrypoint};
+//! // Via geppetto re-export (recommended):
+//! geppetto::program_entrypoint!(process_instruction);
+//! geppetto::default_allocator!();
+//! geppetto::nostd_panic_handler!();
 //!
-//! no_allocator!();
-//! nostd_panic_handler!();
-//! program_entrypoint!(process_instruction);
+//! // Or via pinocchio directly:
+//! // pinocchio::program_entrypoint!(process_instruction);
+//! // pinocchio::default_allocator!();
+//! // pinocchio::nostd_panic_handler!();
+//!
+//! pub fn process_instruction(
+//!     program_id: &geppetto::address::Address,
+//!     accounts: &mut [geppetto::account::AccountView],
+//!     data: &[u8],
+//! ) -> geppetto::ProgramResult {
+//!     // dispatch here
+//!     Ok(())
+//! }
+//! ```
+//!
+//! #### Zero-allocation template (no heap at all)
+//!
+//! ```rust,ignore
+//! #![no_std]
+//!
+//! geppetto::program_entrypoint!(process_instruction);
+//! geppetto::no_allocator!();        // panics on any heap allocation
+//! geppetto::nostd_panic_handler!();
+//! ```
+//!
+//! #### Build command
+//!
+//! ```bash
+//! cargo build-sbf --manifest-path program/Cargo.toml
+//! # Output: program/target/deploy/your_program.so
 //! ```
 //!
 //! ---
