@@ -578,6 +578,31 @@ pub trait AccountSchema {
         }
         Ok(())
     }
+
+    /// Validate an AccountView against this schema.
+    ///
+    /// Checks: owner matches `program_id`, data length >= LEN,
+    /// discriminator matches. This is the recommended way to
+    /// validate an account in an instruction handler.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// Escrow::try_from_account(escrow_account, program_id)?;
+    /// ```
+    fn try_from_account(
+        account: &AccountView,
+        program_id: &Address,
+    ) -> Result<(), ProgramError> {
+        // Check owner
+        if !account.owned_by(program_id) {
+            return Err(ProgramError::InvalidAccountOwner);
+        }
+        // Borrow data (immutable — not borrow_mut)
+        let data = account.try_borrow()?;
+        // Validate length + discriminator
+        Self::validate(&data)
+    }
 }
 ```
 
@@ -684,6 +709,8 @@ pub const BATCH_DISCRIMINATOR: u8 = 255;
 ```
 
 ## 6. src/error.rs — 自定义错误码
+
+**注意**：此模块必须兼容 `#![no_std]`。不使用 `std::error::Error`，不使用 `thiserror`。仅依赖 `core` 和 `pinocchio::error::ProgramError`。
 
 ```rust
 use pinocchio::error::ProgramError;
@@ -846,7 +873,20 @@ pub fn read_address(data: &[u8], offset: usize) -> Result<Address, ProgramError>
 
 以下话题写在 `idioms.rs` 的模块级 doc comments 中。每个话题包含：When to use / Pattern / Example / Common mistakes。
 
-#### Critical（agent 写的第一行就需要）
+**idioms.rs 实现优先级**：内容多，必须分批实现。
+
+| 批次 | 话题 | 黑客松必须 |
+|------|------|-----------|
+| P0 | Entrypoint 选择 + no_allocator/nostd | 是 |
+| P0 | 账户切片解构 | 是 |
+| P0 | TryFrom accounts 模式 | 是 |
+| P0 | CPI 两种风格 | 是 |
+| P0 | self-CPI 事件发射 | 是 |
+| P1 | Token-2022 双支持、Batch CPI | 是 |
+| P1 | Codama、LiteSVM/Mollusk | 是 |
+| P2 | TLV 扩展、likely/unlikely、#[cold]、logging flag、InstructionContext | 时间允许 |
+
+#### Critical — P0（agent 写的第一行就需要）
 
 **Entrypoint 选择指南**
 
@@ -1029,7 +1069,11 @@ pinocchio::msg!("Processing create instruction");
 3. **Account deserialization** — 偏移量必须与 `AccountSchema` 常量一致
 4. **Error handling** — 解析 Custom error codes
 
-每个话题包含 TypeScript 代码示例（无法 doctest，通过端到端测试验证）。
+每个话题包含 TypeScript 代码示例（无法 doctest）。
+
+**验证策略（分层）：**
+1. **Fixture-based 测试**（P0）：用固定的 AccountSchema 布局，验证 TypeScript 侧的偏移量常量、PDA seeds 与 Rust 侧完全匹配。纯数据对比，不需要链上环境。
+2. **链上端到端测试**（P1，如果时间允许）：用 litesvm 部署程序 + ts-node 客户端交互，验证完整链路。
 
 ## 10. src/testing.rs — 测试工具（FR-7，feature-gated）
 
