@@ -272,17 +272,24 @@ pub trait AccountSchema {
     const LEN: usize;
 
     /// Single-byte discriminator to distinguish account types.
-    const DISCRIMINATOR: u8;
+    ///
+    /// `None` for accounts that don't use discriminators (e.g. system-owned).
+    /// `Some(d)` for program-owned accounts — must be unique per program.
+    const DISCRIMINATOR: Option<u8> = None;
 
     /// Validate that raw account data matches this schema.
     ///
-    /// Checks: data length == LEN, first byte == DISCRIMINATOR.
+    /// Default implementation checks:
+    /// 1. Data length >= LEN
+    /// 2. Discriminator matches (if DISCRIMINATOR is Some)
     fn validate(data: &[u8]) -> Result<(), ProgramError> {
-        if data.len() != Self::LEN {
-            return Err(ProgramError::InvalidAccountData);
+        if data.len() < Self::LEN {
+            return Err(ProgramError::AccountDataTooSmall);
         }
-        if data[0] != Self::DISCRIMINATOR {
-            return Err(ProgramError::InvalidAccountData);
+        if let Some(d) = Self::DISCRIMINATOR {
+            if data.is_empty() || data[0] != d {
+                return Err(ProgramError::InvalidAccountData);
+            }
         }
         Ok(())
     }
@@ -297,7 +304,7 @@ pub struct Escrow;
 
 impl AccountSchema for Escrow {
     const LEN: usize = 74;       // 1 + 1 + 32 + 32 + 8
-    const DISCRIMINATOR: u8 = 1;
+    const DISCRIMINATOR: Option<u8> = Some(1);
 }
 
 impl Escrow {
@@ -495,7 +502,7 @@ Doc comments 中还覆盖**纯知识话题**：
 
 | 模块                 | 类型                                                 | 导出代码                          | 知识话题                            | doctest          |
 | ------------------ | -------------------------------------------------- | ----------------------------- | ------------------------------- | ---------------- |
-| `idioms.rs`        | 代码 + 知识                                            | PDA 验证、账户初始化/关闭、数据读写 helpers  | CPI 风格、Batch CPI、事件、TLV         | 是                |
+| `idioms.rs`        | 代码 + 知识                                            | 账户关闭、数据读写 helpers（close_account、read_u64_le、write_u64_le、read_address） | CPI 风格、Batch CPI、事件、TLV         | 是                |
 | `testing.rs`       | 代码 + 知识                                            | 测试断言、mock 工具（feature-gated）   | litesvm/mollusk 选择、CU profiling | 部分               |
 | `anti_patterns.rs` | 纯文档                                                | 无                             | 6+ 常见漏洞的错误/正确对比                 | 是（should\_panic） |
 | `client.rs`        | 纯文档                                                | 无                             | 交易构建、PDA、反序列化                   | 否（TypeScript）    |

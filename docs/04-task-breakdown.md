@@ -26,7 +26,6 @@
 
 | ID | 任务 | 预估 | 依赖 | 产出 |
 |----|------|------|------|------|
-| A-01 | **按 `docs/05-test-spec.md` 执行测试实现** — 为 guard/schema/dispatch/idioms/testing 所有公开 API 编写 happy/boundary/error 测试用例并使其通过 | 4h | Phase 3, A-02~A-12 | `cargo test` 全绿 |
 | A-02 | **Cargo.toml + lib.rs 骨架** — 设置 `#![no_std]`，pinocchio 依赖，feature gates，空模块声明 | 1h | 无 | 编译通过的空 crate |
 | A-03 | **error.rs** — `GeppettoError` 枚举（4 个变体，0x4700-0x4703），`From<GeppettoError> for ProgramError` | 1h | A-02 | `cargo build` 通过 |
 | A-04 | **schema.rs** — `AccountSchema` trait（LEN, DISCRIMINATOR, layout, validate, try_from_account, from_bytes_unchecked），`assert_account_size!` 宏 | 3h | A-03 | trait 定义 + 宏 + 单元测试 |
@@ -67,7 +66,8 @@
 |----|------|------|------|------|
 | A-20 | **AGENTS.md** — 完整内容（机械规则 + feature 选择 + Knowledge Freshness）| 2h | A-19 | AGENTS.md |
 | A-21 | **多 agent 入口文件** — CLAUDE.md, GEMINI.md, .cursor/rules, .windsurf/rules, .github/copilot-instructions, .amazonq/rules, .aider.conf.yml | 1h | A-20 | 7 个入口文件 |
-| A-22 | **全量 `cargo test`** — 所有 doctest + 单元测试 + 编译检查 | 2h | A-18 | 全绿 |
+| A-01 | **按 `docs/05-test-spec.md` 执行全量测试实现** — 补齐所有模块的 happy/boundary/error 测试用例，确保 77 个用例全绿 | 4h | A-02~A-18 | `cargo test` 全绿（77 用例） |
+| A-22 | **全量集成验证** — doctest + 单元测试 + 集成测试 + 编译检查 | 2h | A-01 | 全绿 |
 | A-23 | **`cargo doc` 验证** — 确认所有模块文档正确渲染，链接无断 | 1h | A-22 | docs.rs 预览级质量 |
 
 ---
@@ -97,9 +97,9 @@
 ## 关键路径
 
 ```
-A-02 → A-03 → A-04 → A-06 → A-08 → A-12 → A-14 → A-19 → A-20 → A-22
-                                                                    ↓
-                                                              C-01 → C-04
+A-02 → A-03 → A-04 → A-06 → A-08 → A-12 → A-14 → A-19 → A-20 → A-01 → A-22
+                                                                              ↓
+                                                                        C-01 → C-04
 ```
 
 **关键路径总工时**：约 32h（4 个工作日密集编码）
