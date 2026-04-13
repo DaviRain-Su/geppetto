@@ -16,6 +16,7 @@
 | Reviewing for vulnerabilities | 6 common attack patterns | `src/anti_patterns.rs` module docs |
 | Choosing features / dependencies | Feature matrix | `src/lib.rs` crate docs |
 | Understanding error codes | GeppettoError 0x4700-0x4703 | `src/error.rs` module docs |
+| Upgrading upstream deps | Dependency map + upgrade protocol | `src/lib.rs` "Upstream Dependency Map" section |
 
 ## Rules (non-negotiable)
 

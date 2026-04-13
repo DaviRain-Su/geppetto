@@ -53,6 +53,47 @@
 //! | `token-all` | Shorthand for `token` + `token-2022` + `ata` |
 //! | `full` | Shorthand for `system` + `token-all` + `memo` |
 //! | `test-utils` | `geppetto::testing` module |
+//!
+//! ## Upstream Dependency Map
+//!
+//! Geppetto's knowledge is version-locked to these upstream crates.
+//! When upgrading, ALL knowledge modules must be re-verified.
+//!
+//! | Upstream | Pinned version | Geppetto modules affected |
+//! |----------|---------------|--------------------------|
+//! | `pinocchio` | 0.11.x | ALL modules (re-exported types) |
+//! | `pinocchio-system` | 0.6.x | `idioms` (CPI examples), `guard` (SYSTEM_PROGRAM_ID) |
+//! | `pinocchio-token` | 0.6.x | `idioms` (CPI examples), `guard` (TOKEN IDs) |
+//! | `pinocchio-token-2022` | 0.3.x | `idioms` (Token-2022 dual support) |
+//! | `pinocchio-associated-token-account` | 0.4.x | `guard` (ATA_PROGRAM_ID, assert_ata) |
+//! | `mollusk-svm` | 0.12.x | `testing` (API reference) |
+//! | `litesvm` | 0.11.x | `testing` (API reference) |
+//!
+//! ## Upgrade Protocol
+//!
+//! When an upstream dependency releases a new version:
+//!
+//! 1. **Check the CHANGELOG** — look for breaking changes in types, method
+//!    signatures, or behavior.
+//! 2. **Bump `Cargo.toml`** — update the version pin.
+//! 3. **`cargo check --all-features`** — compilation errors reveal API breaks.
+//! 4. **`cargo test --all-features`** — test failures reveal behavior changes.
+//! 5. **Update affected knowledge modules** — grep for the old version in doc
+//!    comments, update examples, update the version header.
+//! 6. **Update the version header** in every affected module:
+//!    `> Knowledge version: geppetto X.Y.Z | pinocchio A.B.x | YYYY-MM-DD`
+//! 7. **Bump geppetto version** — minor bump for compatible changes, major
+//!    for breaking.
+//!
+//! If `cargo check` passes but behavior changed (e.g. a function now returns
+//! `Option` instead of panicking), the knowledge module may be silently wrong.
+//! Always read the upstream CHANGELOG, don't just rely on compilation.
+//!
+//! ### Upstream repos to watch
+//!
+//! - <https://github.com/anza-xyz/pinocchio> — core SDK + CPI helpers
+//! - <https://github.com/anza-xyz/mollusk> — test harness
+//! - <https://github.com/LiteSVM/litesvm> — transaction simulator
 
 // ── Pinocchio 核心 re-export ──
 pub use pinocchio::*;

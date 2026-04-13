@@ -154,6 +154,53 @@
 - 风险：自动化本身成为额外维护负担
 - 回滚策略：若自动化复杂度高于收益，保留人工流程，但必须保留检查清单
 
+### Milestone E4：上游变更自动追踪
+
+- 目标：当 pinocchio / mollusk / litesvm 发布新版本时，自动检测并创建更新 PR
+- 实现方案（GitHub Actions）：
+  - **定期检查**（每周 cron）：对比 Cargo.toml 中的 pinned version 与 crates.io 最新版本
+  - **自动 PR**：如果上游有新版本，创建 PR，内容包括：
+    1. Cargo.toml 版本 bump
+    2. `cargo check --all-features` 结果
+    3. `cargo test --all-features` 结果
+    4. 上游 CHANGELOG 链接
+    5. 需要人工检查的知识模块列表（根据 lib.rs Upstream Dependency Map）
+  - **标签**：`upstream-update`，不自动合并，需人工审查知识模块
+- 最小 CI workflow 草案：
+
+```yaml
+# .github/workflows/upstream-check.yml
+name: Check upstream versions
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # every Monday
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check pinocchio
+        run: |
+          CURRENT=$(grep 'pinocchio =' Cargo.toml | head -1 | grep -oP '"\K[^"]+')
+          LATEST=$(cargo search pinocchio --limit 1 | grep -oP '"\K[^"]+')
+          if [ "$CURRENT" != "$LATEST" ]; then
+            echo "pinocchio update available: $CURRENT → $LATEST"
+            echo "NEEDS_UPDATE=true" >> $GITHUB_ENV
+          fi
+      # Similar for mollusk-svm, litesvm
+      - name: Create PR if needed
+        if: env.NEEDS_UPDATE == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: 'deps: upstream version update available'
+          labels: upstream-update
+```
+
+- 风险：上游 breaking change 可能导致大量知识模块需要重写
+- 缓解：PR 模板中包含"受影响模块清单"（从 lib.rs Dependency Map 自动生成），人工逐个验证
+
 ## 8.5 演化治理规则
 
 - 任何关键逻辑变更都必须先更新 `docs/03-technical-spec.md` 再改代码。
