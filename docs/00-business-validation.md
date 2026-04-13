@@ -94,6 +94,44 @@ npx skills add solana-foundation/solana-dev-skill
 cargo add geppetto
 ```
 
+### Quasar（[quasar-lang.com](https://quasar-lang.com)，[blueshift-gg/quasar](https://github.com/blueshift-gg/quasar)）
+
+Solana 程序框架（by Blueshift），定位 "Anchor 的开发体验 + Pinocchio 的性能"。程序默认 `#![no_std]`，账户从 SVM 输入缓冲区直接指针转换，零反序列化、零堆分配。用 `#[program]`、`#[derive(Accounts)]` 等宏生成高性能代码。自带 CLI、CU profiler、flamegraph、测试框架 QuasarSVM、自动生成 TypeScript/Rust 客户端。
+
+**与 Geppetto 的核心差异：**
+
+| 维度 | Quasar | Geppetto |
+|---|---|---|
+| 核心思路 | 用宏隐藏复杂度，让人少写代码 | 让复杂度对 agent 可见，确保写对代码 |
+| 哲学 | "让开发更快"（human DX） | "让 agent 开发更可靠"（agent DX） |
+| 宏/魔法 | 重度依赖——`#[program]`、`#[derive(Accounts)]` 生成大量代码 | 零宏魔法——展开后就是标准 Pinocchio |
+| Agent 可读性 | 宏展开后的代码 agent 看不到 | 所有代码对 agent 完全透明 |
+| 知识载体 | 文档站（quasar-lang.com/docs） | 捆绑在 crate 里的 doc comments |
+| 安全强制 | 通过宏的约束属性（`has_one`、`constraint`） | 通过显式 `guard::*` 函数调用 |
+| 定位 | 全栈框架（替代 Anchor） | agent-aware 知识 SDK（包裹 Pinocchio） |
+
+**关系：不同层面的问题，不同的用户群体**
+
+Quasar 适合：想要 Anchor 式开发体验但需要更好性能的团队。**人类开发者主导，agent 辅助。**
+
+Geppetto 适合：用 AI agent 作为主要编码力量、需要 agent 产出可审查可信赖代码的开发者。**agent 主导，人类审查。**
+
+核心论点来自 Armin Ronacher 演讲——"No hidden magic: if the agent can't see it, it can't respect it." 宏生成的隐式代码对人类是便利，对 agent 是黑盒。显式代码（摩擦）不是敌人，是 agent 正确工作的前提。
+
+**未来可能的协作**：`geppetto-quasar` 变体——为 Quasar 提供 agent 知识层。Quasar 用户同样需要 agent 知道应用级知识（何时用 `init`/`close`、安全审计注意事项），这些不在 Quasar 的宏里。
+
+### 竞品定位总结
+
+```
+            Human DX ←───────────────────────→ Agent DX
+               │                                  │
+  Anchor ──── Quasar ────────────── Geppetto ─────┘
+  (宏,慢)    (宏,快)              (显式,agent透明)
+               │                       │
+               └── 竞争 ──────────── 互补 ── solana-dev-skill
+                  (框架 vs 知识SDK)        (广浅 vs 深专)
+```
+
 ## 目标用户
 
 用 AI code agent（Claude Code、Codex、Cursor 等）+ Pinocchio 开发 Solana 程序的开发者。他们希望 agent 产出的代码是正确的、安全的、符合惯用法的。
