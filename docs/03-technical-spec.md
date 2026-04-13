@@ -264,6 +264,9 @@ pub fn assert_pda(
 ///
 /// Returns [`GeppettoError::InvalidDiscriminator`] if mismatch.
 /// Returns [`ProgramError::AccountDataTooSmall`] if data is empty.
+///
+/// For `Option<u8>` discriminators (from AccountSchema), use
+/// `AccountSchema::validate()` or `try_from_account()` instead.
 pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), ProgramError> {
     let data = account.try_borrow()?;
     if data.is_empty() {
@@ -534,21 +537,40 @@ use pinocchio::error::ProgramError;
 /// use geppetto::schema::AccountSchema;
 ///
 /// #[repr(C)]
-/// pub struct Escrow;
+/// pub struct Escrow {
+///     pub discriminator: u8,    // offset 0, 1 byte
+///     pub status: u8,           // offset 1, 1 byte
+///     pub maker: Address,       // offset 2, 32 bytes
+///     pub taker: Address,       // offset 34, 32 bytes
+///     pub amount: u64,          // offset 66, 8 bytes (LE)
+/// }
 ///
 /// impl AccountSchema for Escrow {
 ///     const LEN: usize = 74;       // 1 + 1 + 32 + 32 + 8
-///     const DISCRIMINATOR: u8 = 1;
+///     const DISCRIMINATOR: Option<u8> = Some(1);
+///
+///     fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
+///         &[
+///             ("discriminator", "u8",      0,  1),
+///             ("status",        "u8",      1,  1),
+///             ("maker",         "Address", 2,  32),
+///             ("taker",         "Address", 34, 32),
+///             ("amount",        "u64",     66, 8),
+///         ]
+///     }
 /// }
 ///
-/// // Field offsets as associated constants
+/// // Field offsets also as associated constants (for direct byte access)
 /// impl Escrow {
-///     pub const DISCRIMINATOR_OFFSET: usize = 0;  // u8,  1 byte
-///     pub const STATUS_OFFSET: usize = 1;         // u8,  1 byte
-///     pub const MAKER_OFFSET: usize = 2;          // Address, 32 bytes
-///     pub const TAKER_OFFSET: usize = 34;         // Address, 32 bytes
-///     pub const AMOUNT_OFFSET: usize = 66;        // u64 LE, 8 bytes
+///     pub const DISCRIMINATOR_OFFSET: usize = 0;
+///     pub const STATUS_OFFSET: usize = 1;
+///     pub const MAKER_OFFSET: usize = 2;
+///     pub const TAKER_OFFSET: usize = 34;
+///     pub const AMOUNT_OFFSET: usize = 66;
 /// }
+///
+/// // Compile-time size check
+/// assert_account_size!(Escrow);
 /// ```
 ///
 /// # For AI agents
@@ -559,51 +581,96 @@ use pinocchio::error::ProgramError;
 /// - Serializing/deserializing account data
 /// - Building TypeScript clients (offsets must match)
 /// - Writing tests (assert data at specific offsets)
-pub trait AccountSchema {
+pub trait AccountSchema: Sized {
     /// Total size in bytes of the serialized account data.
     const LEN: usize;
 
     /// Single-byte discriminator to distinguish account types.
-    /// Must be unique across all account types in the program.
-    const DISCRIMINATOR: u8;
-
-    /// Validate that raw account data matches this schema.
     ///
-    /// Default implementation checks length and discriminator.
-    /// Override if you need additional validation.
-    fn validate(data: &[u8]) -> Result<(), ProgramError> {
-        if data.len() < Self::LEN {
-            return Err(ProgramError::AccountDataTooSmall);
-        }
-        if data[0] != Self::DISCRIMINATOR {
-            return Err(ProgramError::InvalidAccountData);
-        }
-        Ok(())
-    }
+    /// `None` for accounts that don't use discriminators (e.g. system-owned).
+    /// `Some(d)` for program-owned accounts — must be unique per program.
+    const DISCRIMINATOR: Option<u8> = None;
 
-    /// Validate an AccountView against this schema.
+    /// Return the field layout as (name, type_name, offset, size) tuples.
     ///
-    /// Checks: owner matches `program_id`, data length >= LEN,
-    /// discriminator matches. This is the recommended way to
-    /// validate an account in an instruction handler.
+    /// Enables agents to generate TypeScript clients:
+    /// - `type_name` maps to TS read methods (u64 → readBigUInt64LE, Address → 32-byte array)
+    /// - `offset` + `size` map to Buffer.subarray calls
     ///
     /// # Example
     ///
     /// ```rust,ignore
-    /// Escrow::try_from_account(escrow_account, program_id)?;
+    /// fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
+    ///     &[
+    ///         ("discriminator", "u8",      0,  1),
+    ///         ("status",        "u8",      1,  1),
+    ///         ("maker",         "Address", 2,  32),
+    ///         ("taker",         "Address", 34, 32),
+    ///         ("amount",        "u64",     66, 8),
+    ///     ]
+    /// }
+    /// ```
+    fn layout() -> &'static [(&'static str, &'static str, usize, usize)];
+
+    /// Validate that raw account data matches this schema.
+    ///
+    /// Default implementation checks:
+    /// 1. Data length >= LEN
+    /// 2. Discriminator matches (if DISCRIMINATOR is Some)
+    fn validate(data: &[u8]) -> Result<(), ProgramError> {
+        if data.len() < Self::LEN {
+            return Err(ProgramError::AccountDataTooSmall);
+        }
+        if let Some(d) = Self::DISCRIMINATOR {
+            if data.is_empty() || data[0] != d {
+                return Err(ProgramError::InvalidAccountData);
+            }
+        }
+        Ok(())
+    }
+
+    /// Zero-copy cast from raw account data to &Self.
+    ///
+    /// # Safety
+    ///
+    /// Caller MUST ensure:
+    /// - `data.len() >= Self::LEN`
+    /// - Discriminator is valid (if applicable)
+    /// - Account owner is correct
+    /// - `Self` is `#[repr(C)]` with no padding
+    ///
+    /// Use `try_from_account` for the safe path.
+    /// Use this only after all guards have passed and you need
+    /// zero-copy access without re-validation.
+    unsafe fn from_bytes_unchecked(data: &[u8]) -> &Self {
+        &*(data.as_ptr() as *const Self)
+    }
+
+    /// Validate an AccountView and return a zero-copy reference.
+    ///
+    /// Checks: owner matches `program_id`, data length >= LEN,
+    /// discriminator matches (if Some). This is the recommended
+    /// safe entry point for accessing account data.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// let escrow: &Escrow = Escrow::try_from_account(escrow_account, program_id)?;
     /// ```
     fn try_from_account(
         account: &AccountView,
         program_id: &Address,
-    ) -> Result<(), ProgramError> {
+    ) -> Result<&Self, ProgramError> {
         // Check owner
         if !account.owned_by(program_id) {
             return Err(ProgramError::InvalidAccountOwner);
         }
-        // Borrow data (immutable — not borrow_mut)
+        // Borrow data (immutable)
         let data = account.try_borrow()?;
         // Validate length + discriminator
-        Self::validate(&data)
+        Self::validate(&data)?;
+        // Safe: we just validated length and discriminator
+        Ok(unsafe { Self::from_bytes_unchecked(&data) })
     }
 }
 ```
