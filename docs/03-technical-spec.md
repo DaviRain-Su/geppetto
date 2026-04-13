@@ -98,6 +98,8 @@ pub use pinocchio_system as system;
 pub use pinocchio_token as token;
 
 #[cfg(feature = "token-2022")]
+// Note: Cargo feature name is `token-2022` (hyphen, Cargo convention),
+// but Rust module alias must use underscore: `token_2022`
 pub use pinocchio_token_2022 as token_2022;
 
 #[cfg(feature = "ata")]
