@@ -91,7 +91,7 @@ pub trait AccountSchema: Sized {
         if data.len() < Self::LEN {
             return Err(ProgramError::AccountDataTooSmall);
         }
-        if let Some(d) = Self::DISCRIMINATOR && data[0] != d {
+        if let Some(d) = Self::DISCRIMINATOR && (data.is_empty() || data[0] != d) {
             return Err(ProgramError::InvalidAccountData);
         }
         Ok(())
