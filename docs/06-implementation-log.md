@@ -9,8 +9,8 @@
 **当前代码状态（2026-04-13）**：
 - `Cargo.toml` — 完整（依赖、features、metadata 与 Phase 3 一致）
 - `src/lib.rs` — 完整（`#![no_std]`、re-export、feature gates、模块声明、crate doc）
-- `src/{guard,schema,dispatch,error,idioms,anti_patterns,client}.rs` — 空文件（骨架已创建，业务逻辑待实现）
-- `src/main.rs` — 残留文件，待删除（library crate 不需要 main.rs）
+- `src/{guard,schema,dispatch,error,idioms,anti_patterns,client,testing}.rs` — 空文件（骨架已创建，业务逻辑待实现）
+- `src/main.rs` — 已删除（library crate 不需要 binary entrypoint）
 - A-02 任务已完成，A-03 起待实现
 
 ## 6.0 实施原则（硬约束）

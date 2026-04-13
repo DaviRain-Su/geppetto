@@ -36,7 +36,7 @@
 - 代码骨架已落地：`Cargo.toml` + `src/lib.rs`（re-export + 模块声明）+ 9 个空模块文件。A-02 完成。
 - 业务逻辑尚未实现：guard/schema/dispatch/error/idioms 等模块为空文件，A-03 起待实现。
 - 依赖版本锁定与特性矩阵未在实现中验证（`cargo test` 尚无测试用例）。
-- `src/main.rs` 残留，需删除（library crate 不需要 binary entrypoint）。
+- `src/main.rs` 已删除，当前为纯 library crate。
 
 ## 7.5 部署策略（当前建议）
 

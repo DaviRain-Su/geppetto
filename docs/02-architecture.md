@@ -65,8 +65,8 @@ geppetto/
 │   ├── client.rs                    ← FR-6：客户端知识（纯文档，TypeScript）
 │   └── testing.rs                   ← FR-7：测试工具函数 + 知识
 │
-├── examples/
-│   └── escrow/                      ← FR-9：示例程序
+├── examples/                        🔲 FR-9：示例程序（计划中，尚未创建）
+│   └── escrow/
 │       ├── Cargo.toml
 │       └── src/
 │           ├── lib.rs
@@ -78,7 +78,7 @@ geppetto/
 │               ├── create.rs
 │               └── exchange.rs
 │
-└── tests/
+└── tests/                           🔲 集成测试目录（计划中，尚未创建）
     ├── guard_tests.rs
     ├── schema_tests.rs
     └── dispatch_tests.rs

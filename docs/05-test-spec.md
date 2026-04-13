@@ -448,10 +448,12 @@ Pinocchio 的 `AccountView` 在测试中需要 mock。两种策略：
 
 ## Phase 5 验收标准
 
-- [x] 每个公开函数有 happy/boundary/error 三类测试
-- [x] 测试用例表覆盖 Phase 3 的全部 20 个边界条件
+> 注：以下验收的是**测试规格文档本身的完整性**（"是否设计清楚了"），不是代码实现。当前仓库 `src/` 下模块为空骨架，`cargo test` 实际执行 0 个测试。代码实现状态见 `docs/06-implementation-log.md`。
+
+- [x] 每个公开函数有 happy/boundary/error 三类测试（规格设计完成）
+- [x] 测试用例表覆盖 Phase 3 的全部 20 个边界条件（规格设计完成）
 - [x] Mock 策略明确（单元用字节缓冲，集成用 mollusk-svm）
 - [x] Fixture-based 客户端对齐测试设计完成
 - [x] 测试命名约定已定义
-- [x] 总计 77 个测试用例
+- [x] 总计 77 个测试用例（规格设计完成，实现待开始）
 - [x] 可进入 Phase 6: Implementation
