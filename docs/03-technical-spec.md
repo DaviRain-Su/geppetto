@@ -529,6 +529,7 @@ use pinocchio::error::ProgramError;
 /// Defines the on-chain memory layout of an account type.
 ///
 /// > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
+/// > **Verified against**: Solana 2.2.x
 ///
 /// Implementors MUST be `#[repr(C)]` to guarantee field ordering
 /// matches the byte layout. Field offsets are expressed as
@@ -714,6 +715,7 @@ use pinocchio::error::ProgramError;
 //! # Instruction Dispatch
 //!
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
+//! > **Verified against**: Solana 2.2.x
 //!
 //! Standard dispatch pattern: first byte of instruction data is the tag.
 //! All official Pinocchio programs (memo, escrow, rewards, token) use this.
@@ -859,22 +861,8 @@ use pinocchio::ProgramResult;
 //! Helper functions for common Pinocchio patterns, extracted from
 //! official programs (escrow, rewards, token).
 
-/// Derive a PDA and verify it matches the given account's address.
-///
-/// Returns the bump seed on success. Combines
-/// `Address::find_program_address` + address comparison.
-///
-/// # Why use this
-///
-/// PDA validation is two steps (derive + compare) that are easy
-/// to get wrong separately. This function makes it atomic.
-pub fn derive_and_verify_pda(
-    account: &AccountView,
-    seeds: &[&[u8]],
-    program_id: &Address,
-) -> Result<u8, ProgramError> {
-    crate::guard::assert_pda(account, seeds, program_id)
-}
+// NOTE: PDA derivation + verification is handled by guard::assert_pda
+// which returns Result<u8, ProgramError> (bump seed). No duplicate here.
 
 /// Close an account safely: zero all data, drain lamports to recipient.
 ///
@@ -1173,6 +1161,7 @@ pinocchio::msg!("Processing create instruction");
 //! # Testing Utilities
 //!
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
+//! > **Verified against**: Solana 2.2.x
 //!
 //! Helpers for testing Pinocchio programs with litesvm or mollusk-svm.
 //! Enable with: `geppetto = { features = ["test-utils"] }`
