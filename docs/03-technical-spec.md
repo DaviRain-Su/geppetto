@@ -1157,8 +1157,13 @@ pinocchio::msg!("Processing create instruction");
 每个话题包含 TypeScript 代码示例（无法 doctest）。
 
 **验证策略（分层）：**
-1. **Fixture-based 测试**（P0）：用固定的 AccountSchema 布局，验证 TypeScript 侧的偏移量常量、PDA seeds 与 Rust 侧完全匹配。纯数据对比，不需要链上环境。
+1. **Fixture-based 测试**（P0）：Rust 侧用 AccountSchema 序列化已知结构，导出 raw bytes 到 fixture 文件。TypeScript 侧读取 fixture，手动反序列化，断言字段值匹配。不需要链上环境，测试快速稳定。
 2. **链上端到端测试**（P1，如果时间允许）：用 litesvm 部署程序 + ts-node 客户端交互，验证完整链路。
+
+**测试文件位置：**
+- Rust 测试：`tests/` 目录（标准 crate 结构）
+- TypeScript fixture 测试：`tests/fixtures/` 存放 fixture 数据，`tests/client_alignment.ts` 执行验证
+- 链上 e2e 测试（如做）：`examples/escrow/tests/` 目录
 
 ## 10. src/testing.rs — 测试工具（FR-7，feature-gated）
 
