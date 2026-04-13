@@ -1,0 +1,31 @@
+{
+  "name": "geppetto-cli",
+  "version": "0.1.0",
+  "description": "Initialize Geppetto agent guidance files in a project",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DaviRain-Su/geppetto.git"
+  },
+  "bin": {
+    "geppetto-cli": "./bin/geppetto-cli.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    ".aider.conf.yml",
+    ".amazonq/rules/geppetto.md",
+    ".cursor/rules/geppetto.md",
+    ".github/copilot-instructions.md",
+    ".windsurf/rules/geppetto.md"
+  ],
+  "scripts": {
+    "test": "node --test tests/cli/init.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
