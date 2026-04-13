@@ -198,10 +198,10 @@
 //! transaction simulation or client alignment tests.
 //!
 //! ---
+use pinocchio::ProgramResult;
 use pinocchio::account::AccountView;
 use pinocchio::address::Address;
 use pinocchio::error::ProgramError;
-use pinocchio::ProgramResult;
 
 /// Close an account safely: zero all data, drain lamports to recipient.
 ///
@@ -216,10 +216,7 @@ use pinocchio::ProgramResult;
 /// Returns [`ProgramError::ArithmeticOverflow`] if `recipient.lamports() + lamports`
 /// would overflow `u64`.
 /// Propagates borrow errors from `try_borrow_mut` if the account is not mutable.
-pub fn close_account(
-    account: &mut AccountView,
-    recipient: &mut AccountView,
-) -> ProgramResult {
+pub fn close_account(account: &mut AccountView, recipient: &mut AccountView) -> ProgramResult {
     let lamports = account.lamports();
     let new_recipient_lamports = recipient
         .lamports()
@@ -248,7 +245,9 @@ pub fn close_account(
 /// the slice is too short.
 #[inline]
 pub fn read_u64_le(data: &[u8], offset: usize) -> Result<u64, ProgramError> {
-    let end = offset.checked_add(8).ok_or(ProgramError::AccountDataTooSmall)?;
+    let end = offset
+        .checked_add(8)
+        .ok_or(ProgramError::AccountDataTooSmall)?;
     if end > data.len() {
         return Err(ProgramError::AccountDataTooSmall);
     }
@@ -271,7 +270,9 @@ pub fn read_u64_le(data: &[u8], offset: usize) -> Result<u64, ProgramError> {
 /// the slice is too short.
 #[inline]
 pub fn write_u64_le(data: &mut [u8], offset: usize, value: u64) -> Result<(), ProgramError> {
-    let end = offset.checked_add(8).ok_or(ProgramError::AccountDataTooSmall)?;
+    let end = offset
+        .checked_add(8)
+        .ok_or(ProgramError::AccountDataTooSmall)?;
     if end > data.len() {
         return Err(ProgramError::AccountDataTooSmall);
     }
@@ -293,7 +294,9 @@ pub fn write_u64_le(data: &mut [u8], offset: usize, value: u64) -> Result<(), Pr
 /// the slice is too short.
 #[inline]
 pub fn read_address(data: &[u8], offset: usize) -> Result<Address, ProgramError> {
-    let end = offset.checked_add(32).ok_or(ProgramError::AccountDataTooSmall)?;
+    let end = offset
+        .checked_add(32)
+        .ok_or(ProgramError::AccountDataTooSmall)?;
     if end > data.len() {
         return Err(ProgramError::AccountDataTooSmall);
     }
@@ -397,14 +400,21 @@ mod tests {
 
     #[test]
     fn test_idioms_read_u64_le_nonzero_offset() {
-        let data = [0u8; 8].iter().chain([1u8, 0, 0, 0, 0, 0, 0, 0].iter()).copied().collect::<alloc::vec::Vec<u8>>();
+        let data = [0u8; 8]
+            .iter()
+            .chain([1u8, 0, 0, 0, 0, 0, 0, 0].iter())
+            .copied()
+            .collect::<alloc::vec::Vec<u8>>();
         assert_eq!(read_u64_le(&data, 8).unwrap(), 1);
     }
 
     #[test]
     fn test_idioms_read_u64_le_error_out_of_bounds() {
         let data = [1u8, 0, 0, 0];
-        assert_eq!(read_u64_le(&data, 0), Err(ProgramError::AccountDataTooSmall));
+        assert_eq!(
+            read_u64_le(&data, 0),
+            Err(ProgramError::AccountDataTooSmall)
+        );
     }
 
     #[test]
@@ -429,7 +439,10 @@ mod tests {
     #[test]
     fn test_idioms_write_u64_le_error_out_of_bounds() {
         let mut data = [0u8; 4];
-        assert_eq!(write_u64_le(&mut data, 0, 42), Err(ProgramError::AccountDataTooSmall));
+        assert_eq!(
+            write_u64_le(&mut data, 0, 42),
+            Err(ProgramError::AccountDataTooSmall)
+        );
     }
 
     #[test]
@@ -449,7 +462,10 @@ mod tests {
     #[test]
     fn test_idioms_read_address_error_out_of_bounds() {
         let data = [0u8; 16];
-        assert_eq!(read_address(&data, 0), Err(ProgramError::AccountDataTooSmall));
+        assert_eq!(
+            read_address(&data, 0),
+            Err(ProgramError::AccountDataTooSmall)
+        );
     }
 
     #[test]

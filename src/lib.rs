@@ -76,13 +76,13 @@ pub use pinocchio_associated_token_account as ata;
 pub use pinocchio_memo as memo;
 
 // ── Geppetto 自有模块 ──
-pub mod guard;
-pub mod schema;
-pub mod dispatch;
-pub mod error;
-pub mod idioms;
 pub mod anti_patterns;
 pub mod client;
+pub mod dispatch;
+pub mod error;
+pub mod guard;
+pub mod idioms;
+pub mod schema;
 
 #[cfg(feature = "test-utils")]
 pub mod testing;

@@ -91,7 +91,9 @@ pub trait AccountSchema: Sized {
         if data.len() < Self::LEN {
             return Err(ProgramError::AccountDataTooSmall);
         }
-        if let Some(d) = Self::DISCRIMINATOR && (data.is_empty() || data[0] != d) {
+        if let Some(d) = Self::DISCRIMINATOR
+            && (data.is_empty() || data[0] != d)
+        {
             return Err(ProgramError::InvalidAccountData);
         }
         Ok(())
@@ -181,10 +183,7 @@ mod tests {
         const DISCRIMINATOR: Option<u8> = Some(42);
 
         fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
-            &[
-                ("discriminator", "u8", 0, 1),
-                ("value", "u64", 8, 8),
-            ]
+            &[("discriminator", "u8", 0, 1), ("value", "u64", 8, 8)]
         }
     }
 
@@ -206,11 +205,7 @@ mod tests {
 
     assert_account_size!(NoDiscriminatorAccount);
 
-    fn mock_account_view(
-        key: [u8; 32],
-        owner: [u8; 32],
-        data: &mut [u8],
-    ) -> AccountView {
+    fn mock_account_view(key: [u8; 32], owner: [u8; 32], data: &mut [u8]) -> AccountView {
         unsafe {
             let total_size = core::mem::size_of::<RuntimeAccount>() + data.len();
             let layout = core::alloc::Layout::from_size_align(total_size, 8).unwrap();
@@ -298,12 +293,10 @@ mod tests {
         let mut data = [42u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let account = mock_account_view([0u8; 32], *wrong_owner.as_array(), &mut data);
         unsafe {
-            assert!(
-                matches!(
-                    MockAccount::try_from_account(&account, &program_id),
-                    Err(ProgramError::InvalidAccountOwner)
-                )
-            );
+            assert!(matches!(
+                MockAccount::try_from_account(&account, &program_id),
+                Err(ProgramError::InvalidAccountOwner)
+            ));
         }
     }
 
@@ -313,12 +306,10 @@ mod tests {
         let mut data = [42u8, 0, 0, 0, 0];
         let account = mock_account_view([0u8; 32], *program_id.as_array(), &mut data);
         unsafe {
-            assert!(
-                matches!(
-                    MockAccount::try_from_account(&account, &program_id),
-                    Err(ProgramError::AccountDataTooSmall)
-                )
-            );
+            assert!(matches!(
+                MockAccount::try_from_account(&account, &program_id),
+                Err(ProgramError::AccountDataTooSmall)
+            ));
         }
     }
 
@@ -328,12 +319,10 @@ mod tests {
         let mut data = [99u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let account = mock_account_view([0u8; 32], *program_id.as_array(), &mut data);
         unsafe {
-            assert!(
-                matches!(
-                    MockAccount::try_from_account(&account, &program_id),
-                    Err(ProgramError::InvalidAccountData)
-                )
-            );
+            assert!(matches!(
+                MockAccount::try_from_account(&account, &program_id),
+                Err(ProgramError::InvalidAccountData)
+            ));
         }
     }
 
@@ -358,10 +347,7 @@ mod tests {
                 first_ptr
             };
 
-            core::ptr::write_unaligned(
-                data.as_mut_ptr().add(8) as *mut u64,
-                99,
-            );
+            core::ptr::write_unaligned(data.as_mut_ptr().add(8) as *mut u64, 99);
 
             let second = MockAccount::from_bytes_unchecked(&data);
             assert_eq!(core::ptr::addr_of!(*second), first_ptr);

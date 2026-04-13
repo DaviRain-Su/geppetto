@@ -45,12 +45,7 @@
 //! - Complex multi-CPI flows: ~30k CU
 
 /// Assert that account data at a given offset equals expected bytes.
-pub fn assert_account_data(
-    data: &[u8],
-    offset: usize,
-    expected: &[u8],
-    field_name: &str,
-) {
+pub fn assert_account_data(data: &[u8], offset: usize, expected: &[u8], field_name: &str) {
     let end = offset.checked_add(expected.len()).unwrap_or_else(|| {
         panic!(
             "field '{}': offset {} + len {} overflow",
@@ -84,11 +79,9 @@ pub fn assert_discriminator(data: &[u8], expected: u8) {
         expected
     );
     assert_eq!(
-        data[0],
-        expected,
+        data[0], expected,
         "discriminator mismatch: expected {}, got {}",
-        expected,
-        data[0]
+        expected, data[0]
     );
 }
 
@@ -96,12 +89,8 @@ pub fn assert_discriminator(data: &[u8], expected: u8) {
 pub fn assert_u64_le(data: &[u8], offset: usize, expected: u64, field_name: &str) {
     let actual = crate::idioms::read_u64_le(data, offset).expect("offset out of bounds");
     assert_eq!(
-        actual,
-        expected,
+        actual, expected,
         "field '{}' at offset {}: expected {}, got {}",
-        field_name,
-        offset,
-        expected,
-        actual
+        field_name, offset, expected, actual
     );
 }
