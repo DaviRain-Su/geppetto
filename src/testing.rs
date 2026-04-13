@@ -3,16 +3,46 @@
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
 //! > **Verified against**: Solana 2.2.x
 //!
-//! Testing guidance for this crate:
+//! Helpers for testing Pinocchio programs. Enable with:
+//! `geppetto = { features = ["test-utils"] }`
 //!
-//! - Prefer lightweight in-kernel unit tests for pure helpers in `guard.rs` and
-//!   `idioms.rs`.
-//! - Use `litesvm`/`mollusk-svm` style integration fixtures to validate end-to-end
-//!   dispatch and account shape behavior.
-//! - Keep feature-gated test helpers behind `#[cfg(feature = "test-utils")]`.
+//! ## Testing Strategy
 //!
-//! Runtime helper exports are planned for a later phase; this module currently
-//! documents intended strategy and conventions.
+//! Use a three-tier approach:
+//!
+//! 1. **Unit tests** — for pure helpers in `guard.rs` and `idioms.rs`.
+//! 2. **Integration fixtures** — `mollusk-svm` for fast instruction-level tests.
+//! 3. **End-to-end tests** — `litesvm` for full transaction simulation.
+//!
+//! ## mollusk-svm vs litesvm
+//!
+//! | Framework | Best for | Speed |
+//! |-----------|----------|-------|
+//! | mollusk-svm | Instruction logic, account shape, CU baseline | Very fast |
+//! | litesvm | Full tx simulation, client alignment, CPI chains | Fast |
+//!
+//! Official programs (memo, escrow, rewards) use mollusk-svm or litesvm.
+//! Do **not** use `solana-program-test` for new Pinocchio programs.
+//!
+//! ## CU Profiling
+//!
+//! When using mollusk-svm, capture compute unit consumption to prevent
+//! regressions:
+//!
+//! ```rust,ignore
+//! let result = mollusk.process_and_validate_instruction(
+//!     &instruction,
+//!     &vec![],
+//!     &vec![],
+//! );
+//! println!("CU consumed: {}", result.compute_units);
+//! ```
+//!
+//! Set a CU budget ceiling in CI and fail the build if any instruction exceeds
+//! it. Typical starting points:
+//! - Simple state updates: ~3k CU
+//! - Token CPIs: ~10k CU
+//! - Complex multi-CPI flows: ~30k CU
 
 /// Assert that account data at a given offset equals expected bytes.
 pub fn assert_account_data(

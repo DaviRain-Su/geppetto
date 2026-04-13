@@ -3,12 +3,12 @@
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
 //! > **Verified against**: Solana 2.2.x
 //!
-//! Canonical low-level helpers for Pinocchio programs.
+//! Canonical low-level helpers and patterns for Pinocchio programs.
+//! Extracted from official Anza programs (escrow, rewards, token, memo).
 //!
 //! ## Why this module
 //!
-//! These helpers encode common safe-by-default patterns that appear in official
-//! programs:
+//! These helpers encode common safe-by-default patterns:
 //!
 //! - Close accounts by moving lamports and clearing data
 //! - Fixed-width integer access with explicit bounds checks
@@ -18,6 +18,186 @@
 //!
 //! - Reduce accidental UB or panics under edge inputs.
 //! - Keep instruction handlers linear and consistent.
+//!
+//! ## Knowledge Topics
+//!
+//! ---
+//!
+//! ### Entrypoint Selection
+//!
+//! Pinocchio provides three entrypoint macros. Choose based on your program's
+//! needs:
+//!
+//! | Macro | When to use |
+//! |-------|-------------|
+//! | `entrypoint!` | Standard choice. Includes allocator + panic handler. Use if you need heap allocation. |
+//! | `program_entrypoint!` | `#![no_std]` zero-allocation programs. Pair with `no_allocator!()` and `nostd_panic_handler!()`. |
+//! | `lazy_program_entrypoint!` | High-performance paths where you only need a subset of accounts. Receives `InstructionContext`. |
+//!
+//! #### Standard `#![no_std]` template
+//!
+//! ```rust,ignore
+//! #![no_std]
+//!
+//! use pinocchio::{no_allocator, nostd_panic_handler, program_entrypoint};
+//!
+//! no_allocator!();
+//! nostd_panic_handler!();
+//! program_entrypoint!(process_instruction);
+//! ```
+//!
+//! ---
+//!
+//! ### Account Slice Destructuring
+//!
+//! Every official Pinocchio program uses pattern matching on the accounts slice.
+//! This is safer than index-based access and gives clear error messages when
+//! the wrong number of accounts is passed.
+//!
+//! ```rust,ignore
+//! // ✅ Correct: destructuring with guard checks
+//! let [maker, escrow, system_program, remaining @ ..] = accounts else {
+//!     return Err(ProgramError::NotEnoughAccountKeys);
+//! };
+//! guard::assert_signer(maker)?;
+//! guard::assert_writable(escrow)?;
+//! guard::assert_system_program(system_program)?;
+//! ```
+//!
+//! **Common mistake**: using `accounts[0]`, `accounts[1]` directly. This panics
+//! on too-short slices instead of returning a clean program error.
+//!
+//! ---
+//!
+//! ### TryFrom Accounts Pattern
+//!
+//! For complex instructions, extract accounts into a typed struct with a
+//! `TryFrom<&mut [AccountView]>` implementation. This keeps the processor
+//! focused on business logic.
+//!
+//! ```rust,ignore
+//! // instructions/create/accounts.rs
+//! pub struct CreateAccounts<'a> {
+//!     pub maker: &'a mut AccountView,
+//!     pub escrow: &'a mut AccountView,
+//!     pub system_program: &'a AccountView,
+//! }
+//!
+//! impl<'a> TryFrom<&'a mut [AccountView]> for CreateAccounts<'a> {
+//!     type Error = ProgramError;
+//!     fn try_from(accounts: &'a mut [AccountView]) -> Result<Self, Self::Error> {
+//!         let [maker, escrow, system_program, ..] = accounts else {
+//!             return Err(ProgramError::NotEnoughAccountKeys);
+//!         };
+//!         guard::assert_signer(maker)?;
+//!         guard::assert_writable(maker)?;
+//!         guard::assert_writable(escrow)?;
+//!         guard::assert_system_program(system_program)?;
+//!         Ok(Self { maker, escrow, system_program })
+//!     }
+//! }
+//! ```
+//!
+//! ---
+//!
+//! ### CPI Styles
+//!
+//! Pinocchio supports two CPI styles:
+//!
+//! 1. **Simple style** — stack-allocate `InstructionAccount` array and call
+//!    `invoke_signed()`. Best for system, ATA, and memo CPIs.
+//! 2. **Optimized style** — use `MaybeUninit` + `CpiWriter` trait +
+//!    `invoke_signed_unchecked()`. Used by `pinocchio-token` internally.
+//!
+//! **Rule of thumb**: for system/ATA/memo CPIs, use the simple style. For token
+//! CPIs, use the typed `.invoke()` methods provided by `pinocchio-token` and
+//! `pinocchio-token-2022`.
+//!
+//! ---
+//!
+//! ### Self-CPI Events
+//!
+//! Programs can emit structured events by CPI-ing to themselves. This is the
+//! pattern used by `escrow` and `rewards`.
+//!
+//! ```rust,ignore
+//! use geppetto::dispatch::SELF_CPI_EVENT_DISCRIMINATOR;
+//!
+//! // Event authority PDA is the signer for the self-CPI
+//! let event_authority_seeds = &[b"event_authority"];
+//! let (event_authority, bump) = Address::derive_program_address(
+//!     event_authority_seeds,
+//!     program_id,
+//! ).unwrap();
+//!
+//! // Build instruction data: [228, event_payload...]
+//! let mut data = [SELF_CPI_EVENT_DISCRIMINATOR];
+//! // ... append payload ...
+//! ```
+//!
+//! ---
+//!
+//! ### Token-2022 Dual Support
+//!
+//! Modern Solana programs should accept both Token and Token-2022. Use
+//! `guard::assert_token_program()` to validate the passed token program, then
+//! branch CPI calls to `pinocchio_token` or `pinocchio_token_2022` based on
+//! the actual address.
+//!
+//! ```rust,ignore
+//! guard::assert_token_program(token_program)?;
+//! if token_program.address() == &geppetto::token::ID {
+//!     // use pinocchio_token CPI
+//! } else if token_program.address() == &geppetto::token_2022::ID {
+//!     // use pinocchio_token_2022 CPI
+//! }
+//! ```
+//!
+//! ---
+//!
+//! ### Batch CPI
+//!
+//! SPL Token reserves discriminator `255` for batching multiple token
+//! instructions into a single CPI call. This reduces CPI overhead.
+//!
+//! ```rust,ignore
+//! use geppetto::dispatch::BATCH_DISCRIMINATOR;
+//!
+//! // Instruction data starts with 255, followed by multiple sub-instructions
+//! let data = [BATCH_DISCRIMINATOR, /* sub-instruction 1 */, /* sub-instruction 2 */];
+//! ```
+//!
+//! **Note**: Batch CPI is only supported by the original SPL Token program, not
+//! Token-2022.
+//!
+//! ---
+//!
+//! ### Codama (Client Generation)
+//!
+//! Codama is the official Solana tool for generating TypeScript/Rust clients
+//! from Rust source code. `escrow` and `rewards` both use it.
+//!
+//! Key attributes:
+//! - `#[derive(CodamaInstructions)]` on instruction enums
+//! - `#[codama(...)]` on account structs to define names and signs
+//!
+//! This complements `client.rs`: Codama generates the skeleton, while
+//! `client.rs` guides manual tuning.
+//!
+//! ---
+//!
+//! ### Testing with LiteSVM / Mollusk-SVM
+//!
+//! Official Pinocchio programs do **not** use `solana-program-test` (it is
+//! considered legacy). Instead, they use:
+//!
+//! - **mollusk-svm** — fast, fixture-driven SVM tests
+//! - **litesvm** — lightweight Solana VM for end-to-end tests
+//!
+//! Use mollusk for pure instruction logic. Use litesvm when you need full
+//! transaction simulation or client alignment tests.
+//!
+//! ---
 use pinocchio::account::AccountView;
 use pinocchio::address::Address;
 use pinocchio::error::ProgramError;

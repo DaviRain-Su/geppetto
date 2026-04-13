@@ -63,14 +63,22 @@
 - 2026-04-13：A-11 完成 — dispatch.rs 5 个单元测试全部通过。
 - 2026-04-13：A-13 完成 — idioms.rs 14 个单元测试全部通过。
 - 2026-04-13：全量 `cargo test` 通过（64 个单元测试），`cargo doc --no-deps` 无警告，`cargo check --features full` 通过。
+- 2026-04-13：A-14/A-15 完成 — idioms.rs 模块级知识文档扩展（P0: entrypoint/账户解构/TryFrom/CPI/self-CPI + P1: Token-2022/Batch/Codama/LiteSVM）。
+- 2026-04-13：A-16 完成 — anti_patterns.rs 6 个反模式文档（Missing signer、Unchecked owner、PDA collision、Close drain、Catch-all dispatch、Unbounded alloc）。
+- 2026-04-13：A-17 完成 — client.rs 4 个客户端话题（Transaction/PDA/Deserialization/Error handling）+ fixture 测试策略。
+- 2026-04-13：A-18 完成 — testing.rs 知识文档扩展（mollusk vs litesvm、CU profiling）。
+- 2026-04-13：A-19 完成 — lib.rs crate 级文档补充 Feature Flags 表格。
+- 2026-04-13：A-20/A-21 完成 — AGENTS.md + 7 个多 agent 入口文件（CLAUDE.md、GEMINI.md、.cursor/rules、.windsurf/rules、.github/copilot-instructions.md、.amazonq/rules、.aider.conf.yml）。
+- 2026-04-13：A-22/A-23 完成 — 全量集成验证通过（`cargo test --all-features` 65/65、`cargo clippy --all-features` 0 警告、`cargo doc --no-deps` 0 警告、`cargo check --features full,test-utils` 通过）。
 - **风险说明**：PDA/ATA 测试依赖 `solana-address` 的 `curve25519` feature，已加入 dev-dependencies；后续若升级 pinocchio 版本需确认该依赖仍然有效。
-- **下一步**：A-14~A-19（知识模块文档与 `lib.rs` crate doc 完善）或进入 Phase 7 Review。
+- **下一步**：进入 Phase 7 Review，或开始子模块 B/C（geppetto-cli / escrow demo）。
 
 ## 6.3 验收条件（进入 Phase 7）
 
-- [x] 关键路径任务 A-02 到 A-13 全部完成并通过。
+- [x] 关键路径任务 A-02 到 A-23 全部完成并通过。
 - [x] 代码与 `docs/03-technical-spec.md` 保持 1:1 契约一致。
-- [x] `cargo test` 覆盖并通过 Phase 5 定义的 happy/boundary/error 案例框架（64/64 通过）。
-- [x] `cargo test --doc` 覆盖所有公开 doc 示例（3 个 ignored doctest 为预期行为）。
+- [x] `cargo test` 覆盖并通过 Phase 5 定义的 happy/boundary/error 案例框架（65/65 通过）。
+- [x] `cargo test --doc` 覆盖所有公开 doc 示例（ignored doctest 为预期行为）。
+- [x] `cargo doc --no-deps` 0 警告，`cargo clippy --all-features` 0 警告。
 - [x] 关键任务间无阻塞，执行日志持续记录并附 1 句风险说明。
 

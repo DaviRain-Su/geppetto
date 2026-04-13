@@ -40,6 +40,19 @@
 //! | `anti_patterns` | Knowledge only | What NOT to do |
 //! | `client` | Knowledge only | TypeScript client patterns |
 //! | `testing` | Code + Knowledge | Test utilities (feature-gated) |
+//!
+//! ## Feature Flags
+//!
+//! | Feature | Enables |
+//! |---------|---------|
+//! | `system` | `geppetto::system` (pinocchio-system) |
+//! | `token` | `geppetto::token` (pinocchio-token) |
+//! | `token-2022` | `geppetto::token_2022` (pinocchio-token-2022) |
+//! | `ata` | `geppetto::ata` (pinocchio-associated-token-account) |
+//! | `memo` | `geppetto::memo` (pinocchio-memo) |
+//! | `token-all` | Shorthand for `token` + `token-2022` + `ata` |
+//! | `full` | Shorthand for `system` + `token-all` + `memo` |
+//! | `test-utils` | `geppetto::testing` module |
 
 // ── Pinocchio 核心 re-export ──
 pub use pinocchio::*;
