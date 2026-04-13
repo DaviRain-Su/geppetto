@@ -91,7 +91,7 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 
 - Phase 0: Business Validation ✅
 - Phase 1: PRD ✅
-- Phase 2: Architecture 🚧
+- Phase 3: Technical Spec 🚧
 
 Hackathon delivery target: **2026-05-11**
 

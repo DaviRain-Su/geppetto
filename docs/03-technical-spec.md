@@ -15,7 +15,7 @@ name = "geppetto"
 version = "0.1.0"
 edition = "2024"
 description = "Pinocchio Agent Harness — knowledge + constraints for AI coding agents"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/DaviRain-Su/geppetto"
 keywords = ["solana", "pinocchio", "agent", "harness"]
 categories = ["development-tools"]
@@ -297,7 +297,16 @@ pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), P
 /// these values have been stable since Solana 1.x.
 /// If Solana ever changes rent parameters, this function must be updated.
 ///
+/// ⚠️ WARNING: This uses hardcoded Solana mainnet parameters.
+/// For accurate results on other clusters or future rent changes,
+/// pass the rent amount computed off-chain via instruction data
+/// and compare with `account.lamports()` directly.
+///
 /// Formula: `(128 + data_len) * 3480 * 2`
+/// where 3480 = lamports per byte-year (mainnet hardcoded)
+///        2   = exemption threshold in years
+///
+/// See: <https://docs.solana.com/core/accounts#rent-exemption>
 ///
 /// # Errors
 ///
@@ -313,8 +322,15 @@ pub fn assert_rent_exempt(account: &AccountView) -> Result<(), ProgramError> {
 
 /// Calculate minimum lamports for rent exemption.
 ///
+/// ⚠️ WARNING: This uses hardcoded Solana mainnet parameters.
+/// For accurate results, pass the rent amount computed off-chain
+/// via instruction data.
+///
 /// Formula: (128 + data_len) * 3480 * 2
-/// where 3480 = lamports per byte-year, 2 = exemption threshold (years).
+/// where 3480 = lamports per byte-year (mainnet hardcoded)
+///        2   = exemption threshold in years
+///
+/// See: <https://docs.solana.com/core/accounts#rent-exemption>
 #[inline]
 const fn rent_exempt_minimum(data_len: usize) -> u64 {
     ((128 + data_len) as u64) * 3480 * 2
@@ -396,10 +412,20 @@ pub fn assert_token_program(account: &AccountView) -> Result<(), ProgramError> {
     }
 }
 
-/// SPL Token Program ID
-pub const SPL_TOKEN_PROGRAM_ID: Address = /* TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA */;
-/// Token-2022 Program ID
-pub const TOKEN_2022_PROGRAM_ID: Address = /* TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb */;
+/// SPL Token Program ID: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA
+pub const SPL_TOKEN_PROGRAM_ID: Address = Address::new_from_array([
+    0x06, 0xdd, 0xf6, 0xe1, 0xd7, 0x65, 0xa1, 0x93,
+    0xd9, 0xcb, 0xe1, 0x46, 0xce, 0xeb, 0x79, 0xac,
+    0x1c, 0xb4, 0x85, 0xed, 0x5f, 0x5b, 0x37, 0x91,
+    0x3a, 0x8c, 0xf5, 0x85, 0x7e, 0xff, 0x00, 0xa9,
+]);
+/// Token-2022 Program ID: TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
+pub const TOKEN_2022_PROGRAM_ID: Address = Address::new_from_array([
+    0x06, 0xdd, 0xf6, 0xe1, 0xee, 0x75, 0x8f, 0xde,
+    0x18, 0x42, 0x5d, 0xbc, 0xe4, 0x6c, 0xcd, 0xda,
+    0xb6, 0x1a, 0xfc, 0x4d, 0x83, 0xb9, 0x0d, 0x27,
+    0xfe, 0xbd, 0xf9, 0x28, 0xd8, 0xa1, 0x8b, 0xfc,
+]);
 ```
 
 #### `assert_current_program`
@@ -491,8 +517,13 @@ fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Addr
     addr
 }
 
-/// Associated Token Account Program ID
-pub const ATA_PROGRAM_ID: Address = /* ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL */;
+/// Associated Token Account Program ID: ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL
+pub const ATA_PROGRAM_ID: Address = Address::new_from_array([
+    0x8c, 0x97, 0x25, 0x8f, 0x4e, 0x24, 0x89, 0xf1,
+    0xbb, 0x3d, 0x10, 0x29, 0x14, 0x8e, 0x0d, 0x83,
+    0x0b, 0x5a, 0x13, 0x99, 0xda, 0xff, 0x10, 0x84,
+    0x04, 0x8e, 0x7b, 0xd8, 0xdb, 0xe9, 0xf8, 0x59,
+]);
 ```
 
 ### 3.3 Guard 汇总表
@@ -639,10 +670,12 @@ pub trait AccountSchema: Sized {
     /// # Safety
     ///
     /// Caller MUST ensure:
-    /// - `data.len() >= Self::LEN`
-    /// - Discriminator is valid (if applicable)
+    /// - `data.len() >= size_of::<Self>()` (not just `Self::LEN`)
+    /// - `Self` is `#[repr(C)]` with no padding bytes
+    /// - Discriminator has been validated (if applicable)
     /// - Account owner is correct
-    /// - `Self` is `#[repr(C)]` with no padding
+    ///
+    /// Violating these conditions is undefined behavior.
     ///
     /// Use `try_from_account` for the safe path.
     /// Use this only after all guards have passed and you need
@@ -877,6 +910,12 @@ use pinocchio::ProgramResult;
 /// 1. Zeros all account data bytes
 /// 2. Transfers all lamports to recipient
 /// 3. Sets account lamports to 0
+///
+/// # Safety
+///
+/// Caller must ensure `account` is writable before calling this function.
+/// Consider using `guard::assert_writable(account)?` first.
+/// Also ensure `recipient` is writable if it is a program-owned account.
 pub fn close_account(
     account: &mut AccountView,
     recipient: &mut AccountView,
