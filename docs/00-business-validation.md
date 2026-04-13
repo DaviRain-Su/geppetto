@@ -62,6 +62,7 @@ AI code agent 写 Solana 程序时：
 | 来源                                         | 借鉴了什么                                                     |
 | ------------------------------------------ | --------------------------------------------------------- |
 | **Harness Engineering** (2026 趋势)          | Agent = Model + Harness；工程化改造环境而非优化 prompt；编译期约束比运行期建议更可靠 |
+| [**"The Vibes Don't Scale"**](https://stack72.dev/the-vibes-dont-scale/) (Paul Stack) | "Prompt 是最不重要的部分，另外 95% 是 agent 开始前就知道的东西"；living conventions → 从错误中提炼约定反馈回系统；deliberate lifecycle → 先探索→计划→审查→再实现 |
 | Next.js bundled docs                       | 知识捆绑在包内，版本匹配，agent 不需要 web search                         |
 | Next.js skills (vercel-labs/next-skills)   | 结构化的最佳实践知识，可安装可更新                                         |
 | Armin Ronacher "Friction Is Your Judgment" | Agent-Legible 代码库设计、机械强制执行、增加决策摩擦                         |
