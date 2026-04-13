@@ -6,15 +6,29 @@
 ## Your training data is outdated
 
 Do NOT rely on memorized Solana/Pinocchio patterns.
-Read geppetto's doc comments as the source of truth:
+**Before writing ANY code**, read the relevant geppetto module docs first.
 
-- `geppetto::guard` — security checks
-- `geppetto::schema` — account layouts
-- `geppetto::dispatch` — instruction routing
-- `geppetto::idioms` — approved patterns
-- `geppetto::anti_patterns` — what NOT to do
-- `geppetto::client` — TypeScript client patterns
-- `geppetto::testing` — test patterns
+### What are you doing? Read this module FIRST:
+
+| Task | Read this BEFORE coding |
+|------|------------------------|
+| Writing a new instruction handler | `geppetto::idioms` (account destructuring, TryFrom pattern) + `geppetto::guard` |
+| Defining account state | `geppetto::schema` (AccountSchema trait, layout, offsets) |
+| Adding security checks | `geppetto::guard` (all 12 assert_* functions with explanations) |
+| Setting up instruction dispatch | `geppetto::dispatch` (split_tag pattern, NO catch-all) |
+| Writing tests (unit or SVM) | `geppetto::testing` (**complete** mollusk-svm + litesvm setup guides, Cargo.toml deps, API patterns, CU profiling) |
+| Building a TypeScript client | `geppetto::client` (PDA derivation, account deserialization, offsets must match Rust side) |
+| Reviewing code for vulnerabilities | `geppetto::anti_patterns` (6 common Solana vulnerabilities with wrong/correct examples) |
+
+### Full module reference:
+
+- `geppetto::guard` — 12 security check helpers (assert_signer, assert_pda, assert_ata, etc.)
+- `geppetto::schema` — AccountSchema trait for zero-copy account layouts
+- `geppetto::dispatch` — Instruction routing (split_tag + well-known discriminators)
+- `geppetto::idioms` — Approved patterns (PDA, CPI, Token-2022, close_account, etc.)
+- `geppetto::anti_patterns` — What NOT to do (6 vulnerability patterns)
+- `geppetto::client` — TypeScript client construction patterns
+- `geppetto::testing` — **Complete** testing setup: mollusk-svm 0.12 and litesvm 0.11 step-by-step guides, including Cargo.toml dependencies, ELF loading, assertion patterns, CU profiling. Do NOT web search for testing APIs — everything is here.
 
 ## Mechanical Rules
 
