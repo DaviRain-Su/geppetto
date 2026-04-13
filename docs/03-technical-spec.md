@@ -1206,11 +1206,34 @@ pinocchio::msg!("Processing create instruction");
 - TypeScript fixture 测试：`tests/fixtures/` 存放 fixture 数据，`tests/client_alignment.ts` 执行验证
 - 链上 e2e 测试（如做）：`examples/escrow/tests/` 目录
 
+**最小测试运行配置（示例）：**
+
+```json
+// tests/package.json
+{
+  "name": "geppetto-client-alignment",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "npx ts-node tests/client_alignment.ts"
+  },
+  "dependencies": {
+    "@solana/kit": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  }
+}
+```
+
+运行命令：
+```bash
+cd tests && npm install && npm test
+```
+
 ## 10. src/testing.rs — 测试工具（FR-7，feature-gated）
 
 ```rust
-#![cfg(feature = "test-utils")]
-
 //! # Testing Utilities
 //!
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
