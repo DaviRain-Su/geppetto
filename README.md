@@ -94,9 +94,18 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 
 ## Project Status
 
-- Phase 0: Business Validation ✅
-- Phase 1: PRD ✅
-- Phase 3: Technical Spec 🚧
+| Phase                        | 状态                             |
+| ---------------------------- | ------------------------------ |
+| Phase 0: Business Validation | ✅ 完成                           |
+| Phase 1: PRD                 | ✅ 完成                           |
+| Phase 2: Architecture        | ✅ 完成                           |
+| Phase 3: Technical Spec      | ✅ 完成                           |
+| Phase 4: Task Breakdown      | ✅ 完成                           |
+| Phase 5: Test Spec           | ✅ 完成                           |
+| Phase 6: Implementation      | 🚧 骨架已创建（lib.rs + 空模块），业务代码待实现 |
+| Phase 7: Review & Deploy     | ⏳ 待启动                          |
+
+**代码状态**：`Cargo.toml` + `src/lib.rs`（re-export + 模块声明）+ 9 个空模块文件。业务逻辑尚未实现。
 
 Hackathon delivery target: **2026-05-11**
 

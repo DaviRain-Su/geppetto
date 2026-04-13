@@ -4,7 +4,14 @@
 > 日期：2026-04-13
 > 输入：Phase 5 测试规格
 
-本阶段从 Phase 3/5 的契约开始实现。当前仓库为最小骨架（只有 `src/main.rs` 与 `Cargo.toml`），尚未包含 `lib.rs` 或 `src/*.rs` 业务模块，因此正式实现尚未启动。
+本阶段从 Phase 3/5 的契约开始实现。
+
+**当前代码状态（2026-04-13）**：
+- `Cargo.toml` — 完整（依赖、features、metadata 与 Phase 3 一致）
+- `src/lib.rs` — 完整（`#![no_std]`、re-export、feature gates、模块声明、crate doc）
+- `src/{guard,schema,dispatch,error,idioms,anti_patterns,client}.rs` — 空文件（骨架已创建，业务逻辑待实现）
+- `src/main.rs` — 残留文件，待删除（library crate 不需要 main.rs）
+- A-02 任务已完成，A-03 起待实现
 
 ## 6.0 实施原则（硬约束）
 

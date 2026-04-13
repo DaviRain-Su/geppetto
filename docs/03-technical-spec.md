@@ -1390,6 +1390,8 @@ When in doubt, read the pinocchio source code directly.
 
 ## Phase 3 验收标准
 
+> 注：以下验收的是**规格文档本身的完整性**（"是否定义清楚了"），不是代码实现。代码实现状态见 `docs/06-implementation-log.md`。
+
 - [x] Guard helpers：12 个函数，完整签名和实现（从 6 扩展到 12）
 - [x] Well-known 地址常量：System、Token、Token-2022、ATA
 - [x] Well-known discriminator 常量：228（event）、255（batch）

@@ -33,9 +33,10 @@
 
 ## 7.4 风险与阻塞项（当前）
 
-- 当前代码尚未落地：已有 `Cargo.toml`、`.gitignore`、`README.md`、`docs/` 目录骨架，待补齐 `src/lib.rs` 与业务模块。
-- 依赖版本锁定与特性矩阵未在实现中验证（尚未 run test）。
-- 任何实现启动前必须先补齐 `src` 文件结构，否则测试无法覆盖。
+- 代码骨架已落地：`Cargo.toml` + `src/lib.rs`（re-export + 模块声明）+ 9 个空模块文件。A-02 完成。
+- 业务逻辑尚未实现：guard/schema/dispatch/error/idioms 等模块为空文件，A-03 起待实现。
+- 依赖版本锁定与特性矩阵未在实现中验证（`cargo test` 尚无测试用例）。
+- `src/main.rs` 残留，需删除（library crate 不需要 binary entrypoint）。
 
 ## 7.5 部署策略（当前建议）
 
