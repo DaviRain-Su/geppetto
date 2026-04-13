@@ -88,6 +88,67 @@
 //! # Output: program/target/deploy/your_program.so
 //! ```
 //!
+//! #### Downstream Cargo.toml template
+//!
+//! ```toml
+//! [package]
+//! name = "my-program"
+//! version = "0.1.0"
+//! edition = "2024"
+//!
+//! [dependencies]
+//! geppetto = { version = "0.1", features = ["system", "token-all"] }
+//!
+//! [dev-dependencies]
+//! pinocchio = "0.11"
+//! solana-address = { version = "2", features = ["curve25519"] }
+//! mollusk-svm = "0.12"
+//! solana-account = "3"
+//! solana-instruction = "3"
+//! solana-pubkey = "4"
+//! solana-program-error = "3"
+//!
+//! [lib]
+//! crate-type = ["cdylib", "lib"]
+//! # "cdylib" = produces the .so for on-chain deployment
+//! # "lib" = allows cargo test to import the crate
+//! # BOTH are required. Without "cdylib", cargo build-sbf produces nothing.
+//! # Without "lib", tests can't import your program's modules.
+//! ```
+//!
+//! ---
+//!
+//! ### PDA Derivation: `derive_program_address` (NOT `find_program_address`)
+//!
+//! **Pinocchio uses `Address::derive_program_address`, not `find_program_address`.**
+//!
+//! This is a const-generic API — it takes `&[&[u8]; N]` (fixed-size array),
+//! NOT `&[&[u8]]` (slice). You must know the number of seeds at compile time.
+//!
+//! ```rust,ignore
+//! use geppetto::address::Address;
+//!
+//! // ✅ Correct: fixed-size array
+//! let (pda, bump) = Address::derive_program_address(
+//!     &[b"escrow", maker.as_ref()],  // [&[u8]; 2]
+//!     program_id,
+//! ).ok_or(ProgramError::InvalidSeeds)?;
+//!
+//! // ❌ Wrong: this does NOT compile
+//! // let seeds: &[&[u8]] = &[b"escrow", maker.as_ref()];
+//! // Address::derive_program_address(seeds, program_id);
+//! // Error: expected `&[&[u8]; N]`, found `&[&[u8]]`
+//! ```
+//!
+//! Returns `Option<(Address, u8)>` — `None` if no valid bump found.
+//!
+//! If you need dynamic seed count (runtime-determined), use
+//! `geppetto::guard::assert_pda()` which handles 0-15 seeds internally
+//! via a match over all array sizes.
+//!
+//! **In tests**: use `solana_pubkey::Pubkey::find_program_address` instead,
+//! which accepts `&[&[u8]]` slices. See `geppetto::testing` for details.
+//!
 //! ---
 //!
 //! ### Account Slice Destructuring
@@ -154,6 +215,51 @@
 //! **Rule of thumb**: for system/ATA/memo CPIs, use the simple style. For token
 //! CPIs, use the typed `.invoke()` methods provided by `pinocchio-token` and
 //! `pinocchio-token-2022`.
+//!
+//! #### Concrete CPI examples
+//!
+//! **System: Transfer SOL** (requires `features = ["system"]`)
+//!
+//! ```rust,ignore
+//! use geppetto::system::Transfer;
+//!
+//! Transfer {
+//!     from: maker,       // &AccountView, must be signer + writable
+//!     to: recipient,     // &AccountView, must be writable
+//!     lamports: 1_000_000,
+//! }.invoke()?;
+//!
+//! // With PDA signer:
+//! Transfer { from: pda_account, to: recipient, lamports: 1_000_000 }
+//!     .invoke_signed(&[&[b"seed", &[bump]]])?;
+//! ```
+//!
+//! **Token: Transfer SPL tokens** (requires `features = ["token"]`)
+//!
+//! ```rust,ignore
+//! use geppetto::token::Transfer;
+//!
+//! Transfer {
+//!     from: source_ata,     // &AccountView
+//!     to: dest_ata,         // &AccountView
+//!     authority: owner,     // &AccountView, must be signer
+//!     amount: 1_000_000,
+//! }.invoke()?;
+//! ```
+//!
+//! **System: Create Account** (requires `features = ["system"]`)
+//!
+//! ```rust,ignore
+//! use geppetto::system::CreateAccount;
+//!
+//! CreateAccount {
+//!     from: payer,          // &AccountView, signer + writable
+//!     to: new_account,      // &AccountView, signer + writable
+//!     lamports: rent_lamports,
+//!     space: MyAccount::LEN as u64,
+//!     owner: program_id,    // &Address
+//! }.invoke()?;
+//! ```
 //!
 //! ---
 //!

@@ -195,3 +195,62 @@
 //! Geppetto is built `#![no_std]` with no allocator by default. All helpers
 //! use fixed-size slices and checked arithmetic. If you need allocation,
 //! explicitly opt in via the `alloc` feature and audit every `Vec` usage.
+//!
+//! ---
+//!
+//! ## `#[repr(C)]` Struct with Hidden Padding
+//!
+//! **Danger level**: High
+//!
+//! ### What goes wrong
+//!
+//! A `#[repr(C)]` struct with mixed-alignment fields gets invisible padding.
+//! `u64` requires 8-byte alignment, so a `u8` field before it gets 7 bytes
+//! of padding. The struct's `size_of` won't match your expected byte layout,
+//! causing `AccountSchema::LEN` mismatch and incorrect data reads.
+//!
+//! ### Wrong code
+//! ```rust,ignore
+//! // ❌ This struct has 7 bytes of hidden padding!
+//! #[repr(C)]
+//! pub struct BadEscrow {
+//!     pub discriminator: u8,    // 1 byte
+//!     pub status: u8,           // 1 byte
+//!     pub maker: [u8; 32],      // 32 bytes — alignment 1, no padding here
+//!     pub taker: [u8; 32],      // 32 bytes
+//!     pub amount: u64,          // 8 bytes — BUT u64 needs 8-byte alignment!
+//!     // compiler inserts 6 bytes of padding before `amount`
+//! }
+//! // size_of::<BadEscrow>() = 80, NOT 74!
+//! // assert_account_size! will catch this at compile time.
+//! ```
+//!
+//! ### Correct code
+//! ```rust,ignore
+//! // ✅ Option A: Unit struct + offset constants (recommended)
+//! // No #[repr(C)] needed, no padding possible.
+//! pub struct Escrow;
+//!
+//! impl Escrow {
+//!     pub const DISCRIMINATOR_OFFSET: usize = 0;  // u8
+//!     pub const STATUS_OFFSET: usize = 1;         // u8
+//!     pub const MAKER_OFFSET: usize = 2;          // [u8; 32]
+//!     pub const TAKER_OFFSET: usize = 34;         // [u8; 32]
+//!     pub const AMOUNT_OFFSET: usize = 66;        // u64 LE
+//! }
+//!
+//! // ✅ Option B: #[repr(C)] with explicit padding field
+//! #[repr(C)]
+//! pub struct EscrowRepr {
+//!     pub discriminator: u8,
+//!     pub _padding: [u8; 7],  // explicit! makes padding visible
+//!     pub value: u64,         // now aligned correctly
+//! }
+//! ```
+//!
+//! ### How Geppetto prevents this
+//!
+//! `assert_account_size!(MyStruct)` catches the mismatch at compile time.
+//! If `size_of::<T>() != T::LEN`, the build fails with a clear message.
+//! For maximum safety, prefer unit struct + offset constants (Option A)
+//! which avoids `#[repr(C)]` alignment issues entirely.
