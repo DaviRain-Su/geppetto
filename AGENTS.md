@@ -30,7 +30,8 @@ Choose geppetto features based on your program's needs:
 
 - Transfer SOL / create accounts → `features = ["system"]`
 - SPL Token operations → `features = ["system", "token-all"]`
-- Need everything → `features = ["full"]`
+- Need all runtime CPI features → `features = ["full"]` (system + token-all + memo)
+- Need test utilities → `features = ["test-utils"]`
 - Only knowledge + guard + schema → no features needed (default)
 
 ## Knowledge Freshness Rules

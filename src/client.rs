@@ -55,7 +55,7 @@
 //! // Escrow schema: discriminator(1) + status(1) + maker(32) + taker(32) + amount(8)
 //! const discriminator = accountData.readUInt8(0);
 //! const status = accountData.readUInt8(1);
-//! const maker = accountData.subarray(2, 34).toBase58();
+//! const maker = encodeBase58(accountData.subarray(2, 34));
 //! const amount = accountData.readBigUInt64LE(66);
 //! ```
 //!
