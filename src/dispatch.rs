@@ -48,3 +48,38 @@ pub const SELF_CPI_EVENT_DISCRIMINATOR: u8 = 228;
 
 /// Well-known discriminator for batch instructions (SPL Token).
 pub const BATCH_DISCRIMINATOR: u8 = 255;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dispatch_split_tag_happy() {
+        let data = &[5u8, 1, 2, 3];
+        assert_eq!(split_tag(data).unwrap(), (5, &[1, 2, 3][..]));
+    }
+
+    #[test]
+    fn test_dispatch_split_tag_boundary_single_byte() {
+        let data = &[0u8];
+        assert_eq!(split_tag(data).unwrap(), (0, &[][..]));
+    }
+
+    #[test]
+    fn test_dispatch_split_tag_boundary_max_tag() {
+        let data = &[255u8, 0];
+        assert_eq!(split_tag(data).unwrap(), (255, &[0][..]));
+    }
+
+    #[test]
+    fn test_dispatch_split_tag_error_empty() {
+        let data: &[u8] = &[];
+        assert_eq!(split_tag(data), Err(ProgramError::InvalidInstructionData));
+    }
+
+    #[test]
+    fn test_constants() {
+        assert_eq!(SELF_CPI_EVENT_DISCRIMINATOR, 228);
+        assert_eq!(BATCH_DISCRIMINATOR, 255);
+    }
+}

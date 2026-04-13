@@ -17,6 +17,9 @@ pinocchio-token-2022 = { version = "0.3", optional = true }
 pinocchio-associated-token-account = { version = "0.4", optional = true }
 pinocchio-memo = { version = "0.4", optional = true }
 
+[dev-dependencies]
+solana-address = { version = "2.0", features = ["curve25519"] }
+
 [features]
 default = []
 system = ["dep:pinocchio-system"]

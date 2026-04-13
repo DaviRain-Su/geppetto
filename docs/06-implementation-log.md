@@ -12,7 +12,7 @@
 - `src/{error,schema,guard,dispatch,idioms}.rs` — 已实现并通过 `cargo check`
 - `src/{anti_patterns,client,testing}.rs` — 空文件（知识文档/测试工具待后续补充）
 - `src/main.rs` — 已删除（library crate 不需要 binary entrypoint）
-- A-02 ~ A-12 已完成，A-07/A-09/A-11/A-13（测试）待实现
+- A-02 ~ A-13 全部已完成
 
 ## 6.0 实施原则（硬约束）
 
@@ -59,13 +59,18 @@
 - 2026-04-13：A-12 完成 — `idioms.rs` 导出函数（`close_account`, `read_u64_le`, `write_u64_le`, `read_address`）。
 - 2026-04-13：代理熵检查通过（bare catch / 静态默认值 / 重复语义函数 均为 0）。
 - 2026-04-13：Critical bug fixes — 修复 schema.rs `try_from_account` 的 `mem::forget` 借用泄漏；修复 guard.rs `assert_pda` / `derive_ata` 的种子转换错误；修复 idioms.rs `close_account` 的 lamports 溢出保护；修复 idioms.rs 偏移计算的 `usize` 溢出保护。
-- **下一步**：A-07/A-09（guard.rs 两批测试）、A-11（dispatch.rs 测试）、A-13（idioms.rs 测试）。
+- 2026-04-13：A-07/A-09 完成 — guard.rs 33 个单元测试全部通过（含 mock AccountView 辅助函数、curve25519 dev-dependency 修复）。
+- 2026-04-13：A-11 完成 — dispatch.rs 5 个单元测试全部通过。
+- 2026-04-13：A-13 完成 — idioms.rs 14 个单元测试全部通过。
+- 2026-04-13：全量 `cargo test` 通过（64 个单元测试），`cargo doc --no-deps` 无警告，`cargo check --features full` 通过。
+- **风险说明**：PDA/ATA 测试依赖 `solana-address` 的 `curve25519` feature，已加入 dev-dependencies；后续若升级 pinocchio 版本需确认该依赖仍然有效。
+- **下一步**：A-14~A-19（知识模块文档与 `lib.rs` crate doc 完善）或进入 Phase 7 Review。
 
 ## 6.3 验收条件（进入 Phase 7）
 
-- [ ] 关键路径任务 A-02 到 A-13 全部完成并通过。
-- [ ] 代码与 `docs/03-technical-spec.md` 保持 1:1 契约一致。
-- [ ] `cargo test` 覆盖并通过 Phase 5 定义的 happy/boundary/error 案例框架。
-- [ ] `cargo test --doc` 覆盖所有公开 doc 示例。
-- [ ] 关键任务间无阻塞，执行日志持续记录并附 1 句风险说明。
+- [x] 关键路径任务 A-02 到 A-13 全部完成并通过。
+- [x] 代码与 `docs/03-technical-spec.md` 保持 1:1 契约一致。
+- [x] `cargo test` 覆盖并通过 Phase 5 定义的 happy/boundary/error 案例框架（64/64 通过）。
+- [x] `cargo test --doc` 覆盖所有公开 doc 示例（3 个 ignored doctest 为预期行为）。
+- [x] 关键任务间无阻塞，执行日志持续记录并附 1 句风险说明。
 

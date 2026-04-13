@@ -62,7 +62,7 @@ pub fn assert_owner(account: &AccountView, expected_owner: &Address) -> Result<(
 /// seeds. Without this check, an attacker can substitute any account.
 ///
 /// # Errors
-/// Returns [`GeppettoError::PdaMismatch`] if the derived address does not match.
+/// Returns [`crate::error::GeppettoError::PdaMismatch`] if the derived address does not match.
 /// Returns the bump seed on success.
 pub fn assert_pda(
     account: &AccountView,
@@ -185,7 +185,7 @@ fn derive_pda(seeds: &[&[u8]], program_id: &Address) -> Option<(Address, u8)> {
 /// account type with a valid layout but wrong semantics.
 ///
 /// # Errors
-/// Returns [`GeppettoError::InvalidDiscriminator`] if mismatch.
+/// Returns [`crate::error::GeppettoError::InvalidDiscriminator`] if mismatch.
 /// Returns [`ProgramError::AccountDataTooSmall`] if data is empty.
 pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), ProgramError> {
     let data = account.try_borrow()?;
@@ -206,7 +206,7 @@ pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), P
 /// causing data loss.
 ///
 /// # Implementation note
-/// Uses hardcoded rent constants. See [`rent_exempt_minimum`] for details.
+/// Uses hardcoded rent constants. See `rent_exempt_minimum` for details.
 ///
 /// # Errors
 /// Returns [`ProgramError::AccountNotRentExempt`] if below threshold.
@@ -240,7 +240,7 @@ const fn rent_exempt_minimum(data_len: usize) -> u64 {
 /// unintended state mutations.
 ///
 /// # Errors
-/// Returns [`GeppettoError::ExpectedReadonly`] if `account.is_writable()` is true.
+/// Returns [`crate::error::GeppettoError::ExpectedReadonly`] if `account.is_writable()` is true.
 #[inline]
 pub fn assert_readonly(account: &AccountView) -> Result<(), ProgramError> {
     if !account.is_writable() {
@@ -347,7 +347,7 @@ pub fn assert_account_count(accounts: &[AccountView], expected: usize) -> Result
 /// an attacker can substitute a non-ATA token account.
 ///
 /// # Errors
-/// Returns [`GeppettoError::PdaMismatch`] if derived ATA address doesn't match.
+/// Returns [`crate::error::GeppettoError::PdaMismatch`] if derived ATA address doesn't match.
 pub fn assert_ata(
     account: &AccountView,
     wallet: &Address,
@@ -366,7 +366,7 @@ pub fn assert_ata(
 fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Result<Address, ProgramError> {
     let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
     let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID)
-        .ok_or(ProgramError::InvalidInstructionData)?;
+        .ok_or(crate::error::GeppettoError::PdaMismatch)?;
     Ok(addr)
 }
 
@@ -377,3 +377,623 @@ pub const ATA_PROGRAM_ID: Address = Address::new_from_array([
     0x0b, 0x5a, 0x13, 0x99, 0xda, 0xff, 0x10, 0x84,
     0x04, 0x8e, 0x7b, 0xd8, 0xdb, 0xe9, 0xf8, 0x59,
 ]);
+
+#[cfg(test)]
+mod tests {
+    extern crate alloc;
+
+    use super::*;
+    use pinocchio::account::AccountView;
+    use pinocchio::address::Address;
+    use pinocchio::account::RuntimeAccount;
+
+    // Helper to create a mock AccountView for testing.
+    // Allocates a RuntimeAccount followed by data region on the heap,
+    // initializes all fields, and returns an AccountView via new_unchecked.
+    // The memory is leaked intentionally since AccountView borrows it.
+    // This is a test-only helper and should not be used in production.
+    fn mock_account_view(
+        key: [u8; 32],
+        owner: [u8; 32],
+        lamports: u64,
+        data: &mut [u8],
+        is_signer: bool,
+        is_writable: bool,
+    ) -> AccountView {
+        unsafe {
+            let total_size = core::mem::size_of::<RuntimeAccount>() + data.len();
+            let layout = core::alloc::Layout::from_size_align(total_size, 8).unwrap();
+            let ptr = alloc::alloc::alloc(layout);
+            assert!(!ptr.is_null());
+
+            let raw = ptr as *mut RuntimeAccount;
+            (*raw).borrow_state = pinocchio::account::NOT_BORROWED;
+            (*raw).is_signer = if is_signer { 1 } else { 0 };
+            (*raw).is_writable = if is_writable { 1 } else { 0 };
+            (*raw).executable = 0;
+            (*raw).padding = [0; 4];
+            (*raw).address = Address::new_from_array(key);
+            (*raw).owner = Address::new_from_array(owner);
+            (*raw).lamports = lamports;
+            (*raw).data_len = data.len() as u64;
+
+            if !data.is_empty() {
+                let data_ptr = ptr.add(core::mem::size_of::<RuntimeAccount>());
+                core::ptr::copy_nonoverlapping(data.as_ptr(), data_ptr, data.len());
+            }
+
+            AccountView::new_unchecked(raw)
+        }
+    }
+
+    #[test]
+    fn test_assert_signer_happy() {
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            true,
+            false,
+        );
+        assert!(assert_signer(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_signer_error() {
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_signer(&account),
+            Err(ProgramError::MissingRequiredSignature)
+        );
+    }
+
+    #[test]
+    fn test_assert_writable_happy() {
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            true,
+        );
+        assert!(assert_writable(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_writable_error() {
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(assert_writable(&account), Err(ProgramError::Immutable));
+    }
+
+    #[test]
+    fn test_assert_owner_happy() {
+        let mut data = [];
+        let owner = Address::new_from_array([1u8; 32]);
+        let account = mock_account_view(
+            [0u8; 32],
+            *owner.as_array(),
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_owner(&account, &owner).is_ok());
+    }
+
+    #[test]
+    fn test_assert_owner_error() {
+        let mut data = [];
+        let owner = Address::new_from_array([1u8; 32]);
+        let wrong_owner = Address::new_from_array([2u8; 32]);
+        let account = mock_account_view(
+            [0u8; 32],
+            *wrong_owner.as_array(),
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_owner(&account, &owner),
+            Err(ProgramError::InvalidAccountOwner)
+        );
+    }
+
+    #[test]
+    fn test_assert_pda_happy() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let seeds: &[&[u8]] = &[b"test"];
+        let (derived, bump) = derive_pda(seeds, &program_id).unwrap();
+
+        let mut data = [];
+        let account = mock_account_view(
+            *derived.as_array(),
+            *program_id.as_array(),
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(assert_pda(&account, seeds, &program_id).unwrap(), bump);
+    }
+
+    #[test]
+    fn test_assert_pda_error() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let seeds: &[&[u8]] = &[b"test"];
+        let wrong_address = Address::new_from_array([99u8; 32]);
+
+        let mut data = [];
+        let account = mock_account_view(
+            *wrong_address.as_array(),
+            *program_id.as_array(),
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_pda(&account, seeds, &program_id),
+            Err(crate::error::GeppettoError::PdaMismatch.into())
+        );
+    }
+
+    #[test]
+    fn test_assert_pda_empty_seeds() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let seeds: &[&[u8]] = &[];
+        let (derived, bump) = derive_pda(seeds, &program_id).unwrap();
+
+        let mut data = [];
+        let account = mock_account_view(
+            *derived.as_array(),
+            *program_id.as_array(),
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(assert_pda(&account, seeds, &program_id).unwrap(), bump);
+    }
+
+    #[test]
+    fn test_derive_pda_boundary_too_many_seeds() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let seeds: &[&[u8]] = &[b"1", b"2", b"3", b"4", b"5", b"6", b"7", b"8", b"9", b"10", b"11", b"12", b"13", b"14", b"15", b"16"];
+        assert_eq!(derive_pda(seeds, &program_id), None);
+    }
+
+    #[test]
+    fn test_assert_discriminator_happy() {
+        let mut data = [42u8];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_discriminator(&account, 42).is_ok());
+    }
+
+    #[test]
+    fn test_assert_discriminator_error() {
+        let mut data = [42u8];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_discriminator(&account, 99),
+            Err(crate::error::GeppettoError::InvalidDiscriminator.into())
+        );
+    }
+
+    #[test]
+    fn test_assert_discriminator_empty_data() {
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_discriminator(&account, 42),
+            Err(ProgramError::AccountDataTooSmall)
+        );
+    }
+
+    #[test]
+    fn test_assert_rent_exempt_happy() {
+        let mut data = [0u8; 100];
+        let min_balance = rent_exempt_minimum(100);
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            min_balance,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_rent_exempt(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_rent_exempt_error() {
+        let mut data = [0u8; 100];
+        let min_balance = rent_exempt_minimum(100);
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            min_balance - 1,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_rent_exempt(&account),
+            Err(ProgramError::AccountNotRentExempt)
+        );
+    }
+
+    #[test]
+    fn test_assert_rent_exempt_boundary_exact() {
+        let mut data = [0u8; 100];
+        let min_balance = rent_exempt_minimum(100);
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            min_balance,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_rent_exempt(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_rent_exempt_data_len_zero() {
+        let mut data = [];
+        let min_balance = rent_exempt_minimum(0);
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            min_balance,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_rent_exempt(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_readonly_happy() {
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_readonly(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_readonly_error() {
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            true,
+        );
+        assert_eq!(
+            assert_readonly(&account),
+            Err(crate::error::GeppettoError::ExpectedReadonly.into())
+        );
+    }
+
+    #[test]
+    fn test_assert_system_program_happy() {
+        let mut data = [];
+        let account = mock_account_view(
+            *SYSTEM_PROGRAM_ID.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_system_program(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_system_program_error() {
+        let mut data = [];
+        let wrong_address = Address::new_from_array([99u8; 32]);
+        let account = mock_account_view(
+            *wrong_address.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_system_program(&account),
+            Err(ProgramError::IncorrectProgramId)
+        );
+    }
+
+    #[test]
+    fn test_assert_token_program_happy_token() {
+        let mut data = [];
+        let account = mock_account_view(
+            *SPL_TOKEN_PROGRAM_ID.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_token_program(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_token_program_happy_token_2022() {
+        let mut data = [];
+        let account = mock_account_view(
+            *TOKEN_2022_PROGRAM_ID.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_token_program(&account).is_ok());
+    }
+
+    #[test]
+    fn test_assert_token_program_error() {
+        let mut data = [];
+        let wrong_address = Address::new_from_array([99u8; 32]);
+        let account = mock_account_view(
+            *wrong_address.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_token_program(&account),
+            Err(ProgramError::IncorrectProgramId)
+        );
+    }
+
+    #[test]
+    fn test_assert_current_program_happy() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            *program_id.as_array(),
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_current_program(&account, &program_id).is_ok());
+    }
+
+    #[test]
+    fn test_assert_current_program_error() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let wrong_owner = Address::new_from_array([2u8; 32]);
+        let mut data = [];
+        let account = mock_account_view(
+            [0u8; 32],
+            *wrong_owner.as_array(),
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_current_program(&account, &program_id),
+            Err(ProgramError::InvalidAccountOwner)
+        );
+    }
+
+    #[test]
+    fn test_assert_account_count_happy_greater() {
+        let mut data1 = [];
+        let mut data2 = [];
+        let account1 = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data1,
+            false,
+            false,
+        );
+        let account2 = mock_account_view(
+            [1u8; 32],
+            [0u8; 32],
+            0,
+            &mut data2,
+            false,
+            false,
+        );
+        let accounts = [account1, account2];
+        assert!(assert_account_count(&accounts, 1).is_ok());
+    }
+
+    #[test]
+    fn test_assert_account_count_boundary_exact() {
+        let mut data1 = [];
+        let mut data2 = [];
+        let account1 = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data1,
+            false,
+            false,
+        );
+        let account2 = mock_account_view(
+            [1u8; 32],
+            [0u8; 32],
+            0,
+            &mut data2,
+            false,
+            false,
+        );
+        let accounts = [account1, account2];
+        assert!(assert_account_count(&accounts, 2).is_ok());
+    }
+
+    #[test]
+    fn test_assert_account_count_error() {
+        let mut data1 = [];
+        let account1 = mock_account_view(
+            [0u8; 32],
+            [0u8; 32],
+            0,
+            &mut data1,
+            false,
+            false,
+        );
+        let accounts = [account1];
+        assert_eq!(
+            assert_account_count(&accounts, 2),
+            Err(ProgramError::NotEnoughAccountKeys)
+        );
+    }
+
+    #[test]
+    fn test_assert_account_count_boundary_zero() {
+        let accounts: [AccountView; 0] = [];
+        assert!(assert_account_count(&accounts, 0).is_ok());
+    }
+
+    #[test]
+    fn test_assert_ata_happy() {
+        let wallet = Address::new_from_array([1u8; 32]);
+        let mint = Address::new_from_array([2u8; 32]);
+        let token_program = SPL_TOKEN_PROGRAM_ID;
+        let derived = derive_ata(&wallet, &mint, &token_program).unwrap();
+
+        let mut data = [];
+        let account = mock_account_view(
+            *derived.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert!(assert_ata(&account, &wallet, &mint, &token_program).is_ok());
+    }
+
+    #[test]
+    fn test_assert_ata_error_wrong_mint() {
+        let wallet = Address::new_from_array([1u8; 32]);
+        let mint = Address::new_from_array([2u8; 32]);
+        let wrong_mint = Address::new_from_array([3u8; 32]);
+        let token_program = SPL_TOKEN_PROGRAM_ID;
+
+        let derived = derive_ata(&wallet, &mint, &token_program).unwrap();
+        let mut data = [];
+        let account = mock_account_view(
+            *derived.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_ata(&account, &wallet, &wrong_mint, &token_program),
+            Err(crate::error::GeppettoError::PdaMismatch.into())
+        );
+    }
+
+    #[test]
+    fn test_assert_ata_error_wrong_wallet() {
+        let wallet = Address::new_from_array([1u8; 32]);
+        let wrong_wallet = Address::new_from_array([99u8; 32]);
+        let mint = Address::new_from_array([2u8; 32]);
+        let token_program = SPL_TOKEN_PROGRAM_ID;
+
+        let derived = derive_ata(&wallet, &mint, &token_program).unwrap();
+        let mut data = [];
+        let account = mock_account_view(
+            *derived.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_ata(&account, &wrong_wallet, &mint, &token_program),
+            Err(crate::error::GeppettoError::PdaMismatch.into())
+        );
+    }
+
+    #[test]
+    fn test_assert_ata_error_wrong_token_program() {
+        let wallet = Address::new_from_array([1u8; 32]);
+        let mint = Address::new_from_array([2u8; 32]);
+        let token_program = SPL_TOKEN_PROGRAM_ID;
+        let wrong_token_program = Address::new_from_array([99u8; 32]);
+
+        let derived = derive_ata(&wallet, &mint, &token_program).unwrap();
+        let mut data = [];
+        let account = mock_account_view(
+            *derived.as_array(),
+            [0u8; 32],
+            0,
+            &mut data,
+            false,
+            false,
+        );
+        assert_eq!(
+            assert_ata(&account, &wallet, &mint, &wrong_token_program),
+            Err(crate::error::GeppettoError::PdaMismatch.into())
+        );
+    }
+}

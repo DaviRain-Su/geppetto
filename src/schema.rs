@@ -159,3 +159,213 @@ macro_rules! assert_account_size {
         };
     };
 }
+
+#[cfg(test)]
+mod tests {
+    extern crate alloc;
+
+    use super::*;
+    use pinocchio::account::{AccountView, RuntimeAccount};
+    use pinocchio::address::Address;
+
+    #[repr(C)]
+    #[derive(Debug, PartialEq)]
+    struct MockAccount {
+        discriminator: u8,
+        _padding: [u8; 7],
+        value: u64,
+    }
+
+    impl AccountSchema for MockAccount {
+        const LEN: usize = 16; // 1 + 7 (padding) + 8
+        const DISCRIMINATOR: Option<u8> = Some(42);
+
+        fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
+            &[
+                ("discriminator", "u8", 0, 1),
+                ("value", "u64", 8, 8),
+            ]
+        }
+    }
+
+    assert_account_size!(MockAccount);
+
+    #[repr(C)]
+    struct NoDiscriminatorAccount {
+        value: u64,
+    }
+
+    impl AccountSchema for NoDiscriminatorAccount {
+        const LEN: usize = 8;
+        const DISCRIMINATOR: Option<u8> = None;
+
+        fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
+            &[("value", "u64", 0, 8)]
+        }
+    }
+
+    assert_account_size!(NoDiscriminatorAccount);
+
+    fn mock_account_view(
+        key: [u8; 32],
+        owner: [u8; 32],
+        data: &mut [u8],
+    ) -> AccountView {
+        unsafe {
+            let total_size = core::mem::size_of::<RuntimeAccount>() + data.len();
+            let layout = core::alloc::Layout::from_size_align(total_size, 8).unwrap();
+            let ptr = alloc::alloc::alloc(layout);
+            assert!(!ptr.is_null());
+
+            let raw = ptr as *mut RuntimeAccount;
+            (*raw).borrow_state = pinocchio::account::NOT_BORROWED;
+            (*raw).is_signer = 0;
+            (*raw).is_writable = 0;
+            (*raw).executable = 0;
+            (*raw).padding = [0; 4];
+            (*raw).address = Address::new_from_array(key);
+            (*raw).owner = Address::new_from_array(owner);
+            (*raw).lamports = 0;
+            (*raw).data_len = data.len() as u64;
+
+            if !data.is_empty() {
+                let data_ptr = ptr.add(core::mem::size_of::<RuntimeAccount>());
+                core::ptr::copy_nonoverlapping(data.as_ptr(), data_ptr, data.len());
+            }
+
+            AccountView::new_unchecked(raw)
+        }
+    }
+
+    #[test]
+    fn test_schema_validate_happy() {
+        let data = [42u8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0];
+        assert!(MockAccount::validate(&data).is_ok());
+    }
+
+    #[test]
+    fn test_schema_validate_error_short() {
+        let data = [42u8, 0, 0, 0, 0];
+        assert_eq!(
+            MockAccount::validate(&data),
+            Err(ProgramError::AccountDataTooSmall)
+        );
+    }
+
+    #[test]
+    fn test_schema_validate_error_wrong_discriminator() {
+        let data = [99u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        assert_eq!(
+            MockAccount::validate(&data),
+            Err(ProgramError::InvalidAccountData)
+        );
+    }
+
+    #[test]
+    fn test_schema_validate_boundary_exact_len() {
+        let data = [42u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        assert!(MockAccount::validate(&data).is_ok());
+    }
+
+    #[test]
+    fn test_schema_validate_boundary_longer_data() {
+        let data = [42u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        assert!(MockAccount::validate(&data).is_ok());
+    }
+
+    #[test]
+    fn test_schema_validate_boundary_none_discriminator() {
+        let data = [99u8, 0, 0, 0, 0, 0, 0, 0];
+        assert!(NoDiscriminatorAccount::validate(&data).is_ok());
+    }
+
+    #[test]
+    fn test_schema_try_from_account_happy() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let mut data = [42u8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0];
+        let account = mock_account_view([0u8; 32], *program_id.as_array(), &mut data);
+        unsafe {
+            let result = MockAccount::try_from_account(&account, &program_id).unwrap();
+            assert_eq!(result.discriminator, 42);
+            assert_eq!(result.value, 7);
+        }
+    }
+
+    #[test]
+    fn test_schema_try_from_account_error_wrong_owner() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let wrong_owner = Address::new_from_array([2u8; 32]);
+        let mut data = [42u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let account = mock_account_view([0u8; 32], *wrong_owner.as_array(), &mut data);
+        unsafe {
+            assert!(
+                matches!(
+                    MockAccount::try_from_account(&account, &program_id),
+                    Err(ProgramError::InvalidAccountOwner)
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn test_schema_try_from_account_error_short_data() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let mut data = [42u8, 0, 0, 0, 0];
+        let account = mock_account_view([0u8; 32], *program_id.as_array(), &mut data);
+        unsafe {
+            assert!(
+                matches!(
+                    MockAccount::try_from_account(&account, &program_id),
+                    Err(ProgramError::AccountDataTooSmall)
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn test_schema_try_from_account_error_wrong_discriminator() {
+        let program_id = Address::new_from_array([1u8; 32]);
+        let mut data = [99u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let account = mock_account_view([0u8; 32], *program_id.as_array(), &mut data);
+        unsafe {
+            assert!(
+                matches!(
+                    MockAccount::try_from_account(&account, &program_id),
+                    Err(ProgramError::InvalidAccountData)
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn test_schema_from_bytes_unchecked_happy() {
+        let data = [42u8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0];
+        unsafe {
+            let account = MockAccount::from_bytes_unchecked(&data);
+            assert_eq!(account.discriminator, 42);
+            assert_eq!(account.value, 7);
+        }
+    }
+
+    #[test]
+    fn test_schema_from_bytes_unchecked_zero_copy() {
+        let mut data = [42u8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0];
+        unsafe {
+            let first_ptr = {
+                let first = MockAccount::from_bytes_unchecked(&data);
+                let first_ptr = core::ptr::addr_of!(*first);
+                assert_eq!(first.value, 7);
+                first_ptr
+            };
+
+            core::ptr::write_unaligned(
+                data.as_mut_ptr().add(8) as *mut u64,
+                99,
+            );
+
+            let second = MockAccount::from_bytes_unchecked(&data);
+            assert_eq!(core::ptr::addr_of!(*second), first_ptr);
+            assert_eq!(second.value, 99);
+        }
+    }
+}
