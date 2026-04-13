@@ -50,7 +50,14 @@
 - 2026-04-13：Code Review 修复 — Cargo.toml license 统一为 `MIT OR Apache-2.0`；PRD 补充扩展 guard 列表；Tech Spec 多项安全文档增强。
 - 2026-04-13：Codex review + 多轮 review 修复 — 文档状态与仓库同步、SYSTEM_PROGRAM_ID 注释澄清、feature default 策略统一为 `default = []`。
 - 2026-04-13：`cargo check` 通过 default / test-utils / full 三种 feature 组合。
-- **下一步**：A-03（error.rs 实现）。
+- 2026-04-13：A-03 完成 — `error.rs`（`GeppettoError` + `From` 转换）。
+- 2026-04-13：A-04 完成 — `schema.rs`（`AccountSchema` trait + `assert_account_size!` 宏），修复了 `try_from_account` 中 `Ref` 生命周期与 `unsafe` 块兼容问题。
+- 2026-04-13：A-06 完成 — `guard.rs` 第一批 6 个函数（`assert_signer`, `assert_writable`, `assert_owner`, `assert_pda`, `assert_discriminator`, `assert_rent_exempt`）。
+- 2026-04-13：A-08 完成 — `guard.rs` 第二批 6 个函数 + 4 个 well-known 常量（`assert_readonly`, `assert_system_program`, `assert_token_program`, `assert_current_program`, `assert_account_count`, `assert_ata`）。
+- 2026-04-13：A-10 完成 — `dispatch.rs`（`split_tag` + `SELF_CPI_EVENT_DISCRIMINATOR` + `BATCH_DISCRIMINATOR`）。
+- 2026-04-13：A-12 完成 — `idioms.rs` 导出函数（`close_account`, `read_u64_le`, `write_u64_le`, `read_address`）。
+- 2026-04-13：代理熵检查通过（bare catch / 静态默认值 / 重复语义函数 均为 0）。
+- **下一步**：A-07/A-09（guard.rs 两批测试）、A-11（dispatch.rs 测试）、A-13（idioms.rs 测试）。
 
 ## 6.3 验收条件（进入 Phase 7）
 
