@@ -1,0 +1,12 @@
+[package]
+name = "geppetto-escrow"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+geppetto = { path = "../..", features = ["system", "token"] }
+pinocchio = "0.11"
+
+[lib]
+crate-type = ["cdylib", "lib"]
