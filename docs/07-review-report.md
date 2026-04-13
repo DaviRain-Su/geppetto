@@ -3,7 +3,7 @@
 > 状态：已完成
 > 日期：2026-04-13
 > 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）
-> 基线：HEAD = d7bf160
+> 审查基线：Phase 7 最终已验证基线 = `85b2416`
 
 ## 7.1 审查目标
 
@@ -72,7 +72,7 @@
 ## 7.6 风险与回滚
 
 - **已知风险**：PDA/ATA 单元测试依赖 `solana-address` 的 `curve25519` dev-dependency。若未来升级 `pinocchio` 导致 `solana-address` major 版本变更，需重新确认该 feature 的可用性。
-- **回滚条件**：若 `AccountSchema`、`assert_pda` 或 `close_account` 出现逻辑回归，优先回滚至 `d7bf160`（当前已通过全量验证的基线）。
+- **回滚条件**：若 `AccountSchema`、`assert_pda` 或 `close_account` 出现逻辑回归，优先回滚至 `85b2416`（Phase 7 最终已通过全量验证并完成审查的基线）。
 
 ## Phase 7 验收标准
 

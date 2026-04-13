@@ -2,12 +2,12 @@
 
 > 状态：已完成
 > 日期：2026-04-13
-> 输入：Phase 7 审查报告（HEAD = `85b2416`）
+> 输入：Phase 7 审查报告（reviewed baseline = `85b2416`）
 > 目标：把 A-02 ~ A-23 的已交付结果固化为后续演化基线，并明确子模块 B/C 的推进顺序、复杂度预算与回滚策略。
 
 ## 8.1 当前基线
 
-截至 `85b2416`，Geppetto 已完成以下闭环：
+截至 Phase 7 最终审查基线 `85b2416`，Geppetto 已完成以下闭环：
 
 - 核心 crate：`guard` / `schema` / `dispatch` / `error` / `idioms`
 - 知识模块：`anti_patterns` / `client` / `testing` / crate-level docs
@@ -172,7 +172,7 @@
 
 ## 8.6 退化与回滚原则
 
-- 核心安全语义（`AccountSchema`、`assert_pda`、`assert_owner`、`close_account`）出现回归时，优先回滚到 `85b2416` 这一已完成 Phase 7 审查的基线。
+- 核心安全语义（`AccountSchema`、`assert_pda`、`assert_owner`、`close_account`）出现回归时，优先回滚到 `85b2416` 这一最新 Phase 7 审查完成基线。
 - 子模块 B/C 允许独立冻结，不应为了示例或 CLI 问题回滚核心 crate 的已验证安全修复。
 - 若出现文档/agent 入口与实现不一致：
   - 暂停新发布

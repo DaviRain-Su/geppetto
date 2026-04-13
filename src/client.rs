@@ -86,11 +86,12 @@
 //!
 //! ## Fixture-Based Alignment Testing
 //!
-//! The recommended way to verify Rust/TypeScript alignment without a live
-//! validator:
+//! A recommended future setup for verifying Rust/TypeScript alignment without a
+//! live validator is:
 //!
-//! 1. Rust test serializes a known account to `tests/fixtures/escrow_account.bin`.
+//! 1. Rust test serializes a known account fixture to disk.
 //! 2. TypeScript test reads the fixture and asserts field values.
 //! 3. If offsets drift in Rust, the TypeScript test fails immediately.
 //!
-//! See `tests/client_alignment.ts` for a working example.
+//! Submodule C (`escrow demo`) is the intended place to add the concrete fixture
+//! files and execute the end-to-end alignment check.

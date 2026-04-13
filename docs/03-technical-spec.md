@@ -593,6 +593,8 @@ pub fn assert_account_count(accounts: &[AccountView], expected: usize) -> Result
 ///
 /// # Errors
 ///
+/// Returns [`ProgramError::IncorrectProgramId`] if `token_program` is neither
+/// SPL Token nor Token-2022.
 /// Returns [`GeppettoError::PdaMismatch`] if derived ATA address doesn't match.
 pub fn assert_ata(
     account: &AccountView,
@@ -610,6 +612,9 @@ pub fn assert_ata(
 
 /// Derive an Associated Token Account address.
 fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Result<Address, ProgramError> {
+    if token_program != &SPL_TOKEN_PROGRAM_ID && token_program != &TOKEN_2022_PROGRAM_ID {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
     let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID)
         .ok_or(crate::error::GeppettoError::PdaMismatch)?;
@@ -640,7 +645,7 @@ pub const ATA_PROGRAM_ID: Address = Address::new_from_array([
 | `assert_token_program`   | `&AccountView`                               | `Result<(), ProgramError>` | `IncorrectProgramId`                  |
 | `assert_current_program` | `&AccountView, &Address`                     | `Result<(), ProgramError>` | `InvalidAccountOwner`                 |
 | `assert_account_count`   | `&[AccountView], usize`                      | `Result<(), ProgramError>` | `NotEnoughAccountKeys`                |
-| `assert_ata`             | `&AccountView, &Address, &Address, &Address` | `Result<(), ProgramError>` | `GeppettoError::PdaMismatch`          |
+| `assert_ata`             | `&AccountView, &Address, &Address, &Address` | `Result<(), ProgramError>` | `IncorrectProgramId` / `GeppettoError::PdaMismatch` |
 
 ### 3.4 导出常量
 
@@ -750,11 +755,11 @@ pub trait AccountSchema: Sized {
     /// Validate that raw account data matches this schema.
     ///
     /// Default implementation checks:
-    /// 1. Data length >= LEN
+    /// 1. Data length == LEN
     /// 2. Discriminator matches (if DISCRIMINATOR is Some)
     fn validate(data: &[u8]) -> Result<(), ProgramError> {
-        if data.len() < Self::LEN {
-            return Err(ProgramError::AccountDataTooSmall);
+        if data.len() != Self::LEN {
+            return Err(GeppettoError::InvalidAccountLen.into());
         }
         if let Some(d) = Self::DISCRIMINATOR {
             if data.is_empty() || data[0] != d {
@@ -785,7 +790,7 @@ pub trait AccountSchema: Sized {
 
     /// Validate an AccountView and return a zero-copy reference.
     ///
-    /// Checks: owner matches `program_id`, data length >= LEN,
+    /// Checks: owner matches `program_id`, data length == LEN,
     /// discriminator matches (if Some). This is the recommended
     /// entry point for accessing account data.
     ///
@@ -1355,7 +1360,14 @@ pub fn assert_account_data(
     expected: &[u8],
     field_name: &str,
 ) {
-    let end = offset + expected.len();
+    let end = offset.checked_add(expected.len()).unwrap_or_else(|| {
+        panic!(
+            "field '{}': offset {} + len {} overflow",
+            field_name,
+            offset,
+            expected.len()
+        )
+    });
     assert!(
         end <= data.len(),
         "field '{}': offset {}..{} out of bounds (data len = {})",
@@ -1481,8 +1493,8 @@ When in doubt, read the pinocchio source code directly.
 | 3  | `assert_readonly` 传入可写账户                           | 返回 `GeppettoError::ExpectedReadonly` |
 | 4  | `assert_pda` seeds 为空 `&[]`                        | 正常推导（空 seeds 是合法的 PDA）               |
 | 5  | `assert_discriminator` 传入空数据账户                     | 返回 `AccountDataTooSmall`             |
-| 6  | `AccountSchema::validate` data.len < LEN           | 返回 `AccountDataTooSmall`             |
-| 7  | `AccountSchema::validate` data.len > LEN           | 通过（`<` 检查，不是 `!=`）                   |
+| 6  | `AccountSchema::validate` data.len != LEN          | 返回 `InvalidAccountLen`               |
+| 7  | `AccountSchema::validate` data.len > LEN           | 返回 `InvalidAccountLen`               |
 | 8  | `split_tag` 传入空 `&[]`                              | 返回 `InvalidInstructionData`          |
 | 9  | `split_tag` 传入单字节 `&[0]`                           | 返回 `(0, &[])` — tag=0，rest 为空        |
 | 10 | `read_u64_le` offset 超出数据边界                        | 返回 `AccountDataTooSmall`             |
@@ -1495,7 +1507,8 @@ When in doubt, read the pinocchio source code directly.
 | 17 | `assert_account_count` accounts.len() < expected   | 返回 `NotEnoughAccountKeys`            |
 | 18 | `assert_ata` wallet/mint/token\_program 组合正确       | 通过                                   |
 | 19 | `assert_ata` mint 参数错误                             | 返回 `GeppettoError::PdaMismatch`      |
-| 20 | 两个 AccountSchema 使用相同 DISCRIMINATOR                | 编译通过但运行时错误——文档中警告                    |
+| 20 | `assert_ata` 传入非 token / token-2022 program       | 返回 `IncorrectProgramId`              |
+| 21 | 两个 AccountSchema 使用相同 DISCRIMINATOR                | 编译通过但运行时错误——文档中警告                    |
 
 ## Phase 3 验收标准
 

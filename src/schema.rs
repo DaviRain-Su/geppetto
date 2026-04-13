@@ -85,11 +85,11 @@ pub trait AccountSchema: Sized {
     /// Validate that raw account data matches this schema.
     ///
     /// Default implementation checks:
-    /// 1. Data length >= LEN
+    /// 1. Data length == LEN
     /// 2. Discriminator matches (if DISCRIMINATOR is Some)
     fn validate(data: &[u8]) -> Result<(), ProgramError> {
-        if data.len() < Self::LEN {
-            return Err(ProgramError::AccountDataTooSmall);
+        if data.len() != Self::LEN {
+            return Err(crate::error::GeppettoError::InvalidAccountLen.into());
         }
         if let Some(d) = Self::DISCRIMINATOR
             && (data.is_empty() || data[0] != d)
@@ -243,7 +243,7 @@ mod tests {
         let data = [42u8, 0, 0, 0, 0];
         assert_eq!(
             MockAccount::validate(&data),
-            Err(ProgramError::AccountDataTooSmall)
+            Err(crate::error::GeppettoError::InvalidAccountLen.into())
         );
     }
 
@@ -263,9 +263,12 @@ mod tests {
     }
 
     #[test]
-    fn test_schema_validate_boundary_longer_data() {
+    fn test_schema_validate_error_longer_data() {
         let data = [42u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        assert!(MockAccount::validate(&data).is_ok());
+        assert_eq!(
+            MockAccount::validate(&data),
+            Err(crate::error::GeppettoError::InvalidAccountLen.into())
+        );
     }
 
     #[test]
@@ -308,7 +311,8 @@ mod tests {
         unsafe {
             assert!(matches!(
                 MockAccount::try_from_account(&account, &program_id),
-                Err(ProgramError::AccountDataTooSmall)
+                Err(ProgramError::Custom(code))
+                    if code == crate::error::GeppettoError::InvalidAccountLen as u32
             ));
         }
     }
@@ -339,18 +343,19 @@ mod tests {
     #[test]
     fn test_schema_from_bytes_unchecked_zero_copy() {
         let mut data = [42u8, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0];
+        let account_ptr = data.as_ptr() as *const MockAccount;
+
         unsafe {
-            let first_ptr = {
-                let first = MockAccount::from_bytes_unchecked(&data);
-                let first_ptr = core::ptr::addr_of!(*first);
-                assert_eq!(first.value, 7);
-                first_ptr
-            };
+            let first = MockAccount::from_bytes_unchecked(&data);
+            assert_eq!(core::ptr::addr_of!(*first), account_ptr);
+            assert_eq!(first.value, 7);
+        }
 
-            core::ptr::write_unaligned(data.as_mut_ptr().add(8) as *mut u64, 99);
+        data[8..16].copy_from_slice(&99u64.to_le_bytes());
 
+        unsafe {
             let second = MockAccount::from_bytes_unchecked(&data);
-            assert_eq!(core::ptr::addr_of!(*second), first_ptr);
+            assert_eq!(core::ptr::addr_of!(*second), account_ptr);
             assert_eq!(second.value, 99);
         }
     }

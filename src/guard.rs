@@ -341,6 +341,8 @@ pub fn assert_account_count(accounts: &[AccountView], expected: usize) -> Result
 /// an attacker can substitute a non-ATA token account.
 ///
 /// # Errors
+/// Returns [`ProgramError::IncorrectProgramId`] if `token_program` is neither
+/// SPL Token nor Token-2022.
 /// Returns [`crate::error::GeppettoError::PdaMismatch`] if derived ATA address doesn't match.
 pub fn assert_ata(
     account: &AccountView,
@@ -362,6 +364,9 @@ fn derive_ata(
     mint: &Address,
     token_program: &Address,
 ) -> Result<Address, ProgramError> {
+    if token_program != &SPL_TOKEN_PROGRAM_ID && token_program != &TOKEN_2022_PROGRAM_ID {
+        return Err(ProgramError::IncorrectProgramId);
+    }
     let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
     let (addr, _) =
         derive_pda(seeds, &ATA_PROGRAM_ID).ok_or(crate::error::GeppettoError::PdaMismatch)?;
@@ -838,7 +843,7 @@ mod tests {
         let account = mock_account_view(*derived.as_array(), [0u8; 32], 0, &mut data, false, false);
         assert_eq!(
             assert_ata(&account, &wallet, &mint, &wrong_token_program),
-            Err(crate::error::GeppettoError::PdaMismatch.into())
+            Err(ProgramError::IncorrectProgramId)
         );
     }
 }

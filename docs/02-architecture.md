@@ -282,11 +282,11 @@ pub trait AccountSchema {
     /// Validate that raw account data matches this schema.
     ///
     /// Default implementation checks:
-    /// 1. Data length >= LEN
+    /// 1. Data length == LEN
     /// 2. Discriminator matches (if DISCRIMINATOR is Some)
     fn validate(data: &[u8]) -> Result<(), ProgramError> {
-        if data.len() < Self::LEN {
-            return Err(ProgramError::AccountDataTooSmall);
+        if data.len() != Self::LEN {
+            return Err(GeppettoError::InvalidAccountLen.into());
         }
         if let Some(d) = Self::DISCRIMINATOR {
             if data.is_empty() || data[0] != d {

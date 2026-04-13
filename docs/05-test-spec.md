@@ -134,7 +134,7 @@ mod tests {
 | Happy | address 匹配 ATA 推导 | Ok(()) |
 | Error (wrong mint) | mint 不同 | Err(GeppettoError::PdaMismatch) |
 | Error (wrong wallet) | wallet 不同 | Err(GeppettoError::PdaMismatch) |
-| Error (wrong token program) | token_program 不同 | Err(GeppettoError::PdaMismatch) |
+| Error (wrong token program) | token_program 不是 SPL Token / Token-2022 | Err(IncorrectProgramId) |
 
 ---
 
@@ -151,13 +151,13 @@ struct MockAccount {
 }
 
 impl AccountSchema for MockAccount {
-    const LEN: usize = 9; // 1 + 8
+    const LEN: usize = 16; // 1 + 7 + 8
     const DISCRIMINATOR: Option<u8> = Some(42);
 
     fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
         &[
             ("discriminator", "u8", 0, 1),
-            ("value", "u64", 1, 8),
+            ("value", "u64", 8, 8),
         ]
     }
 }
@@ -165,11 +165,11 @@ impl AccountSchema for MockAccount {
 
 | 用例 | 输入 | 预期结果 |
 |------|------|----------|
-| Happy | data = [42, 0,0,0,0,0,0,0,0], len=9 | Ok(()) |
-| Error (short) | data.len() = 5 | Err(AccountDataTooSmall) |
+| Happy | data = [42, 0,0,0,0,0,0,0, 7,0,0,0,0,0,0,0], len=16 | Ok(()) |
+| Error (short) | data.len() = 5 | Err(InvalidAccountLen) |
 | Error (wrong discriminator) | data[0] = 99 | Err(InvalidAccountData) |
-| Boundary (exact len) | data.len() == 9 | Ok(()) |
-| Boundary (longer data) | data.len() == 20 | Ok()（>= 检查） |
+| Boundary (exact len) | data.len() == 16 | Ok(()) |
+| Error (longer data) | data.len() == 20 | Err(InvalidAccountLen) |
 | Boundary (None discriminator) | DISCRIMINATOR = None, data[0] = 任意 | Ok()（不检查） |
 
 ### 2.2 AccountSchema::try_from_account
@@ -178,14 +178,14 @@ impl AccountSchema for MockAccount {
 |------|------|----------|
 | Happy | owner 正确 + data 正确 | Ok(&MockAccount) |
 | Error (wrong owner) | owner != program_id | Err(InvalidAccountOwner) |
-| Error (short data) | data.len() < LEN | Err(AccountDataTooSmall) |
+| Error (short data) | data.len() != LEN | Err(InvalidAccountLen) |
 | Error (wrong discriminator) | data[0] != DISCRIMINATOR | Err(InvalidAccountData) |
 
 ### 2.3 from_bytes_unchecked
 
 | 用例 | 输入 | 预期结果 |
 |------|------|----------|
-| Happy | 9 字节正确数据 | 返回 &MockAccount，字段值正确 |
+| Happy | 16 字节正确数据 | 返回 &MockAccount，字段值正确 |
 | 验证零拷贝 | 修改原始 data → 引用的值也变 | 确认是指针转换不是拷贝 |
 
 ### 2.4 assert_account_size! 宏
@@ -448,12 +448,12 @@ Pinocchio 的 `AccountView` 在测试中需要 mock。两种策略：
 
 ## Phase 5 验收标准
 
-> 注：以下验收的是**测试规格文档本身的完整性**（"是否设计清楚了"），不是代码实现。当前仓库 `src/` 下模块为空骨架，`cargo test` 实际执行 0 个测试。代码实现状态见 `docs/06-implementation-log.md`。
+> 注：以下验收的是**测试规格文档本身的完整性**（"是否设计清楚了"），不是代码实现。本节中的 `77` 个用例是 Phase 5 的设计目标，用于覆盖后续单元、集成、re-export 与 fixture 对齐测试。当前仓库已完成核心实现并通过 `65` 个单元测试；实际执行状态见 `docs/06-implementation-log.md` 与 `docs/07-review-report.md`。
 
 - [x] 每个公开函数有 happy/boundary/error 三类测试（规格设计完成）
 - [x] 测试用例表覆盖 Phase 3 的全部 20 个边界条件（规格设计完成）
 - [x] Mock 策略明确（单元用字节缓冲，集成用 mollusk-svm）
 - [x] Fixture-based 客户端对齐测试设计完成
 - [x] 测试命名约定已定义
-- [x] 总计 77 个测试用例（规格设计完成，实现待开始）
+- [x] 总计 77 个测试用例（规格设计完成，后续实现可按模块分批落地）
 - [x] 可进入 Phase 6: Implementation

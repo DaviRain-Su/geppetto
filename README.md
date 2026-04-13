@@ -2,7 +2,7 @@
 
 > Make AI code agents instantly fluent in Solana/Pinocchio best practices.
 
-Geppetto is an **agent-aware knowledge SDK** for Pinocchio program development. It bundles battle-tested knowledge, guard helpers, and coding conventions into a single Rust crate—version-locked, doctest-validated, and designed for AI agents first.
+Geppetto is an **agent-aware knowledge SDK** for Pinocchio program development. It bundles battle-tested knowledge, guard helpers, and coding conventions into a single Rust crate—version-locked, doc-comment driven, and designed for AI agents first.
 
 ---
 
@@ -19,7 +19,7 @@ Humans end up reviewing and fixing agent output line by line, canceling out the 
 
 ## What Geppetto Does
 
-1. **Bundled Knowledge** — Knowledge lives as Rust doc comments inside the crate. `cargo doc` builds it, `cargo test` validates every example. No "docs are stale but code is updated" problem.
+1. **Bundled Knowledge** — Knowledge lives as Rust doc comments inside the crate. `cargo doc` builds it, and the Rust doc/test workflow checks the executable examples while keeping longer reference snippets intentionally ignored. No "docs are stale but code is updated" problem.
 2. **Enforced Conventions** — `AccountSchema` trait for account layouts, `guard::*` helpers for security checks, and a standard dispatch pattern. Not macro magic—just clear, explicit Pinocchio code that agents can read and follow.
 3. **AGENTS.md Guide** — Tells agents: "Your training data is outdated. Read the doc comments in `geppetto` for the source of truth."
 
@@ -102,10 +102,11 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 | Phase 3: Technical Spec      | ✅ 完成                           |
 | Phase 4: Task Breakdown      | ✅ 完成                           |
 | Phase 5: Test Spec           | ✅ 完成                           |
-| Phase 6: Implementation      | 🚧 核心模块已实现（error/schema/guard/dispatch/idioms），测试与知识文档待补充 |
-| Phase 7: Review & Deploy     | ⏳ 待核心代码与测试完成后启动                          |
+| Phase 6: Implementation      | ✅ 完成                           |
+| Phase 7: Review & Deploy     | ✅ 完成                           |
+| Phase 8: Evolution           | ✅ 完成（ADR、复杂度预算、演化路径已固化）             |
 
-**代码状态**：A-02 ~ A-12 已完成。`error.rs`、`schema.rs`、`guard.rs`（12 guards）、`dispatch.rs`、`idioms.rs` 已按 Phase 3 规格实现并通过 `cargo check`。
+**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。子模块 B 已补上 `npx geppetto-cli init` 初版脚手架。
 
 Hackathon delivery target: **2026-05-11**
 

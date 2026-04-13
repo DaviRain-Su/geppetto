@@ -16,6 +16,8 @@
     "AGENTS.md",
     "CLAUDE.md",
     "GEMINI.md",
+    "LICENSE",
+    "LICENSE-APACHE",
     ".aider.conf.yml",
     ".amazonq/rules/geppetto.md",
     ".cursor/rules/geppetto.md",
