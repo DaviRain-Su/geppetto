@@ -38,14 +38,37 @@ pub fn assert_pda(
     seeds: &[&[u8]],
     program_id: &Address,
 ) -> Result<u8, ProgramError> {
-    let seeds_array: &[&[u8]] = seeds;
     let (derived, bump) =
-        Address::derive_program_address(seeds_array.try_into().unwrap_or(&[]), program_id)
-            .ok_or(crate::error::GeppettoError::PdaMismatch)?;
+        derive_pda(seeds, program_id).ok_or(crate::error::GeppettoError::PdaMismatch)?;
     if account.address() == &derived {
         Ok(bump)
     } else {
         Err(crate::error::GeppettoError::PdaMismatch.into())
+    }
+}
+
+/// Derive a PDA from seeds and program_id, matching the seed layout used by
+/// `Address::derive_program_address` for up to 7 seeds (covers all common cases).
+fn derive_pda(seeds: &[&[u8]], program_id: &Address) -> Option<(Address, u8)> {
+    match seeds.len() {
+        0 => Address::derive_program_address(&[], program_id),
+        1 => Address::derive_program_address(&[seeds[0]], program_id),
+        2 => Address::derive_program_address(&[seeds[0], seeds[1]], program_id),
+        3 => Address::derive_program_address(&[seeds[0], seeds[1], seeds[2]], program_id),
+        4 => Address::derive_program_address(&[seeds[0], seeds[1], seeds[2], seeds[3]], program_id),
+        5 => Address::derive_program_address(
+            &[seeds[0], seeds[1], seeds[2], seeds[3], seeds[4]],
+            program_id,
+        ),
+        6 => Address::derive_program_address(
+            &[seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5]],
+            program_id,
+        ),
+        7 => Address::derive_program_address(
+            &[seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6]],
+            program_id,
+        ),
+        _ => None,
     }
 }
 
@@ -165,8 +188,7 @@ pub fn assert_ata(
 /// Derive an Associated Token Account address.
 fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Address {
     let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
-    let (addr, _) = Address::derive_program_address(seeds.try_into().unwrap_or(&[]), &ATA_PROGRAM_ID)
-        .expect("ATA seeds are always valid");
+    let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID).expect("ATA seeds are always valid");
     addr
 }
 

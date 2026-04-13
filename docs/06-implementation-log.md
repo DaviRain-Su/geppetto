@@ -57,6 +57,7 @@
 - 2026-04-13：A-10 完成 — `dispatch.rs`（`split_tag` + `SELF_CPI_EVENT_DISCRIMINATOR` + `BATCH_DISCRIMINATOR`）。
 - 2026-04-13：A-12 完成 — `idioms.rs` 导出函数（`close_account`, `read_u64_le`, `write_u64_le`, `read_address`）。
 - 2026-04-13：代理熵检查通过（bare catch / 静态默认值 / 重复语义函数 均为 0）。
+- 2026-04-13：Critical bug fixes — 修复 schema.rs `try_from_account` 的 `mem::forget` 借用泄漏；修复 guard.rs `assert_pda` / `derive_ata` 的种子转换错误；修复 idioms.rs `close_account` 的 lamports 溢出保护；修复 idioms.rs 偏移计算的 `usize` 溢出保护。
 - **下一步**：A-07/A-09（guard.rs 两批测试）、A-11（dispatch.rs 测试）、A-13（idioms.rs 测试）。
 
 ## 6.3 验收条件（进入 Phase 7）

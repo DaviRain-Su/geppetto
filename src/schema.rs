@@ -73,12 +73,11 @@ pub trait AccountSchema: Sized {
         let data = account.try_borrow()?;
         Self::validate(&*data)?;
         // SAFETY: we just validated length and discriminator, and owner is correct.
-        // We leak the `Ref` by extracting its raw pointer, extending the borrow
-        // to the lifetime of `account`. Caller is responsible for not violating
-        // the borrow rules.
-        let ptr: *const [u8] = data.as_ref();
-        core::mem::forget(data);
-        Ok(unsafe { Self::from_bytes_unchecked(&*ptr) })
+        // We extend the borrow by returning a reference with lifetime `'a`.
+        // This is sound as long as the caller respects the borrow invariant.
+        let ptr = data.as_ref().as_ptr();
+        let len = data.as_ref().len();
+        Ok(unsafe { Self::from_bytes_unchecked(core::slice::from_raw_parts(ptr, len)) })
     }
 }
 

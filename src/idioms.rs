@@ -9,7 +9,11 @@ pub fn close_account(
     recipient: &mut AccountView,
 ) -> ProgramResult {
     let lamports = account.lamports();
-    recipient.set_lamports(recipient.lamports() + lamports);
+    let new_recipient_lamports = recipient
+        .lamports()
+        .checked_add(lamports)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    recipient.set_lamports(new_recipient_lamports);
     account.set_lamports(0);
 
     let mut data = account.try_borrow_mut()?;
@@ -21,7 +25,7 @@ pub fn close_account(
 /// Read a little-endian u64 from a byte slice at the given offset.
 #[inline]
 pub fn read_u64_le(data: &[u8], offset: usize) -> Result<u64, ProgramError> {
-    let end = offset + 8;
+    let end = offset.checked_add(8).ok_or(ProgramError::AccountDataTooSmall)?;
     if end > data.len() {
         return Err(ProgramError::AccountDataTooSmall);
     }
@@ -34,7 +38,7 @@ pub fn read_u64_le(data: &[u8], offset: usize) -> Result<u64, ProgramError> {
 /// Write a little-endian u64 to a mutable byte slice at the given offset.
 #[inline]
 pub fn write_u64_le(data: &mut [u8], offset: usize, value: u64) -> Result<(), ProgramError> {
-    let end = offset + 8;
+    let end = offset.checked_add(8).ok_or(ProgramError::AccountDataTooSmall)?;
     if end > data.len() {
         return Err(ProgramError::AccountDataTooSmall);
     }
@@ -45,7 +49,7 @@ pub fn write_u64_le(data: &mut [u8], offset: usize, value: u64) -> Result<(), Pr
 /// Read a 32-byte Address from a byte slice at the given offset.
 #[inline]
 pub fn read_address(data: &[u8], offset: usize) -> Result<Address, ProgramError> {
-    let end = offset + 32;
+    let end = offset.checked_add(32).ok_or(ProgramError::AccountDataTooSmall)?;
     if end > data.len() {
         return Err(ProgramError::AccountDataTooSmall);
     }
