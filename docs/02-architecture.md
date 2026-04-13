@@ -55,11 +55,11 @@ geppetto/
 │   ├── dispatch.rs                  ← FR-4：指令分发模式
 │   ├── error.rs                     ← Geppetto 自定义错误码
 │   │
-│   │  ── 知识文档层（纯 doc comments，无导出代码）──
-│   ├── idioms.rs                    ← FR-5：惯用法
-│   ├── anti_patterns.rs             ← FR-5：反模式
-│   ├── client.rs                    ← FR-6：客户端知识
-│   └── testing.rs                   ← FR-7：测试知识
+│   │  ── 知识层（代码 + 文档 或 纯文档）──
+│   ├── idioms.rs                    ← FR-5：惯用法 helpers（PDA/CPI/事件）+ 知识
+│   ├── anti_patterns.rs             ← FR-5：反模式（纯文档）
+│   ├── client.rs                    ← FR-6：客户端知识（纯文档，TypeScript）
+│   └── testing.rs                   ← FR-7：测试工具函数 + 知识
 │
 ├── examples/
 │   └── escrow/                      ← FR-9：示例程序
@@ -90,10 +90,10 @@ lib.rs ──re-export──→ pinocchio + pinocchio-system + pinocchio-token +
   ├── dispatch.rs ───→ pinocchio (ProgramResult, AccountView)
   ├── error.rs ──────→ pinocchio (ProgramError)
   │
-  ├── idioms.rs ─────→ (纯文档，doctest 依赖 geppetto 自身)
-  ├── anti_patterns.rs → (纯文档)
+  ├── idioms.rs ─────→ pinocchio + guard + schema（代码 + 知识：PDA/CPI/事件 helpers）
+  ├── anti_patterns.rs → (纯文档，doctest 依赖 geppetto 自身)
   ├── client.rs ─────→ (纯文档，TypeScript 示例)
-  └── testing.rs ────→ (纯文档)
+  └── testing.rs ────→ pinocchio（代码 + 知识：测试工具函数，cfg(test) 或 dev-dep）
 ```
 
 关键：约定代码层的三个模块（guard、schema、dispatch）之间**无循环依赖**。guard 可以引用 schema（检查 discriminator 时需要知道布局），但 schema 不依赖 guard。
@@ -162,12 +162,15 @@ memo = ["dep:pinocchio-memo"]
 # 预设组合，覆盖常见场景
 token-all = ["token", "token-2022", "ata"]   # SPL Token 全家桶
 full = ["system", "token-all", "memo"]        # 所有 CPI helpers
+
+# 测试工具（testing.rs 导出的 helpers）
+test-utils = []
 ```
 
-**用法示例（AGENTS.md 和 doc comments 里都要写清楚）：**
+**用法示例���AGENTS.md 和 doc comments 里都要写清楚）：**
 
 ```toml
-# 最小：只要 guard + schema + 知识，不做任何 CPI
+# 最小：只要 guard + schema + idioms helpers，不做任何 CPI
 geppetto = "0.1"
 
 # 需要转 SOL
@@ -178,6 +181,10 @@ geppetto = { version = "0.1", features = ["system", "token-all"] }
 
 # 全部拉入
 geppetto = { version = "0.1", features = ["full"] }
+
+# 测试中使用 testing.rs 的工具函数
+[dev-dependencies]
+geppetto = { version = "0.1", features = ["test-utils"] }
 ```
 
 **AGENTS.md 里的 feature 选择指引：**
@@ -372,45 +379,154 @@ impl From<GeppettoError> for ProgramError {
 }
 ```
 
-### 3. 知识文档层
+### 3. 知识层（代码 + 文档 混合）
 
-四个纯文档模块共享相同的结构：
+知识层模块分两类：**代码 + 知识**（导出可调用的 helper）和**纯知识**（只有 doc comments）。
 
-````rust
-//! # Module Title
-//!
+所有模块共享版本头格式：
+
+```rust
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
 //! > **Verified against**: Solana 2.2.x
 //!
 //! If pinocchio version differs or knowledge is >3 months old,
 //! verify patterns before using. See AGENTS.md Knowledge Freshness Rules.
+```
+
+#### 3a. idioms.rs — 代码 + 知识（FR-5）
+
+导出常用模式的 helper 函数，doc comments 包含完整知识（为什么这样做、替代方案、注意事项）。
+
+````rust
+//! # Solana/Pinocchio Idioms
 //!
-//! ## Topic 1
-//!
-//! [问题描述]
-//!
-//! ### Wrong (don't do this)
-//! ```rust,should_panic
-//! // 错误示例
-//! ```
-//!
-//! ### Correct
-//! ```rust
-//! // 正确示例（doctest 验证）
-//! ```
-//!
-//! ## Topic 2
-//! ...
+//! Helper functions for common Pinocchio patterns.
+//! Each function is a codified best practice from the official
+//! programs (escrow, rewards, token).
+
+use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult};
+
+/// Derive a PDA and verify it matches the given account's address.
+///
+/// Combines `Pubkey::find_program_address` + address comparison.
+/// Returns the bump seed on success.
+///
+/// # Why use this
+/// PDA validation is two steps (derive + compare) that are easy to
+/// get wrong separately. This function makes it atomic.
+///
+/// # Example
+/// ```rust,ignore
+/// let bump = geppetto::idioms::derive_and_verify_pda(
+///     escrow_account,
+///     &[b"escrow", maker.key().as_ref()],
+///     program_id,
+/// )?;
+/// ```
+pub fn derive_and_verify_pda(
+    account: &AccountInfo,
+    seeds: &[&[u8]],
+    program_id: &Pubkey,
+) -> Result<u8, ProgramError>;
+
+/// Write a discriminator + raw data to an account.
+///
+/// # Why use this
+/// Missing discriminator is a common bug. This function ensures
+/// the first byte is always written.
+pub fn initialize_account_data(
+    account: &AccountInfo,
+    discriminator: u8,
+    data: &[u8],
+) -> ProgramResult;
+
+/// Close an account safely: zero data, drain lamports to recipient.
+///
+/// # Why use this
+/// Improper account closure is a known attack vector (close account drain).
+/// This function zeros all data before transferring lamports.
+pub fn close_account(
+    account: &AccountInfo,
+    recipient: &AccountInfo,
+) -> ProgramResult;
+
+/// Read a little-endian u64 from account data at the given offset.
+///
+/// # Why use this
+/// Manual byte slicing is error-prone. This function handles
+/// bounds checking and endianness.
+pub fn read_u64_le(data: &[u8], offset: usize) -> Result<u64, ProgramError>;
+
+/// Write a little-endian u64 to account data at the given offset.
+pub fn write_u64_le(data: &mut [u8], offset: usize, value: u64) -> Result<(), ProgramError>;
 ````
 
-**各模块覆盖内容：**
+Doc comments 中还覆盖以下**纯知识话题**（无导出函数，只有文档）：
 
-| 模块                 | 内容                                                                                             | doctest                                    |
-| ------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `idioms.rs`        | PDA 推导、CPI（简单 vs 优化）、Token/Token-2022、Batch CPI、self-CPI 事件、TLV 扩展                             | Rust 示例：是                                  |
-| `anti_patterns.rs` | missing signer、unchecked owner、PDA 种子碰撞、close account drain、unbounded alloc、catch-all dispatch | Rust 示例：是（`should_panic` / `compile_fail`） |
-| `client.rs`        | 交易构建、PDA 推导（必须匹配合约侧种子）、账户反序列化（偏移量匹配 AccountSchema）、错误处理                                        | TypeScript 示例：否（手动 + 端到端测试验证）              |
-| `testing.rs`       | litesvm/mollusk-svm 环境搭建、交易构建与提交、状态断言、CU profiling                                             | Rust 示例：部分（需要测试环境的无法 doctest）              |
+- CPI 两种风格（简单 vs 优化）的选择指南
+- Batch CPI 使用场景
+- self-CPI 事件发射模式（discriminator 228）
+- TLV 扩展模式
+- Token/Token-2022 双支持策略
+
+#### 3b. testing.rs — 代码 + 知识（FR-7）
+
+导出测试工具函数。在 crate 中通过 `#[cfg(feature = "test-utils")]` 门控，用户项目的 `[dev-dependencies]` 启用。
+
+```rust
+//! # Testing Utilities
+//!
+//! Helper functions for testing Pinocchio programs with litesvm/mollusk-svm.
+//! Enable with: `geppetto = { features = ["test-utils"] }`
+
+use pinocchio::pubkey::Pubkey;
+
+/// Create a deterministic keypair for testing.
+///
+/// # Why use this
+/// Tests need reproducible addresses. This generates a keypair
+/// from a human-readable seed string.
+pub fn test_keypair(seed: &str) -> Pubkey;
+
+/// Assert that account data at a given offset equals expected bytes.
+///
+/// # Why use this
+/// Manual account data comparison is verbose. This helper gives
+/// clear error messages on mismatch with offset context.
+pub fn assert_account_data(
+    data: &[u8],
+    offset: usize,
+    expected: &[u8],
+    field_name: &str,
+);
+
+/// Assert that an account's discriminator matches the expected value.
+pub fn assert_discriminator(data: &[u8], expected: u8);
+```
+
+Doc comments 中还覆盖**纯知识话题**：
+
+- litesvm vs mollusk-svm vs bankrun 选择指南
+- 测试环境搭建模式
+- CU profiling 方法
+
+#### 3c. anti\_patterns.rs — 纯文档（FR-5）
+
+无导出代码，纯 doc comments + `should_panic` / `compile_fail` 示例。
+
+#### 3d. client.rs — 纯文档（FR-6）
+
+无导出代码，TypeScript 示例写在 doc comments 中。
+
+**各模块总结：**
+
+| 模块                 | 类型                                                 | 导出代码                          | 知识话题                            | doctest          |
+| ------------------ | -------------------------------------------------- | ----------------------------- | ------------------------------- | ---------------- |
+| `idioms.rs`        | 代码 + 知识                                            | PDA 验证、账户初始化/关闭、数据读写 helpers  | CPI 风格、Batch CPI、事件、TLV         | 是                |
+| `testing.rs`       | 代码 + 知识                                            | 测试断言、mock 工具（feature-gated）   | litesvm/mollusk 选择、CU profiling | 部分               |
+| `anti_patterns.rs` | 纯文档                                                | 无                             | 6+ 常见漏洞的错误/正确对比                 | 是（should\_panic） |
+| `client.rs`        | 纯文档                                                | 无                             | 交易构建、PDA、反序列化                   | 否（TypeScript）    |
+| `testing.rs`       | litesvm/mollusk-svm 环境搭建、交易构建与提交、状态断言、CU profiling | Rust 示例：部分（需要测试环境的无法 doctest） |                                 |                  |
 
 ### 4. Agent 指引文件 — FR-8
 
@@ -502,7 +618,7 @@ Read and follow all instructions in AGENTS.md in this repository.
 | Amazon Q                  | `.amazonq/rules/geppetto.md`      | 指向 AGENTS.md            |
 | Aider                     | `.aider.conf.yml`                 | `read: AGENTS.md` 配置项   |
 
-**`npx geppetto-cli init`**** 生成所有入口文件：**
+**`npx geppetto-cli init`**\*\* 生成所有入口文件：\*\*
 
 ```
 geppetto-cli init 做的事：
@@ -542,6 +658,7 @@ ata = ["dep:pinocchio-associated-token-account"]
 memo = ["dep:pinocchio-memo"]
 token-all = ["token", "token-2022", "ata"]
 full = ["system", "token-all", "memo"]
+test-utils = []
 ```
 
 ## Examples 架构（escrow demo）
@@ -596,7 +713,7 @@ pub fn process(
 | `#![no_std]`       | 是                          | 与 Pinocchio 一致，Solana BPF 程序标准                                                              |
 | guard 返回类型         | `Result<(), ProgramError>` | 用 `?` 链式调用，与 Pinocchio 风格一致                                                                 |
 | AccountSchema 字段偏移 | `impl` 块中的 `pub const`     | 不是 trait method（不需要动态派发），const 可被 agent 和编译器同时使用                                            |
-| 知识模块导出             | `pub mod` 但无 `pub` items   | 模块存在于 `cargo doc` 但不污染命名空间                                                                  |
+| 知识层混合策略           | idioms/testing 导出代码，anti_patterns/client 纯文档 | agent 不只读知识还能直接调用 helper——"读到就能用"比"读到还要自己写"体验好得多 |
 | 自定义错误偏移            | `0x4700` 起始                | 避免与 Pinocchio 内置错误码和用户程序错误码冲突                                                               |
 | dispatch helper    | 仅 `split_tag()` 函数         | 不做 trait/宏，dispatch 逻辑应由 agent 在 processor.rs 中显式写 match                                    |
 | feature 默认值        | `default = []`（最小）         | 核心 SDK（guard/schema/dispatch/知识）不依赖任何 CPI helper，用户按需加 feature。提供 `token-all` 和 `full` 预设组合 |
