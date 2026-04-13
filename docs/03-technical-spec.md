@@ -56,6 +56,11 @@ test-utils = []
 //! and patterns (dispatch, idioms) that make AI coding agents
 //! produce correct, secure, idiomatic Pinocchio programs.
 //!
+//! Built on top of official [Anza-xyz/pinocchio](https://github.com/anza-xyz/pinocchio)
+//! and Solana Foundation patterns. All types (`AccountView`, `Address`,
+//! `ProgramError`) are direct re-exports from pinocchio 0.11.x — this
+//! crate adds zero wrapping, only knowledge and constraints.
+//!
 //! ## Quick Start
 //!
 //! ```toml
@@ -965,10 +970,18 @@ pinocchio::msg!("Processing create instruction");
 - 配合 `lazy_program_entrypoint!` 使用
 - 账户按需解析，减少不必要的反序列化
 
-**Codama 注解**
+#### High（补充）
+
+**Codama 注解（客户端自动生成）**
 - `#[derive(CodamaInstructions)]` 和 `#[codama(...)]` 属性
-- 用于自动生成 TypeScript/Rust 客户端
-- escrow 和 rewards 都使用
+- 用于从 Rust 类型自动生成 TypeScript/Rust 客户端 SDK
+- escrow 和 rewards 都使用，是官方推荐的客户端生成方案
+- 与 `client.rs` 知识互补：Codama 生成骨架，`client.rs` 知识指导手动调优
+
+**LiteSVM / Mollusk-SVM 测试（官方推荐）**
+- 官方程序（memo/escrow/rewards）全部使用 mollusk-svm 或 litesvm
+- 不使用 `solana-program-test`（已过时）
+- `testing.rs` 导出的工具函数基于这些测试框架
 
 ## 8. src/anti_patterns.rs — 反模式（FR-5，纯文档）
 
