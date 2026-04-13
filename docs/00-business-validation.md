@@ -59,14 +59,14 @@ AI code agent 写 Solana 程序时：
 
 ## 灵感来源
 
-| 来源                                         | 借鉴了什么                             |
-| ------------------------------------------ | --------------------------------- |
+| 来源                                         | 借鉴了什么                                                     |
+| ------------------------------------------ | --------------------------------------------------------- |
 | **Harness Engineering** (2026 趋势)          | Agent = Model + Harness；工程化改造环境而非优化 prompt；编译期约束比运行期建议更可靠 |
-| Next.js bundled docs                       | 知识捆绑在包内，版本匹配，agent 不需要 web search |
-| Next.js skills (vercel-labs/next-skills)   | 结构化的最佳实践知识，可安装可更新                 |
-| Armin Ronacher "Friction Is Your Judgment" | Agent-Legible 代码库设计、机械强制执行、增加决策摩擦 |
-| dev-lifecycle                              | 开发阶段约束、技术规格先于代码                   |
-| Pinocchio                                  | 底层框架，零依赖、显式、零拷贝                   |
+| Next.js bundled docs                       | 知识捆绑在包内，版本匹配，agent 不需要 web search                         |
+| Next.js skills (vercel-labs/next-skills)   | 结构化的最佳实践知识，可安装可更新                                         |
+| Armin Ronacher "Friction Is Your Judgment" | Agent-Legible 代码库设计、机械强制执行、增加决策摩擦                         |
+| dev-lifecycle                              | 开发阶段约束、技术规格先于代码                                           |
+| Pinocchio                                  | 底层框架，零依赖、显式、零拷贝                                           |
 
 **Geppetto 在 Harness Engineering 进化中的位置：**
 

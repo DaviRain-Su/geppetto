@@ -708,15 +708,15 @@ pub fn process(
 
 ## 关键架构决策
 
-| 决策                 | 选择                         | 理由                                                                                          |
-| ------------------ | -------------------------- | ------------------------------------------------------------------------------------------- |
-| `#![no_std]`       | 是                          | 与 Pinocchio 一致，Solana BPF 程序标准                                                              |
-| guard 返回类型         | `Result<(), ProgramError>` | 用 `?` 链式调用，与 Pinocchio 风格一致                                                                 |
-| AccountSchema 字段偏移 | `impl` 块中的 `pub const`     | 不是 trait method（不需要动态派发），const 可被 agent 和编译器同时使用                                            |
-| 知识层混合策略           | idioms/testing 导出代码，anti_patterns/client 纯文档 | agent 不只读知识还能直接调用 helper——"读到就能用"比"读到还要自己写"体验好得多 |
-| 自定义错误偏移            | `0x4700` 起始                | 避免与 Pinocchio 内置错误码和用户程序错误码冲突                                                               |
-| dispatch helper    | 仅 `split_tag()` 函数         | 不做 trait/宏，dispatch 逻辑应由 agent 在 processor.rs 中显式写 match                                    |
-| feature 默认值        | `default = []`（最小）         | 核心 SDK（guard/schema/dispatch/知识）不依赖任何 CPI helper，用户按需加 feature。提供 `token-all` 和 `full` 预设组合 |
+| 决策                 | 选择                                            | 理由                                                                                          |
+| ------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `#![no_std]`       | 是                                             | 与 Pinocchio 一致，Solana BPF 程序标准                                                              |
+| guard 返回类型         | `Result<(), ProgramError>`                    | 用 `?` 链式调用，与 Pinocchio 风格一致                                                                 |
+| AccountSchema 字段偏移 | `impl` 块中的 `pub const`                        | 不是 trait method（不需要动态派发），const 可被 agent 和编译器同时使用                                            |
+| 知识层混合策略            | idioms/testing 导出代码，anti\_patterns/client 纯文档 | agent 不只读知识还能直接调用 helper——"读到就能用"比"读到还要自己写"体验好得多                                            |
+| 自定义错误偏移            | `0x4700` 起始                                   | 避免与 Pinocchio 内置错误码和用户程序错误码冲突                                                               |
+| dispatch helper    | 仅 `split_tag()` 函数                            | 不做 trait/宏，dispatch 逻辑应由 agent 在 processor.rs 中显式写 match                                    |
+| feature 默认值        | `default = []`（最小）                            | 核心 SDK（guard/schema/dispatch/知识）不依赖任何 CPI helper，用户按需加 feature。提供 `token-all` 和 `full` 预设组合 |
 
 ## Phase 2 验收标准
 
