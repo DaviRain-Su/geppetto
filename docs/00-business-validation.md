@@ -120,18 +120,19 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 
 | 决策点 | 结论 | 理由 |
 |---|---|---|
-| Re-export 策略 | `use geppetto::*` 透传，一个入口 | Geppetto 是 Pinocchio 的替代入口，不是附加工具。类比 Next.js 不需要单独装 React |
+| Re-export 策略 | `use geppetto::*` 透传核心 SDK；CPI helpers 通过子模块透传（`geppetto::system`、`geppetto::token` 等），作为 optional features 默认启用 | Geppetto 是整个 Pinocchio 生态的替代入口，一个 `cargo add geppetto` 替代 6 个 crate |
 | 文档发现机制 | AGENTS.md + doc comments + `cargo doc` + docs.rs fallback | 知识写在 .rs 文件的 doc comments 里，代码和文档合一，`cargo test` 验证示例不过时 |
 | Guard helpers 数量 | Phase 3 精确定义，第一批 6 个 | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent_exempt |
 | 交付拆分 | crate 和 demo 各走独立 Phase 3-6 | 独立工作流，防止耦合 |
 | 知识覆盖策略 | 合约侧：代码 + 知识；客户端侧：纯知识（doc comments）；npm 包赛后 | 4 周内不维护两套语言的代码，但知识覆盖全链路。agent 从同一 crate 读到两端知识，布局精确匹配 |
+| 项目脚手架 | `cargo-generate` 模板仓库，不做自研 CLI | 零额外开发量，Rust 生态标准工具。一行命令生成配好 Geppetto 的项目骨架 + AGENTS.md + 文件结构约定 |
 | MCP server | 赛后第一优先级 | 4 周内做少做好，MCP 增加的复杂度可能导致哪边都做不好 |
 
 ## 黑客松交付范围（4 周，截止 2026-05-11）
 
-### 子模块 A：geppetto crate
+### 子模块 A：geppetto crate（核心）
 
-- `src/lib.rs` — re-export pinocchio + crate 总览文档（doc comments）
+- `src/lib.rs` — re-export pinocchio 生态 + crate 总览文档（doc comments）
 - `src/guard.rs` — 第一批 6 个安全检查 helper + 安全知识（doc comments）
 - `src/schema.rs` — `AccountSchema` trait + 账户布局惯用法（doc comments）
 - `src/dispatch.rs` — 指令分发标准模式 + 文档（doc comments）
@@ -142,9 +143,47 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 - `examples/escrow/` — 完整 escrow 示例程序
 - `AGENTS.md` — agent 指引
 
-### 子模块 B：escrow demo
+### 子模块 B：geppetto-template（全栈 monorepo 模板）
 
-- 一个用 Geppetto + Claude Code 写的 escrow 程序
+`cargo-generate` 模板仓库，一行命令生成从合约到前端的完整项目：
+
+```bash
+cargo generate --git https://github.com/DaviRain-Su/geppetto-template
+```
+
+生成 monorepo 结构：
+
+```
+{{project-name}}/
+├── program/                      ← Rust 侧（Geppetto 主场）
+│   ├── Cargo.toml                    geppetto 已在依赖里
+│   ├── src/
+│   │   ├── lib.rs                    entrypoint 骨架
+│   │   ├── processor.rs              指令分发 match 骨架
+│   │   ├── state.rs                  AccountSchema 占位示例
+│   │   ├── error.rs                  错误枚举骨架
+│   │   └── instructions/mod.rs       指令模块结构
+│   └── tests/
+│       └── integration.rs            litesvm 测试骨架
+│
+├── app/                          ← 前端侧（薄，用官方栈）
+│   ├── package.json                  @solana/kit + Next.js
+│   ├── src/
+│   │   ├── idl/index.ts              程序 ID + 指令/账户布局（前后端契约桥梁）
+│   │   ├── hooks/useProgram.ts       合约交互 hook 骨架
+│   │   └── app/                      Next.js App Router 页面
+│   └── next.config.js
+│
+├── AGENTS.md                     ← 统一指引（Rust 节 + TypeScript 节）
+└── docs/
+    └── 03-technical-spec.md      ← 技术规格模板
+```
+
+核心设计：`app/src/idl/index.ts` 的账户布局必须与 `program/src/state.rs` 精确匹配，AGENTS.md 明确告知 agent 这个契约关系。前端用 solana-dev-skill 推荐的官方栈（@solana/kit + Next.js），Geppetto 不封装前端，只确保前后端接口对齐。
+
+### 子模块 C：escrow demo + A/B 视频
+
+- 用 `cargo generate` + Geppetto + Claude Code 全流程创建 escrow 程序（合约 + 前端）
 - A/B 对比视频（裸 Pinocchio vs Geppetto 辅助）
 
 ## 后续演进（赛后）
