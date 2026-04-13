@@ -11,18 +11,28 @@ Geppetto 是一个 Rust crate，让 AI code agent 立刻成为精通 Solana/Pino
 
 ## 问题定义
 
+**Solana 开发的完整链路**
+
+```
+合约（Rust/Pinocchio）→ 客户端 SDK（TypeScript）→ 前端 UI
+        ↑                        ↑                    ↑
+    代码 + 知识              纯知识覆盖           赛后
+```
+
 **现状（没有 Geppetto）**
 
 AI code agent 写 Solana 程序时：
 - Web search → 找到过时信息（Anchor 旧版 API、已弃用模式）
 - 训练数据 → 不包含 Pinocchio（太新）
 - 产出代码 → 反模式、缺少安全检查、不符合惯用法
+- 客户端代码 → 账户反序列化偏移量与合约不匹配（#1 客户端 bug）
 - 人类 → 花大量时间审查修复，agent 的价值被抵消
 
 **期望（有 Geppetto）**
 
 - Agent 读捆绑知识 → 遵循惯用法
 - 用 guard helpers → 安全检查机械化
+- 客户端知识从同一 crate 获取 → 两端布局精确匹配
 - 代码一次就对 → 人类只需审查业务逻辑
 
 ## 它是什么 / 不是什么
@@ -31,7 +41,7 @@ AI code agent 写 Solana 程序时：
 
 一个 **agent-aware 的知识 SDK**，核心做三件事：
 
-1. **捆绑知识** — `cargo add geppetto` 后，知识以 Rust doc comments 形式内嵌在源码中。`cargo doc` 自动构建、`cargo test` 自动验证代码示例，不存在"文档过时但代码更新了"的问题。覆盖：账户模型、指令模式、安全检查、惯用法、反模式、完整示例。每次 `cargo update`，知识跟着更新。
+1. **捆绑知识** — `cargo add geppetto` 后，知识以 Rust doc comments 形式内嵌在源码中。`cargo doc` 自动构建、`cargo test` 自动验证代码示例，不存在"文档过时但代码更新了"的问题。覆盖全链路：合约侧（账户模型、指令模式、安全检查、惯用法、反模式）+ 客户端侧（交易构建、PDA 推导、账户反序列化）+ 测试（litesvm/bankrun）。每次 `cargo update`，知识跟着更新。
 
 2. **约定代码** — 在 Pinocchio 之上提供一薄层约定模式：`AccountSchema` trait 定义账户布局、标准指令分发模式、`guard::*` 安全检查 helpers。不是宏魔法，展开后就是标准 Pinocchio 代码，agent 完全看得懂。
 
@@ -84,6 +94,7 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 | 文档发现机制 | AGENTS.md + doc comments + `cargo doc` + docs.rs fallback | 知识写在 .rs 文件的 doc comments 里，代码和文档合一，`cargo test` 验证示例不过时 |
 | Guard helpers 数量 | Phase 3 精确定义，第一批 6 个 | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent_exempt |
 | 交付拆分 | crate 和 demo 各走独立 Phase 3-6 | 独立工作流，防止耦合 |
+| 知识覆盖策略 | 合约侧：代码 + 知识；客户端侧：纯知识（doc comments）；npm 包赛后 | 4 周内不维护两套语言的代码，但知识覆盖全链路。agent 从同一 crate 读到两端知识，布局精确匹配 |
 | MCP server | 赛后第一优先级 | 4 周内做少做好，MCP 增加的复杂度可能导致哪边都做不好 |
 
 ## 黑客松交付范围（4 周，截止 2026-05-11）
@@ -96,6 +107,8 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 - `src/dispatch.rs` — 指令分发标准模式 + 文档（doc comments）
 - `src/idioms.rs` — 纯文档模块：PDA、CPI、Token 交互等惯用法（doc comments，无导出代码）
 - `src/anti_patterns.rs` — 纯文档模块：常见漏洞 + 修复（doc comments，无导出代码）
+- `src/client.rs` — 纯文档模块：客户端知识（交易构建、PDA 推导、账户反序列化，TypeScript 示例）
+- `src/testing.rs` — 纯文档模块：测试惯用法（litesvm/bankrun）
 - `examples/escrow/` — 完整 escrow 示例程序
 - `AGENTS.md` — agent 指引
 
@@ -109,7 +122,7 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 按优先级排序：
 
 1. **MCP server** — agent 通过 MCP 查询知识，比文件路径优雅
-2. **npm 包** — TypeScript 客户端侧知识
+2. **`@geppetto/sdk` npm 包** — 将 `client.rs` 知识迁移为 TypeScript 代码，加真实类型定义和 helper 函数
 3. **skills 仓库** — 独立于 crate 版本的专项知识包
 4. **自动进化** — CI 追踪 Pinocchio 上游变更，自动生成知识更新 PR
 
