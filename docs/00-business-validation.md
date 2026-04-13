@@ -172,16 +172,16 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 
 ## 关键设计决策
 
-| 决策点                   | 结论                                                                                                               | 理由                                                                                    |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Re-export 策略          | `use geppetto::*` 透传核心 SDK；CPI helpers 通过子模块按需启用（`default = []`，提供 `token-all` / `full` 预设） | 核心（guard/schema/dispatch/知识）零 CPI 依赖；CPI helpers 按需加 feature，避免不必要的编译开销 |
-| 文档发现机制                | AGENTS.md + doc comments + `cargo doc` + docs.rs fallback                                                        | 知识写在 .rs 文件的 doc comments 里，代码和文档合一，`cargo test` 验证示例不过时                              |
-| Guard helpers 数量      | Phase 3 精确定义，第一批 6 个                                                                                             | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent\_exempt |
-| 交付拆分                  | crate 和 demo 各走独立 Phase 3-6                                                                                      | 独立工作流，防止耦合                                                                            |
-| 知识覆盖策略                | 合约侧：代码 + 知识；客户端侧：纯知识（doc comments）；npm 包赛后                                                                       | 4 周内不维护两套语言的代码，但知识覆盖全链路。agent 从同一 crate 读到两端知识，布局精确匹配                                 |
-| 项目脚手架                 | 不做模板，用官方 `npx create-solana-dapp -t pinocchio-counter`；`npx geppetto-cli init` 生成 AGENTS.md                      | 官方已有 pinocchio 模板，不重复造轮子。Geppetto 做增强层，不做基础层。赛后可给官方提 PR 加 `pinocchio-geppetto` 模板     |
-| 知识保鲜（Dated Knowledge） | 每个知识模块带版本号 + 时间戳 + 适用的 pinocchio/solana 版本。AGENTS.md 指示 agent 使用前检查保鲜期，过期则先验证再使用                                 | 开发者不一定及时 `cargo update`，agent 需要"保质期意识"。agent 自身就是更新机制——发现过期→验证→更新，零基础设施成本            |
-| MCP server            | 赛后第一优先级                                                                                                          | 4 周内做少做好，MCP 增加的复杂度可能导致哪边都做不好                                                         |
+| 决策点                   | 结论                                                                                          | 理由                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Re-export 策略          | `use geppetto::*` 透传核心 SDK；CPI helpers 通过子模块按需启用（`default = []`，提供 `token-all` / `full` 预设） | 核心（guard/schema/dispatch/知识）零 CPI 依赖；CPI helpers 按需加 feature，避免不必要的编译开销               |
+| 文档发现机制                | AGENTS.md + doc comments + `cargo doc` + docs.rs fallback                                   | 知识写在 .rs 文件的 doc comments 里，代码和文档合一，`cargo test` 验证示例不过时                              |
+| Guard helpers 数量      | Phase 3 精确定义，第一批 6 个                                                                        | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent\_exempt |
+| 交付拆分                  | crate 和 demo 各走独立 Phase 3-6                                                                 | 独立工作流，防止耦合                                                                            |
+| 知识覆盖策略                | 合约侧：代码 + 知识；客户端侧：纯知识（doc comments）；npm 包赛后                                                  | 4 周内不维护两套语言的代码，但知识覆盖全链路。agent 从同一 crate 读到两端知识，布局精确匹配                                 |
+| 项目脚手架                 | 不做模板，用官方 `npx create-solana-dapp -t pinocchio-counter`；`npx geppetto-cli init` 生成 AGENTS.md | 官方已有 pinocchio 模板，不重复造轮子。Geppetto 做增强层，不做基础层。赛后可给官方提 PR 加 `pinocchio-geppetto` 模板     |
+| 知识保鲜（Dated Knowledge） | 每个知识模块带版本号 + 时间戳 + 适用的 pinocchio/solana 版本。AGENTS.md 指示 agent 使用前检查保鲜期，过期则先验证再使用            | 开发者不一定及时 `cargo update`，agent 需要"保质期意识"。agent 自身就是更新机制——发现过期→验证→更新，零基础设施成本            |
+| MCP server            | 赛后第一优先级                                                                                     | 4 周内做少做好，MCP 增加的复杂度可能导致哪边都做不好                                                         |
 
 ## 黑客松交付范围（4 周，截止 2026-05-11）
 
@@ -191,7 +191,7 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 - `src/guard.rs` — 第一批 6 个安全检查 helper + 安全知识（doc comments）
 - `src/schema.rs` — `AccountSchema` trait + 账户布局惯用法（doc comments）
 - `src/dispatch.rs` — 指令分发标准模式 + 文档（doc comments）
-- `src/idioms.rs` — 代码 + 知识模块：导出 close_account、read_u64_le 等 helper 函数，同时覆盖 PDA、CPI、Token 交互等惯用法（doc comments）[^1]
+- `src/idioms.rs` — 代码 + 知识模块：导出 close\_account、read\_u64\_le 等 helper 函数，同时覆盖 PDA、CPI、Token 交互等惯用法（doc comments）[^1]
 - `src/anti_patterns.rs` — 纯文档模块：常见漏洞 + 修复（doc comments，无导出代码）
 - `src/client.rs` — 纯文档模块：客户端知识（交易构建、PDA 推导、账户反序列化，TypeScript 示例）
 - `src/testing.rs` — 代码 + 知识模块：导出测试断言工具函数（feature-gated），同时覆盖 litesvm/bankrun 测试惯用法（doc comments）[^1]
