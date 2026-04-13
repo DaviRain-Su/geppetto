@@ -22,6 +22,7 @@ Geppetto 是一个 Rust crate，让 AI code agent 立刻成为精通 Solana/Pino
 **现状（没有 Geppetto）**
 
 AI code agent 写 Solana 程序时：
+
 - Web search → 找到过时信息（Anchor 旧版 API、已弃用模式）
 - 训练数据 → 不包含 Pinocchio（太新）
 - 产出代码 → 反模式、缺少安全检查、不符合惯用法
@@ -42,9 +43,7 @@ AI code agent 写 Solana 程序时：
 一个 **agent-aware 的知识 SDK**，核心做三件事：
 
 1. **捆绑知识** — `cargo add geppetto` 后，知识以 Rust doc comments 形式内嵌在源码中。`cargo doc` 自动构建、`cargo test` 自动验证代码示例，不存在"文档过时但代码更新了"的问题。覆盖全链路：合约侧（账户模型、指令模式、安全检查、惯用法、反模式）+ 客户端侧（交易构建、PDA 推导、账户反序列化）+ 测试（litesvm/bankrun）。每次 `cargo update`，知识跟着更新。
-
 2. **约定代码** — 在 Pinocchio 之上提供一薄层约定模式：`AccountSchema` trait 定义账户布局、标准指令分发模式、`guard::*` 安全检查 helpers。不是宏魔法，展开后就是标准 Pinocchio 代码，agent 完全看得懂。
-
 3. **AGENTS.md 指引** — 告诉 agent："你的训练数据过时了，读 geppetto 源码的 doc comments 才是真相来源。运行 `cargo doc --open` 查看完整知识。"
 
 ### 不是什么
@@ -56,13 +55,13 @@ AI code agent 写 Solana 程序时：
 
 ## 灵感来源
 
-| 来源 | 借鉴了什么 |
-|---|---|
-| Next.js bundled docs | 知识捆绑在包内，版本匹配，agent 不需要 web search |
-| Next.js skills (vercel-labs/next-skills) | 结构化的最佳实践知识，可安装可更新 |
+| 来源                                         | 借鉴了什么                             |
+| ------------------------------------------ | --------------------------------- |
+| Next.js bundled docs                       | 知识捆绑在包内，版本匹配，agent 不需要 web search |
+| Next.js skills (vercel-labs/next-skills)   | 结构化的最佳实践知识，可安装可更新                 |
 | Armin Ronacher "Friction Is Your Judgment" | Agent-Legible 代码库设计、机械强制执行、增加决策摩擦 |
-| dev-lifecycle | 开发阶段约束、技术规格先于代码 |
-| Pinocchio | 底层框架，零依赖、显式、零拷贝 |
+| dev-lifecycle                              | 开发阶段约束、技术规格先于代码                   |
+| Pinocchio                                  | 底层框架，零依赖、显式、零拷贝                   |
 
 ## 竞品分析
 
@@ -72,15 +71,15 @@ Claude Code 官方 skill，纯 markdown 文件，覆盖 Solana 全栈（UI、SDK
 
 **与 Geppetto 的核心差异：**
 
-| 维度 | solana-dev-skill | Geppetto |
-|---|---|---|
-| 形态 | 纯 markdown 文件 | Rust crate（代码 + 知识合一） |
-| 知识更新 | 手动更新，锁定在 "Jan 2026" | `cargo update` 自动获取新版本知识 |
-| 程序框架 | Anchor 为默认，Pinocchio 是备选 | Pinocchio-first，深度覆盖 |
-| 强制力 | 零——只是建议 agent 怎么做 | 有——`guard::*` 是真实 API，`AccountSchema` 是必须实现的 trait |
-| 代码验证 | 无——markdown 里的示例可能过时 | doctest 自动验证——`cargo test` 确保每个示例编译通过 |
-| 覆盖策略 | 广而浅——整个 Solana 栈 | 深而专——Pinocchio 程序开发的完整实践 |
-| 安装方式 | `npx skills add` 复制文件到本地 | `cargo add geppetto` 成为项目依赖 |
+| 维度   | solana-dev-skill         | Geppetto                                           |
+| ---- | ------------------------ | -------------------------------------------------- |
+| 形态   | 纯 markdown 文件            | Rust crate（代码 + 知识合一）                              |
+| 知识更新 | 手动更新，锁定在 "Jan 2026"      | `cargo update` 自动获取新版本知识                           |
+| 程序框架 | Anchor 为默认，Pinocchio 是备选 | Pinocchio-first，深度覆盖                               |
+| 强制力  | 零——只是建议 agent 怎么做        | 有——`guard::*` 是真实 API，`AccountSchema` 是必须实现的 trait |
+| 代码验证 | 无——markdown 里的示例可能过时     | doctest 自动验证——`cargo test` 确保每个示例编译通过              |
+| 覆盖策略 | 广而浅——整个 Solana 栈         | 深而专——Pinocchio 程序开发的完整实践                           |
+| 安装方式 | `npx skills add` 复制文件到本地 | `cargo add geppetto` 成为项目依赖                        |
 
 **关系：互补，不是竞争**
 
@@ -100,15 +99,15 @@ Solana 程序框架（by Blueshift），定位 "Anchor 的开发体验 + Pinocch
 
 **与 Geppetto 的核心差异：**
 
-| 维度 | Quasar | Geppetto |
-|---|---|---|
-| 核心思路 | 用宏隐藏复杂度，让人少写代码 | 让复杂度对 agent 可见，确保写对代码 |
-| 哲学 | "让开发更快"（human DX） | "让 agent 开发更可靠"（agent DX） |
-| 宏/魔法 | 重度依赖——`#[program]`、`#[derive(Accounts)]` 生成大量代码 | 零宏魔法——展开后就是标准 Pinocchio |
-| Agent 可读性 | 宏展开后的代码 agent 看不到 | 所有代码对 agent 完全透明 |
-| 知识载体 | 文档站（quasar-lang.com/docs） | 捆绑在 crate 里的 doc comments |
-| 安全强制 | 通过宏的约束属性（`has_one`、`constraint`） | 通过显式 `guard::*` 函数调用 |
-| 定位 | 全栈框架（替代 Anchor） | agent-aware 知识 SDK（包裹 Pinocchio） |
+| 维度        | Quasar                                          | Geppetto                         |
+| --------- | ----------------------------------------------- | -------------------------------- |
+| 核心思路      | 用宏隐藏复杂度，让人少写代码                                  | 让复杂度对 agent 可见，确保写对代码            |
+| 哲学        | "让开发更快"（human DX）                               | "让 agent 开发更可靠"（agent DX）        |
+| 宏/魔法      | 重度依赖——`#[program]`、`#[derive(Accounts)]` 生成大量代码 | 零宏魔法——展开后就是标准 Pinocchio          |
+| Agent 可读性 | 宏展开后的代码 agent 看不到                               | 所有代码对 agent 完全透明                 |
+| 知识载体      | 文档站（quasar-lang.com/docs）                       | 捆绑在 crate 里的 doc comments        |
+| 安全强制      | 通过宏的约束属性（`has_one`、`constraint`）                | 通过显式 `guard::*` 函数调用             |
+| 定位        | 全栈框架（替代 Anchor）                                 | agent-aware 知识 SDK（包裹 Pinocchio） |
 
 **关系：不同层面的问题，不同的用户群体**
 
@@ -156,15 +155,15 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 
 ## 关键设计决策
 
-| 决策点 | 结论 | 理由 |
-|---|---|---|
-| Re-export 策略 | `use geppetto::*` 透传核心 SDK；CPI helpers 通过子模块透传（`geppetto::system`、`geppetto::token` 等），作为 optional features 默认启用 | Geppetto 是整个 Pinocchio 生态的替代入口，一个 `cargo add geppetto` 替代 6 个 crate |
-| 文档发现机制 | AGENTS.md + doc comments + `cargo doc` + docs.rs fallback | 知识写在 .rs 文件的 doc comments 里，代码和文档合一，`cargo test` 验证示例不过时 |
-| Guard helpers 数量 | Phase 3 精确定义，第一批 6 个 | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent_exempt |
-| 交付拆分 | crate 和 demo 各走独立 Phase 3-6 | 独立工作流，防止耦合 |
-| 知识覆盖策略 | 合约侧：代码 + 知识；客户端侧：纯知识（doc comments）；npm 包赛后 | 4 周内不维护两套语言的代码，但知识覆盖全链路。agent 从同一 crate 读到两端知识，布局精确匹配 |
-| 项目脚手架 | 不做模板，用官方 `npx create-solana-dapp -t pinocchio-counter`；`npx geppetto init` 生成 AGENTS.md | 官方已有 pinocchio 模板，不重复造轮子。Geppetto 做增强层，不做基础层。赛后可给官方提 PR 加 `pinocchio-geppetto` 模板 |
-| MCP server | 赛后第一优先级 | 4 周内做少做好，MCP 增加的复杂度可能导致哪边都做不好 |
+| 决策点              | 结论                                                                                                               | 理由                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Re-export 策略     | `use geppetto::*` 透传核心 SDK；CPI helpers 通过子模块透传（`geppetto::system`、`geppetto::token` 等），作为 optional features 默认启用 | Geppetto 是整个 Pinocchio 生态的替代入口，一个 `cargo add geppetto` 替代 6 个 crate                   |
+| 文档发现机制           | AGENTS.md + doc comments + `cargo doc` + docs.rs fallback                                                        | 知识写在 .rs 文件的 doc comments 里，代码和文档合一，`cargo test` 验证示例不过时                              |
+| Guard helpers 数量 | Phase 3 精确定义，第一批 6 个                                                                                             | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent\_exempt |
+| 交付拆分             | crate 和 demo 各走独立 Phase 3-6                                                                                      | 独立工作流，防止耦合                                                                            |
+| 知识覆盖策略           | 合约侧：代码 + 知识；客户端侧：纯知识（doc comments）；npm 包赛后                                                                       | 4 周内不维护两套语言的代码，但知识覆盖全链路。agent 从同一 crate 读到两端知识，布局精确匹配                                 |
+| 项目脚手架            | 不做模板，用官方 `npx create-solana-dapp -t pinocchio-counter`；`npx geppetto init` 生成 AGENTS.md                          | 官方已有 pinocchio 模板，不重复造轮子。Geppetto 做增强层，不做基础层。赛后可给官方提 PR 加 `pinocchio-geppetto` 模板     |
+| MCP server       | 赛后第一优先级                                                                                                          | 4 周内做少做好，MCP 增加的复杂度可能导致哪边都做不好                                                         |
 
 ## 黑客松交付范围（4 周，截止 2026-05-11）
 
@@ -205,7 +204,7 @@ npx geppetto init
 按优先级排序：
 
 1. **MCP server** — agent 通过 MCP 查询知识，比文件路径优雅
-2. **`@geppetto/sdk` npm 包** — 将 `client.rs` 知识迁移为 TypeScript 代码，加真实类型定义和 helper 函数
+2. **`@geppetto/sdk`**\*\* npm 包\*\* — 将 `client.rs` 知识迁移为 TypeScript 代码，加真实类型定义和 helper 函数
 3. **skills 仓库** — 独立于 crate 版本的专项知识包
 4. **自动进化** — CI 追踪 Pinocchio 上游变更，自动生成知识更新 PR
 
@@ -218,3 +217,4 @@ npx geppetto init
 - [x] 关键设计决策已记录
 - [x] 交付范围已确认
 - [x] 可进入 Phase 1: PRD
+

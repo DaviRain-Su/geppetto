@@ -36,13 +36,22 @@ Then tell your agent to:
 - Use `guard::*` for all security checks
 - Follow the standard dispatch pattern in `dispatch.rs`
 
-### Start from a full-stack template
+### Start from an official template + Geppetto
+
+Use Solana's official `create-solana-dapp` template, then add Geppetto on top:
 
 ```bash
-cargo generate --git https://github.com/DaviRain-Su/geppetto-template
+# Create project from official Pinocchio template
+npx create-solana-dapp -t pinocchio-counter
+
+# Add Geppetto to the program
+cd my-project/program && cargo add geppetto
+
+# Generate AGENTS.md for your agent
+npx geppetto init
 ```
 
-Generates a monorepo with a Rust program (powered by Geppetto) and a Next.js + `@solana/kit` frontend, wired together through a shared IDL contract.
+Geppetto doesn't replace the official scaffold—it adds the knowledge layer that makes agents write correct, secure Pinocchio code.
 
 ## Core Modules
 
@@ -74,6 +83,9 @@ Generates a monorepo with a Rust program (powered by Geppetto) and a Next.js + `
 - Quasar = framework optimizing **human DX** with macros
 - **Geppetto** = knowledge SDK optimizing **agent DX** with explicit code
 - **Relationship: different dimensions**
+
+### Tagline
+> "Quasar and Anchor make humans write code faster. Geppetto makes AI agents write code more reliably."
 
 ## Project Status
 
