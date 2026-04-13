@@ -1,11 +1,69 @@
+//! # Account Schema
+//!
+//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
+//! > **Verified against**: Solana 2.2.x
+//!
+//! Trait for defining account memory layouts. Inspired by:
+//! - token's `Transmutable` trait
+//! - rewards' `assert_no_padding!` macro
+//! - escrow's zero-copy state structs
+//!
+//! ## How to implement
+//!
+//! ```rust,ignore
+//! use geppetto::schema::AccountSchema;
+//!
+//! #[repr(C)]
+//! pub struct Escrow {
+//!     pub discriminator: u8,    // offset 0, 1 byte
+//!     pub status: u8,           // offset 1, 1 byte
+//!     pub maker: Address,       // offset 2, 32 bytes
+//!     pub taker: Address,       // offset 34, 32 bytes
+//!     pub amount: u64,          // offset 66, 8 bytes (LE)
+//! }
+//!
+//! impl AccountSchema for Escrow {
+//!     const LEN: usize = 74;       // 1 + 1 + 32 + 32 + 8
+//!     const DISCRIMINATOR: Option<u8> = Some(1);
+//!
+//!     fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
+//!         &[
+//!             ("discriminator", "u8",      0,  1),
+//!             ("status",        "u8",      1,  1),
+//!             ("maker",         "Address", 2,  32),
+//!             ("taker",         "Address", 34, 32),
+//!             ("amount",        "u64",     66, 8),
+//!         ]
+//!     }
+//! }
+//!
+//! // Field offsets also as associated constants (for direct byte access)
+//! impl Escrow {
+//!     pub const DISCRIMINATOR_OFFSET: usize = 0;
+//!     pub const STATUS_OFFSET: usize = 1;
+//!     pub const MAKER_OFFSET: usize = 2;
+//!     pub const TAKER_OFFSET: usize = 34;
+//!     pub const AMOUNT_OFFSET: usize = 66;
+//! }
+//!
+//! // Compile-time size check
+//! assert_account_size!(Escrow);
+//! ```
+//!
+//! ## For AI agents
+//!
+//! When you see `impl AccountSchema for X`, read the `LEN`,
+//! `DISCRIMINATOR`, and `*_OFFSET` constants to understand
+//! the exact byte layout. Use these constants when:
+//! - Serializing/deserializing account data
+//! - Building TypeScript clients (offsets must match)
+//! - Writing tests (assert data at specific offsets)
+
 use pinocchio::account::AccountView;
 use pinocchio::address::Address;
 use pinocchio::error::ProgramError;
 
 /// Defines the on-chain memory layout of an account type.
-///
-/// > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
-/// > **Verified against**: Solana 2.2.x
 ///
 /// Implementors MUST be `#[repr(C)]` to guarantee field ordering
 /// matches the byte layout. Field offsets are expressed as

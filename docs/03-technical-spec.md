@@ -239,11 +239,117 @@ pub fn assert_pda(
     seeds: &[&[u8]],
     program_id: &Address,
 ) -> Result<u8, ProgramError> {
-    let (derived, bump) = Address::find_program_address(seeds, program_id);
+    let (derived, bump) =
+        derive_pda(seeds, program_id).ok_or(crate::error::GeppettoError::PdaMismatch)?;
     if account.address() == &derived {
         Ok(bump)
     } else {
         Err(crate::error::GeppettoError::PdaMismatch.into())
+    }
+}
+
+/// Derive a PDA from seeds and program_id.
+///
+/// Solana allows up to 15 seeds (each up to 32 bytes) for
+/// `Address::derive_program_address`. This helper builds a fixed-size
+/// array for each exact seed count (0-15) so we can call the
+/// const-generic API without unsafe transmute.
+fn derive_pda(seeds: &[&[u8]], program_id: &Address) -> Option<(Address, u8)> {
+    const MAX_SEEDS: usize = 15;
+    if seeds.len() > MAX_SEEDS {
+        return None;
+    }
+
+    match seeds.len() {
+        0 => Address::derive_program_address(&[], program_id),
+        1 => {
+            let s = [seeds[0]];
+            Address::derive_program_address(&s, program_id)
+        }
+        2 => {
+            let s = [seeds[0], seeds[1]];
+            Address::derive_program_address(&s, program_id)
+        }
+        3 => {
+            let s = [seeds[0], seeds[1], seeds[2]];
+            Address::derive_program_address(&s, program_id)
+        }
+        4 => {
+            let s = [seeds[0], seeds[1], seeds[2], seeds[3]];
+            Address::derive_program_address(&s, program_id)
+        }
+        5 => {
+            let s = [seeds[0], seeds[1], seeds[2], seeds[3], seeds[4]];
+            Address::derive_program_address(&s, program_id)
+        }
+        6 => {
+            let s = [seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5]];
+            Address::derive_program_address(&s, program_id)
+        }
+        7 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        8 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        9 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7], seeds[8],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        10 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7], seeds[8], seeds[9],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        11 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7], seeds[8], seeds[9], seeds[10],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        12 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7], seeds[8], seeds[9], seeds[10], seeds[11],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        13 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7], seeds[8], seeds[9], seeds[10], seeds[11], seeds[12],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        14 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7], seeds[8], seeds[9], seeds[10], seeds[11], seeds[12], seeds[13],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        15 => {
+            let s = [
+                seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6],
+                seeds[7], seeds[8], seeds[9], seeds[10], seeds[11], seeds[12], seeds[13],
+                seeds[14],
+            ];
+            Address::derive_program_address(&s, program_id)
+        }
+        _ => None,
     }
 }
 ```
@@ -509,14 +615,8 @@ pub fn assert_ata(
 
 /// Derive an Associated Token Account address.
 fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Address {
-    let (addr, _) = Address::find_program_address(
-        &[
-            wallet.as_ref(),
-            token_program.as_ref(),
-            mint.as_ref(),
-        ],
-        &ATA_PROGRAM_ID,
-    );
+    let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
+    let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID).expect("ATA seeds are always valid");
     addr
 }
 

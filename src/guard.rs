@@ -3,6 +3,13 @@ use pinocchio::address::Address;
 use pinocchio::error::ProgramError;
 
 /// Assert that the account is a signer of the transaction.
+///
+/// # Why this matters
+/// Missing signer checks allow anyone to impersonate authorized users.
+/// This is the #1 most common Solana program vulnerability.
+///
+/// # Errors
+/// Returns [`ProgramError::MissingRequiredSignature`] if `account.is_signer()` is false.
 #[inline]
 pub fn assert_signer(account: &AccountView) -> Result<(), ProgramError> {
     if account.is_signer() {
@@ -13,6 +20,14 @@ pub fn assert_signer(account: &AccountView) -> Result<(), ProgramError> {
 }
 
 /// Assert that the account is writable.
+///
+/// # Why this matters
+/// Writing to a read-only account causes a runtime error.
+/// Checking explicitly gives a clear error message instead of
+/// a cryptic "program failed to complete" at CPI time.
+///
+/// # Errors
+/// Returns [`ProgramError::Immutable`] if `account.is_writable()` is false.
 #[inline]
 pub fn assert_writable(account: &AccountView) -> Result<(), ProgramError> {
     if account.is_writable() {
@@ -23,6 +38,14 @@ pub fn assert_writable(account: &AccountView) -> Result<(), ProgramError> {
 }
 
 /// Assert that the account is owned by the expected program.
+///
+/// # Why this matters
+/// If you don't check ownership, an attacker can pass an account
+/// owned by a different program with arbitrary data.
+/// This is the #2 most common Solana vulnerability.
+///
+/// # Errors
+/// Returns [`ProgramError::InvalidAccountOwner`] if `account.owner() != expected_owner`.
 #[inline]
 pub fn assert_owner(account: &AccountView, expected_owner: &Address) -> Result<(), ProgramError> {
     if account.owned_by(expected_owner) {
@@ -33,6 +56,14 @@ pub fn assert_owner(account: &AccountView, expected_owner: &Address) -> Result<(
 }
 
 /// Assert that the account's address matches the expected PDA.
+///
+/// # Why this matters
+/// PDA validation ensures the account was derived from the expected
+/// seeds. Without this check, an attacker can substitute any account.
+///
+/// # Errors
+/// Returns [`GeppettoError::PdaMismatch`] if the derived address does not match.
+/// Returns the bump seed on success.
 pub fn assert_pda(
     account: &AccountView,
     seeds: &[&[u8]],
@@ -153,6 +184,14 @@ fn derive_pda(seeds: &[&[u8]], program_id: &Address) -> Option<(Address, u8)> {
 }
 
 /// Assert that the first byte of account data matches the expected discriminator.
+///
+/// # Why this matters
+/// Without discriminator checks, an attacker can pass a different
+/// account type with a valid layout but wrong semantics.
+///
+/// # Errors
+/// Returns [`GeppettoError::InvalidDiscriminator`] if mismatch.
+/// Returns [`ProgramError::AccountDataTooSmall`] if data is empty.
 pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), ProgramError> {
     let data = account.try_borrow()?;
     if data.is_empty() {
@@ -166,6 +205,16 @@ pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), P
 }
 
 /// Assert that the account holds enough lamports to be rent exempt.
+///
+/// # Why this matters
+/// Non-rent-exempt accounts can be garbage collected by the runtime,
+/// causing data loss.
+///
+/// # Implementation note
+/// Uses hardcoded rent constants. See [`rent_exempt_minimum`] for details.
+///
+/// # Errors
+/// Returns [`ProgramError::AccountNotRentExempt`] if below threshold.
 pub fn assert_rent_exempt(account: &AccountView) -> Result<(), ProgramError> {
     let min_balance = rent_exempt_minimum(account.data_len());
     if account.lamports() >= min_balance {
@@ -176,12 +225,27 @@ pub fn assert_rent_exempt(account: &AccountView) -> Result<(), ProgramError> {
 }
 
 /// Calculate minimum lamports for rent exemption.
+///
+/// ⚠️ WARNING: This uses hardcoded Solana mainnet parameters.
+/// For accurate results, pass the rent amount computed off-chain
+/// via instruction data.
+///
+/// Formula: (128 + data_len) * 3480 * 2
+/// where 3480 = lamports per byte-year (mainnet hardcoded)
+///        2   = exemption threshold in years
 #[inline]
 const fn rent_exempt_minimum(data_len: usize) -> u64 {
     ((128 + data_len) as u64) * 3480 * 2
 }
 
 /// Assert that the account is NOT writable (read-only).
+///
+/// # Why this matters
+/// Passing a writable account where read-only is expected can enable
+/// unintended state mutations.
+///
+/// # Errors
+/// Returns [`GeppettoError::ExpectedReadonly`] if `account.is_writable()` is true.
 #[inline]
 pub fn assert_readonly(account: &AccountView) -> Result<(), ProgramError> {
     if !account.is_writable() {
@@ -192,6 +256,14 @@ pub fn assert_readonly(account: &AccountView) -> Result<(), ProgramError> {
 }
 
 /// Assert that the account's address is the System Program.
+///
+/// # Why this matters
+/// When creating accounts via CPI, you must verify the system program
+/// account is actually the system program. An attacker could substitute
+/// a malicious program.
+///
+/// # Errors
+/// Returns [`ProgramError::IncorrectProgramId`] if mismatch.
 #[inline]
 pub fn assert_system_program(account: &AccountView) -> Result<(), ProgramError> {
     if account.address() == &SYSTEM_PROGRAM_ID {
@@ -205,6 +277,14 @@ pub fn assert_system_program(account: &AccountView) -> Result<(), ProgramError> 
 pub const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
 
 /// Assert that the account's address is either SPL Token or Token-2022.
+///
+/// # Why this matters
+/// Programs that handle tokens must verify the token program account.
+/// Since Token-2022 is increasingly common, this guard accepts BOTH
+/// program IDs.
+///
+/// # Errors
+/// Returns [`ProgramError::IncorrectProgramId`] if neither Token nor Token-2022.
 #[inline]
 pub fn assert_token_program(account: &AccountView) -> Result<(), ProgramError> {
     let addr = account.address();
@@ -232,6 +312,13 @@ pub const TOKEN_2022_PROGRAM_ID: Address = Address::new_from_array([
 ]);
 
 /// Assert that the account is owned by the currently executing program.
+///
+/// # Why this matters
+/// Ensures the account was created by this program, not a different one.
+/// This is a CPI re-entrancy guard.
+///
+/// # Errors
+/// Returns [`ProgramError::InvalidAccountOwner`] if mismatch.
 #[inline]
 pub fn assert_current_program(
     account: &AccountView,
@@ -241,6 +328,14 @@ pub fn assert_current_program(
 }
 
 /// Assert that the accounts slice has at least `expected` accounts.
+///
+/// # Why this matters
+/// Accessing `accounts[n]` on a too-short slice panics at runtime
+/// with an unhelpful message. This guard gives a clear
+/// `NotEnoughAccountKeys` error upfront.
+///
+/// # Errors
+/// Returns [`ProgramError::NotEnoughAccountKeys`] if `accounts.len() < expected`.
 #[inline]
 pub fn assert_account_count(accounts: &[AccountView], expected: usize) -> Result<(), ProgramError> {
     if accounts.len() >= expected {
@@ -251,13 +346,20 @@ pub fn assert_account_count(accounts: &[AccountView], expected: usize) -> Result
 }
 
 /// Assert that the account's address matches the expected Associated Token Account.
+///
+/// # Why this matters
+/// ATA derivation uses a specific seed pattern. If you don't verify,
+/// an attacker can substitute a non-ATA token account.
+///
+/// # Errors
+/// Returns [`GeppettoError::PdaMismatch`] if derived ATA address doesn't match.
 pub fn assert_ata(
     account: &AccountView,
     wallet: &Address,
     mint: &Address,
     token_program: &Address,
 ) -> Result<(), ProgramError> {
-    let derived = derive_ata(wallet, mint, token_program);
+    let derived = derive_ata(wallet, mint, token_program)?;
     if account.address() == &derived {
         Ok(())
     } else {
@@ -266,10 +368,11 @@ pub fn assert_ata(
 }
 
 /// Derive an Associated Token Account address.
-fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Address {
+fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Result<Address, ProgramError> {
     let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
-    let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID).expect("ATA seeds are always valid");
-    addr
+    let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID)
+        .ok_or(ProgramError::InvalidInstructionData)?;
+    Ok(addr)
 }
 
 /// Associated Token Account Program ID: ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL
