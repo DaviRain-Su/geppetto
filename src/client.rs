@@ -41,7 +41,7 @@
 //!   programAddress: address(PROGRAM_ID),
 //!   seeds: [
 //!     Buffer.from('escrow'),
-//!     Buffer.from(maker.address), // must match Rust seed exactly
+//!     getAddressEncoder().encode(maker.address), // raw 32 bytes, must match Rust seed exactly
 //!   ],
 //! });
 //! ```

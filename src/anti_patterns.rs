@@ -128,7 +128,7 @@
 //!
 //! ---
 //!
-//! ## Catch-All Dispatch (`_ => Ok(())`
+//! ## Catch-All Dispatch (`_ => Ok(())`)
 //!
 //! **Danger level**: High
 //!

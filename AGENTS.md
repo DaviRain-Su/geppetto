@@ -18,7 +18,7 @@ Read geppetto's doc comments as the source of truth:
 
 ## Mechanical Rules
 
-1. All accounts MUST implement `AccountSchema`
+1. All custom state accounts SHOULD implement `AccountSchema`; external/system accounts use `guard::*` and `Address` validation
 2. All account access MUST use `guard::*` helpers
 3. Instruction dispatch MUST use single-byte tag + match
 4. No `_ => Ok(())` — unknown instructions must error
