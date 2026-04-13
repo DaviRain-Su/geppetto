@@ -204,7 +204,7 @@ npx geppetto-cli init
 按优先级排序：
 
 1. **MCP server** — agent 通过 MCP 查询知识，比文件路径优雅
-2. **`@geppetto/sdk`**\*\* npm 包\*\* — 将 `client.rs` 知识迁移为 TypeScript 代码，加真实类型定义和 helper 函数
+2. **`@geppetto/sdk`**** npm 包** — 将 `client.rs` 知识迁移为 TypeScript 代码，加真实类型定义和 helper 函数
 3. **skills 仓库** — 独立于 crate 版本的专项知识包
 4. **自动进化** — CI 追踪 Pinocchio 上游变更，自动生成知识更新 PR
 
