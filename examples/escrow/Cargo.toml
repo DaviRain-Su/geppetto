@@ -6,7 +6,6 @@ publish = false
 
 [dependencies]
 geppetto = { path = "../..", features = ["system", "token"] }
-pinocchio = "0.11"
 
 [lib]
 crate-type = ["cdylib", "lib"]

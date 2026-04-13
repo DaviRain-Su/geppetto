@@ -2,7 +2,7 @@ use geppetto::account::AccountView;
 use geppetto::address::Address;
 use geppetto::dispatch;
 use geppetto::ProgramResult;
-use pinocchio::error::ProgramError;
+use geppetto::error::ProgramError;
 
 use crate::instructions;
 

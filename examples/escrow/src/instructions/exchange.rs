@@ -3,7 +3,7 @@ use geppetto::address::Address;
 use geppetto::guard;
 use geppetto::schema::AccountSchema;
 use geppetto::ProgramResult;
-use pinocchio::error::ProgramError;
+use geppetto::error::ProgramError;
 
 use crate::error::EscrowError;
 use crate::state::{escrow_seeds, status, Escrow};

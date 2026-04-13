@@ -1,4 +1,4 @@
-use pinocchio::error::ProgramError;
+use geppetto::error::ProgramError;
 
 /// Escrow program custom errors.
 #[repr(u32)]

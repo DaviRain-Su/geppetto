@@ -9,7 +9,9 @@
 //! - Stored as `ProgramError::Custom(u32)`.
 //! - Geppetto reserves `0x4700` to `0x4703` in this crate version.
 //! - Downstream users should avoid reusing these codes for unrelated variants.
-use pinocchio::error::ProgramError;
+// Re-export ProgramError so downstream crates can use geppetto::error::ProgramError
+// without depending on pinocchio directly.
+pub use pinocchio::error::ProgramError;
 
 /// Geppetto-specific error codes.
 #[repr(u32)]
