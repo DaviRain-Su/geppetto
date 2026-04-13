@@ -691,17 +691,23 @@ pub trait AccountSchema: Sized {
     ///
     /// Checks: owner matches `program_id`, data length >= LEN,
     /// discriminator matches (if Some). This is the recommended
-    /// safe entry point for accessing account data.
+    /// entry point for accessing account data.
+    ///
+    /// # Safety
+    ///
+    /// This function is marked `unsafe` because it returns a reference tied to
+    /// the internal borrow of `account`. The caller must ensure the borrow is
+    /// not violated (i.e., do not call `try_borrow_mut` while this reference lives).
     ///
     /// # Example
     ///
     /// ```rust,ignore
-    /// let escrow: &Escrow = Escrow::try_from_account(escrow_account, program_id)?;
+    /// let escrow: &Escrow = unsafe { Escrow::try_from_account(escrow_account, program_id)? };
     /// ```
-    fn try_from_account(
-        account: &AccountView,
+    unsafe fn try_from_account<'a>(
+        account: &'a AccountView,
         program_id: &Address,
-    ) -> Result<&Self, ProgramError> {
+    ) -> Result<&'a Self, ProgramError> {
         // Check owner
         if !account.owned_by(program_id) {
             return Err(ProgramError::InvalidAccountOwner);
@@ -709,9 +715,13 @@ pub trait AccountSchema: Sized {
         // Borrow data (immutable)
         let data = account.try_borrow()?;
         // Validate length + discriminator
-        Self::validate(&data)?;
-        // Safe: we just validated length and discriminator
-        Ok(unsafe { Self::from_bytes_unchecked(&data) })
+        Self::validate(&*data)?;
+        // SAFETY: we just validated length and discriminator, and owner is correct.
+        // We extend the borrow by returning a reference with lifetime `'a`.
+        Ok(unsafe { Self::from_bytes_unchecked(core::slice::from_raw_parts(
+            data.as_ref().as_ptr(),
+            data.as_ref().len(),
+        )) })
     }
 }
 ````
