@@ -201,6 +201,77 @@ jobs:
 - 风险：上游 breaking change 可能导致大量知识模块需要重写
 - 缓解：PR 模板中包含"受影响模块清单"（从 lib.rs Dependency Map 自动生成），人工逐个验证
 
+### Milestone E5：约定层 — `geppetto new` 项目脚手架
+
+- 目标：从"知识告诉你怎么做"升级到"约定帮你做对"
+- 类比：Next.js 早期的 `pages/` 约定——不是框架魔法，是目录结构 = 行为
+- 交付：
+  - `geppetto new <project-name>` 命令，生成标准 Pinocchio 项目结构：
+    ```
+    my-program/
+    ├── Cargo.toml              ← geppetto 依赖 + crate-type = ["cdylib", "lib"]
+    ├── AGENTS.md               ← 自动生成
+    ├── CLAUDE.md / GEMINI.md   ← 多 agent 入口
+    ├── src/
+    │   ├── lib.rs              ← entrypoint 骨架（program_entrypoint + nostd_panic_handler）
+    │   ├── processor.rs        ← dispatch::split_tag + match 骨架
+    │   ├── state.rs            ← AccountSchema 示例
+    │   ├── error.rs            ← 自定义错误枚举骨架
+    │   └── instructions/
+    │       └── mod.rs
+    └── tests/
+        └── svm.rs              ← mollusk-svm 测试骨架
+    ```
+  - 约定规则（写入 AGENTS.md）：
+    - `src/instructions/` 下每个文件 = 一条指令
+    - `src/state.rs` 中每个 `impl AccountSchema` = 一个账户类型
+    - `src/processor.rs` 的 match 分支 = 指令路由表
+  - Agent 打开项目，读 AGENTS.md，立刻知道文件在哪、该改哪里
+- 前置条件：E1（geppetto-cli）完成
+- 风险：约定过死导致高级用户抵触
+- 缓解：约定是建议不是强制——生成后用户可以自由修改结构
+- 不做：不做 derive macro，不做代码生成，不隐藏任何逻辑
+
+### Milestone E6：工具层 — `geppetto test` / `geppetto audit`
+
+- 目标：从"知识教你用 mollusk"升级到"一个命令帮你跑完"
+- 类比：Next.js 的 `next build` / `next lint`——底层是 webpack + eslint，但开发者不需要配置
+- 交付：
+  - `geppetto test`：
+    1. 自动执行 `cargo build-sbf`（如果 .so 不存在或源码更新了）
+    2. 执行 `cargo test --all-features`
+    3. 输出 CU 消耗报告（从 mollusk 的 `compute_units_consumed` 提取）
+    4. 如果有 CU 预算文件（`cu-budget.toml`），对比并报告超标
+  - `geppetto audit`：
+    1. 静态检查：扫描源码中是否存在 `anti_patterns.rs` 列出的 6 个反模式
+    2. Guard 覆盖率：检查每条指令的 handler 是否调用了 `assert_signer` / `assert_owner` 等
+    3. AccountSchema 一致性：检查 `LEN` 和 `layout()` 的偏移量是否自洽
+    4. 输出报告：通过 / 警告 / 错误
+  - `geppetto docs`：
+    1. 执行 `cargo doc --no-deps`
+    2. 验证所有知识模块的版本头是否与 Cargo.toml 匹配
+    3. 检查是否有过期知识（>3 个月）
+- 前置条件：E5（约定层）完成，项目结构可预测
+- 风险：工具维护成本高，工具本身也需要跟随上游更新
+- 缓解：工具层是薄包装，底层调用 cargo/mollusk/clippy，不重新实现
+- 不做：不做 LSP 集成，不做 IDE 插件，不做实时 watch 模式（初版）
+
+### Milestone E7：生态整合 — 官方合作
+
+- 目标：将 Geppetto 的知识和约定回馈官方生态
+- 可能的合作方式：
+  1. 给 `anza-xyz/pinocchio` 提 PR：添加 AGENTS.md + 官方 skill
+  2. 给 `anza-xyz/mollusk` 提 PR：添加 "Getting Started" agent 知识
+  3. 给 `solana-foundation/solana-dev-skill` 提 PR：增强 Pinocchio 部分
+  4. 给 `create-solana-dapp` 提 PR：添加 `pinocchio-geppetto` 模板
+  5. 将 Geppetto 提交为官方推荐的 Pinocchio skill/harness
+- 前置条件：E6 完成，有真实用户验证
+- 指标：
+  - Geppetto 被 >=3 个独立项目使用
+  - escrow demo 的 A/B 对比数据有说服力
+  - 官方核心贡献者认可 agent-first 方向
+- 不做：不主动分裂社区，不定位为"替代 pinocchio"
+
 ## 8.5 演化治理规则
 
 - 任何关键逻辑变更都必须先更新 `docs/03-technical-spec.md` 再改代码。
