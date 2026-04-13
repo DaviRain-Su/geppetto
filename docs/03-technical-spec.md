@@ -743,8 +743,6 @@ macro_rules! assert_account_size {
 ## 5. src/dispatch.rs — 指令分发（FR-4）
 
 ````rust
-use pinocchio::error::ProgramError;
-
 //! # Instruction Dispatch
 //!
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
@@ -834,8 +832,6 @@ handlers 数组模式适合 >50 条指令的极大型程序（如 token 的 fast
 **注意**：此模块必须兼容 `#![no_std]`。不使用 `std::error::Error`，不使用 `thiserror`。仅依赖 `core` 和 `pinocchio::error::ProgramError`。
 
 ```rust
-use pinocchio::error::ProgramError;
-
 //! # Geppetto Custom Errors
 //!
 //! Used only when pinocchio's built-in `ProgramError` variants
@@ -882,11 +878,6 @@ impl From<GeppettoError> for ProgramError {
 ### 7.1 导出函数
 
 ```rust
-use pinocchio::account::AccountView;
-use pinocchio::address::Address;
-use pinocchio::error::ProgramError;
-use pinocchio::ProgramResult;
-
 //! # Solana/Pinocchio Idioms
 //!
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13

@@ -191,10 +191,10 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 - `src/guard.rs` — 第一批 6 个安全检查 helper + 安全知识（doc comments）
 - `src/schema.rs` — `AccountSchema` trait + 账户布局惯用法（doc comments）
 - `src/dispatch.rs` — 指令分发标准模式 + 文档（doc comments）
-- `src/idioms.rs` — 纯文档模块：PDA、CPI、Token 交互等惯用法（doc comments，无导出代码）
+- `src/idioms.rs` — 代码 + 知识模块：导出 close_account、read_u64_le 等 helper 函数，同时覆盖 PDA、CPI、Token 交互等惯用法（doc comments）[^1]
 - `src/anti_patterns.rs` — 纯文档模块：常见漏洞 + 修复（doc comments，无导出代码）
 - `src/client.rs` — 纯文档模块：客户端知识（交易构建、PDA 推导、账户反序列化，TypeScript 示例）
-- `src/testing.rs` — 纯文档模块：测试惯用法（litesvm/bankrun）
+- `src/testing.rs` — 代码 + 知识模块：导出测试断言工具函数（feature-gated），同时覆盖 litesvm/bankrun 测试惯用法（doc comments）[^1]
 - `examples/escrow/` — 完整 escrow 示例程序
 - `AGENTS.md` — agent 指引
 
@@ -225,6 +225,8 @@ npx geppetto-cli init
 2. **@geppetto/sdk npm 包** — 将 `client.rs` 知识迁移为 TypeScript 代码，加真实类型定义和 helper 函数
 3. **skills 仓库** — 独立于 crate 版本的专项知识包
 4. **自动进化** — CI 追踪 Pinocchio 上游变更，自动生成知识更新 PR
+
+[^1]: 最终设计见 Phase 3 技术规格。`idioms.rs` 和 `testing.rs` 从纯文档升级为"代码 + 知识"混合模块，导出可直接调用的 helper 函数。
 
 ## Phase 0 验收标准
 

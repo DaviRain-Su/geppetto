@@ -6,6 +6,8 @@
 
 ---
 
+> **注意**：Phase 2 为架构设计草稿，所有 API 签名、类型名和模块路径以 Phase 3 技术规格为准。本文档中部分类型名（如 `AccountInfo`、`Pubkey`）在 Phase 3 中已更新为 Pinocchio 0.11 风格（`AccountView`、`Address`）。
+
 ## 系统概览
 
 Geppetto 是一个单 crate，re-export 整个 Pinocchio 生态并在其上添加三层：约定代码（guard + schema + dispatch）、知识文档（doc comments）、agent 指引（AGENTS.md）。
@@ -138,10 +140,12 @@ pub mod schema;
 pub mod dispatch;
 pub mod error;
 
-// 纯知识模块
+// 知识模块（idioms/testing 含导出代码，anti_patterns/client 纯文档）
 pub mod idioms;
 pub mod anti_patterns;
 pub mod client;
+
+#[cfg(feature = "test-utils")]
 pub mod testing;
 ```
 
@@ -211,7 +215,7 @@ agent 看到用户的需求后，按以下规则选择 features：
 //! Every check that the official programs (escrow, rewards, token)
 //! do implicitly, Geppetto makes explicit.
 
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{account::AccountView, error::ProgramError, address::Address};
 
 /// Assert that the account is a signer of the transaction.
 ///
@@ -221,26 +225,26 @@ use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::
 ///
 /// # Errors
 /// Returns `ProgramError::MissingRequiredSignature` if not a signer.
-pub fn assert_signer(account: &AccountInfo) -> Result<(), ProgramError>;
+pub fn assert_signer(account: &AccountView) -> Result<(), ProgramError>;
 
 /// Assert that the account is writable.
-pub fn assert_writable(account: &AccountInfo) -> Result<(), ProgramError>;
+pub fn assert_writable(account: &AccountView) -> Result<(), ProgramError>;
 
 /// Assert that the account is owned by the expected program.
-pub fn assert_owner(account: &AccountInfo, expected_owner: &Pubkey) -> Result<(), ProgramError>;
+pub fn assert_owner(account: &AccountView, expected_owner: &Address) -> Result<(), ProgramError>;
 
 /// Assert that the account's address matches the expected PDA.
 pub fn assert_pda(
-    account: &AccountInfo,
+    account: &AccountView,
     seeds: &[&[u8]],
-    program_id: &Pubkey,
-) -> Result<(), ProgramError>;
+    program_id: &Address,
+) -> Result<u8, ProgramError>;
 
 /// Assert that the first byte of account data matches the expected discriminator.
-pub fn assert_discriminator(account: &AccountInfo, expected: u8) -> Result<(), ProgramError>;
+pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), ProgramError>;
 
 /// Assert that the account is rent exempt.
-pub fn assert_rent_exempt(account: &AccountInfo) -> Result<(), ProgramError>;
+pub fn assert_rent_exempt(account: &AccountView) -> Result<(), ProgramError>;
 ```
 
 **错误码策略**：尽量使用 Pinocchio 内置的 `ProgramError` 变体。自定义错误仅在内置变体不够表达时使用，定义在 `error.rs` 中。
@@ -300,8 +304,8 @@ impl Escrow {
     // Field offsets — agent 可直接读取这些常量来生成客户端代码
     pub const DISCRIMINATOR_OFFSET: usize = 0;  // u8, 1 byte
     pub const STATUS_OFFSET: usize = 1;         // u8, 1 byte
-    pub const MAKER_OFFSET: usize = 2;          // Pubkey, 32 bytes
-    pub const TAKER_OFFSET: usize = 34;         // Pubkey, 32 bytes
+    pub const MAKER_OFFSET: usize = 2;          // Address, 32 bytes
+    pub const TAKER_OFFSET: usize = 34;         // Address, 32 bytes
     pub const AMOUNT_OFFSET: usize = 66;        // u64 LE, 8 bytes
 }
 ```
@@ -319,8 +323,8 @@ impl Escrow {
 //!
 //! ```rust,ignore
 //! pub fn process_instruction(
-//!     program_id: &Pubkey,
-//!     accounts: &[AccountInfo],
+//!     program_id: &Address,
+//!     accounts: &mut [AccountView],
 //!     data: &[u8],
 //! ) -> ProgramResult {
 //!     let (tag, rest) = data.split_first()
@@ -357,7 +361,7 @@ pub fn split_tag(data: &[u8]) -> Result<(u8, &[u8]), ProgramError> {
 //! Used only when pinocchio's built-in ProgramError variants
 //! are insufficient. Keep this minimal.
 
-use pinocchio::program_error::ProgramError;
+use pinocchio::error::ProgramError;
 
 /// Geppetto custom errors, starting at offset 0x4700.
 #[repr(u32)]
@@ -368,8 +372,8 @@ pub enum GeppettoError {
     InvalidAccountLen = 0x4701,
     /// PDA derivation does not match expected address.
     PdaMismatch = 0x4702,
-    /// Account is not rent exempt.
-    NotRentExempt = 0x4703,
+    /// Account is writable but was expected to be read-only.
+    ExpectedReadonly = 0x4703,
 }
 
 impl From<GeppettoError> for ProgramError {
@@ -404,41 +408,7 @@ impl From<GeppettoError> for ProgramError {
 //! Each function is a codified best practice from the official
 //! programs (escrow, rewards, token).
 
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult};
-
-/// Derive a PDA and verify it matches the given account's address.
-///
-/// Combines `Pubkey::find_program_address` + address comparison.
-/// Returns the bump seed on success.
-///
-/// # Why use this
-/// PDA validation is two steps (derive + compare) that are easy to
-/// get wrong separately. This function makes it atomic.
-///
-/// # Example
-/// ```rust,ignore
-/// let bump = geppetto::idioms::derive_and_verify_pda(
-///     escrow_account,
-///     &[b"escrow", maker.key().as_ref()],
-///     program_id,
-/// )?;
-/// ```
-pub fn derive_and_verify_pda(
-    account: &AccountInfo,
-    seeds: &[&[u8]],
-    program_id: &Pubkey,
-) -> Result<u8, ProgramError>;
-
-/// Write a discriminator + raw data to an account.
-///
-/// # Why use this
-/// Missing discriminator is a common bug. This function ensures
-/// the first byte is always written.
-pub fn initialize_account_data(
-    account: &AccountInfo,
-    discriminator: u8,
-    data: &[u8],
-) -> ProgramResult;
+use pinocchio::{account::AccountView, error::ProgramError, address::Address, ProgramResult};
 
 /// Close an account safely: zero data, drain lamports to recipient.
 ///
@@ -446,8 +416,8 @@ pub fn initialize_account_data(
 /// Improper account closure is a known attack vector (close account drain).
 /// This function zeros all data before transferring lamports.
 pub fn close_account(
-    account: &AccountInfo,
-    recipient: &AccountInfo,
+    account: &mut AccountView,
+    recipient: &mut AccountView,
 ) -> ProgramResult;
 
 /// Read a little-endian u64 from account data at the given offset.
@@ -459,6 +429,9 @@ pub fn read_u64_le(data: &[u8], offset: usize) -> Result<u64, ProgramError>;
 
 /// Write a little-endian u64 to account data at the given offset.
 pub fn write_u64_le(data: &mut [u8], offset: usize, value: u64) -> Result<(), ProgramError>;
+
+/// Read a 32-byte Address from account data at the given offset.
+pub fn read_address(data: &[u8], offset: usize) -> Result<Address, ProgramError>;
 ````
 
 Doc comments 中还覆盖以下**纯知识话题**（无导出函数，只有文档）：
@@ -479,14 +452,14 @@ Doc comments 中还覆盖以下**纯知识话题**（无导出函数，只有文
 //! Helper functions for testing Pinocchio programs with litesvm/mollusk-svm.
 //! Enable with: `geppetto = { features = ["test-utils"] }`
 
-use pinocchio::pubkey::Pubkey;
+use pinocchio::address::Address;
 
-/// Create a deterministic keypair for testing.
+/// Create a deterministic address for testing.
 ///
 /// # Why use this
-/// Tests need reproducible addresses. This generates a keypair
+/// Tests need reproducible addresses. This generates an address
 /// from a human-readable seed string.
-pub fn test_keypair(seed: &str) -> Pubkey;
+pub fn test_address(seed: &str) -> Address;
 
 /// Assert that account data at a given offset equals expected bytes.
 ///
@@ -681,12 +654,12 @@ examples/escrow/src/
 
 ```rust
 // instructions/create.rs
-use geppetto::{guard, ProgramResult, AccountInfo, Pubkey};
+use geppetto::{guard, ProgramResult, AccountView, Address};
 use crate::state::Escrow;
 
 pub fn process(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    program_id: &Address,
+    accounts: &mut [AccountView],
     data: &[u8],
 ) -> ProgramResult {
     // 1. 解析账户
@@ -697,7 +670,7 @@ pub fn process(
     guard::assert_signer(maker)?;
     guard::assert_writable(maker)?;
     guard::assert_writable(escrow)?;
-    guard::assert_pda(escrow, &[b"escrow", maker.key().as_ref()], program_id)?;
+    guard::assert_pda(escrow, &[b"escrow", maker.address().as_ref()], program_id)?;
 
     // 3. 业务逻辑
     // ... 写入 Escrow 数据，偏移量来自 Escrow::*_OFFSET 常量
