@@ -18,7 +18,6 @@
 
 use geppetto::account::AccountView;
 use geppetto::address::Address;
-use geppetto::entrypoint;
 use geppetto::ProgramResult;
 
 pub mod error;
@@ -26,7 +25,12 @@ pub mod instructions;
 pub mod processor;
 pub mod state;
 
-entrypoint!(process_instruction);
+// program_entrypoint + nostd_panic_handler for reliable #![no_std] SBF builds.
+// entrypoint!() uses default_panic_handler which provides custom_panic hook
+// but not #[panic_handler]. nostd_panic_handler provides the actual handler.
+geppetto::program_entrypoint!(process_instruction);
+geppetto::default_allocator!();
+geppetto::nostd_panic_handler!();
 
 pub fn process_instruction(
     program_id: &Address,
