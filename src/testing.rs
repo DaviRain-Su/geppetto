@@ -289,6 +289,140 @@
 //!    `AccountView`. Use mollusk-svm or litesvm instead.
 //! 4. **PDA derivation in tests** — use `solana_pubkey::Pubkey::find_program_address`,
 //!    not `Address::derive_program_address` (which needs `curve25519` feature).
+//! 5. **Program accounts are auto-stubbed** — mollusk automatically provides program
+//!    accounts. Do NOT include your program's account in the `accounts` slice.
+//!
+//! ---
+//!
+//! # mollusk-svm 0.12 API Reference
+//!
+//! This section is a local reference so you do NOT need to web search.
+//!
+//! ## Mollusk constructors
+//!
+//! ```rust,ignore
+//! // Auto-find ELF: searches tests/fixtures/, BPF_OUT_DIR, SBF_OUT_DIR, cwd
+//! let mollusk = Mollusk::new(&program_id, "program_name");
+//!
+//! // Default (builtins only, no custom program)
+//! let mut mollusk = Mollusk::default();
+//!
+//! // Then load ELF manually:
+//! mollusk.add_program(&program_id, "program_name");                    // auto-find
+//! mollusk.add_program_with_loader(&program_id, "name", &loader_key);   // specific loader
+//! mollusk.add_program_with_loader_and_elf(&program_id, &loader_key, elf); // raw bytes
+//! ```
+//!
+//! **Loader keys** (from `mollusk_svm::program`):
+//! - `LOADER_V3` = BPF Loader Upgradeable (default, most common)
+//! - `LOADER_V2` = BPF Loader
+//! - `LOADER_V1` = deprecated
+//!
+//! ## Instruction processing methods
+//!
+//! ```rust,ignore
+//! // Single instruction → InstructionResult
+//! let result = mollusk.process_instruction(&ix, &accounts);
+//!
+//! // Single instruction + declarative checks (panics on failure)
+//! mollusk.process_and_validate_instruction(&ix, &accounts, &[Check::success()]);
+//!
+//! // Chain: sequential instructions, state persists between them
+//! let result = mollusk.process_instruction_chain(&[ix1, ix2], &accounts);
+//!
+//! // Transaction: all instructions in one context (atomic)
+//! let result = mollusk.process_transaction_instructions(&[ix1, ix2], &accounts);
+//! ```
+//!
+//! ## InstructionResult fields
+//!
+//! ```rust,ignore
+//! result.compute_units_consumed  // u64
+//! result.execution_time          // u64 (nanoseconds)
+//! result.program_result          // ProgramResult::Success | Failure(ProgramError) | UnknownError
+//! result.program_result.is_ok()  // bool
+//! result.program_result.is_err() // bool
+//! result.return_data             // Vec<u8>
+//! result.resulting_accounts      // Vec<(Pubkey, Account)> — same order as input
+//! result.get_account(&pubkey)    // Option<&Account>
+//! ```
+//!
+//! ## Check variants (for process_and_validate_*)
+//!
+//! ```rust,ignore
+//! use mollusk_svm::result::Check;
+//!
+//! Check::success()                              // instruction succeeded
+//! Check::err(ProgramError::Custom(0x101))       // specific program error
+//! Check::err(ProgramError::MissingRequiredSignature)
+//! Check::instruction_err(InstructionError::...)  // instruction-level error
+//! Check::compute_units(500)                     // exact CU match
+//! Check::return_data(&[1, 2, 3])                // return data match
+//!
+//! // Account state checks (builder pattern):
+//! Check::account(&pubkey)
+//!     .lamports(1_000_000)
+//!     .data(&expected_data)
+//!     .owner(&program_id)
+//!     .space(74)
+//!     .data_slice(0, &[1])          // check byte at offset 0
+//!     .closed()                      // account == Account::default()
+//!     .rent_exempt()
+//!     .build()
+//! ```
+//!
+//! ## MolluskContext (stateful testing)
+//!
+//! For multi-step flows where account state should persist automatically:
+//!
+//! ```rust,ignore
+//! use std::collections::HashMap;
+//!
+//! let mut store = HashMap::new();
+//! store.insert(escrow_pda, escrow_account);
+//! store.insert(maker, Account::default());
+//!
+//! let ctx = mollusk.with_context(store);
+//!
+//! // No accounts parameter needed — loaded from store automatically
+//! ctx.process_and_validate_instruction(&create_ix, &[Check::success()]);
+//! // State persists: escrow now has data from create
+//! ctx.process_and_validate_instruction(&exchange_ix, &[Check::success()]);
+//! ```
+//!
+//! ## Sysvars
+//!
+//! ```rust,ignore
+//! mollusk.sysvars.clock.slot = 100;
+//! mollusk.sysvars.clock.unix_timestamp = 1700000000;
+//! mollusk.warp_to_slot(500); // updates Clock + SlotHashes
+//! ```
+//!
+//! ## CU Benchmarking
+//!
+//! ```rust,ignore
+//! use mollusk_svm_bencher::MolluskComputeUnitBencher;
+//!
+//! MolluskComputeUnitBencher::new(mollusk)
+//!     .bench(("create", &create_ix, &accounts))
+//!     .bench(("exchange", &exchange_ix, &accounts))
+//!     .must_pass(true)
+//!     .out_dir("../target/benches")
+//!     .execute();
+//! // Outputs markdown table with CU counts
+//! ```
+//!
+//! ## Fixture support (feature = "fuzz")
+//!
+//! ```rust,ignore
+//! // Auto-eject fixtures during tests:
+//! // EJECT_FUZZ_FIXTURES="./fixtures" cargo test-sbf
+//! // EJECT_FUZZ_FIXTURES_JSON="./fixtures" cargo test-sbf
+//!
+//! // Load and replay:
+//! let fixture = Fixture::load_from_json_file("fixtures/create.json");
+//! mollusk.process_and_validate_fixture(&fixture);
+//! ```
 
 /// Assert that account data at a given offset equals expected bytes.
 pub fn assert_account_data(data: &[u8], offset: usize, expected: &[u8], field_name: &str) {
