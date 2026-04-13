@@ -48,7 +48,7 @@ npx create-solana-dapp -t pinocchio-counter
 cd my-project/program && cargo add geppetto
 
 # Generate AGENTS.md for your agent
-npx geppetto init
+npx geppetto-cli init
 ```
 
 Geppetto doesn't replace the official scaffold—it adds the knowledge layer that makes agents write correct, secure Pinocchio code.

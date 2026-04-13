@@ -162,7 +162,7 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 | Guard helpers 数量 | Phase 3 精确定义，第一批 6 个                                                                                             | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent\_exempt |
 | 交付拆分             | crate 和 demo 各走独立 Phase 3-6                                                                                      | 独立工作流，防止耦合                                                                            |
 | 知识覆盖策略           | 合约侧：代码 + 知识；客户端侧：纯知识（doc comments）；npm 包赛后                                                                       | 4 周内不维护两套语言的代码，但知识覆盖全链路。agent 从同一 crate 读到两端知识，布局精确匹配                                 |
-| 项目脚手架            | 不做模板，用官方 `npx create-solana-dapp -t pinocchio-counter`；`npx geppetto init` 生成 AGENTS.md                          | 官方已有 pinocchio 模板，不重复造轮子。Geppetto 做增强层，不做基础层。赛后可给官方提 PR 加 `pinocchio-geppetto` 模板     |
+| 项目脚手架            | 不做模板，用官方 `npx create-solana-dapp -t pinocchio-counter`；`npx geppetto-cli init` 生成 AGENTS.md                      | 官方已有 pinocchio 模板，不重复造轮子。Geppetto 做增强层，不做基础层。赛后可给官方提 PR 加 `pinocchio-geppetto` 模板     |
 | MCP server       | 赛后第一优先级                                                                                                          | 4 周内做少做好，MCP 增加的复杂度可能导致哪边都做不好                                                         |
 
 ## 黑客松交付范围（4 周，截止 2026-05-11）
@@ -180,7 +180,7 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 - `examples/escrow/` — 完整 escrow 示例程序
 - `AGENTS.md` — agent 指引
 
-### 子模块 B：npx geppetto init（极轻量脚本）
+### 子模块 B：npx geppetto-cli init（极轻量脚本）
 
 在已有项目中生成 AGENTS.md 和可选的 `docs/03-technical-spec.md` 模板。几十行脚本，不做模板、不做前端、不做 CLI 框架。
 
@@ -190,7 +190,7 @@ npx create-solana-dapp -t pinocchio-counter
 # 加入 Geppetto 知识层
 cd my-project/program && cargo add geppetto
 # 生成 agent 指引
-npx geppetto init
+npx geppetto-cli init
 ```
 
 ### 子模块 C：escrow demo + A/B 视频
