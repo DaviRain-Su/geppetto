@@ -40,7 +40,11 @@ AI code agent 写 Solana 程序时：
 
 ### 是什么
 
-一个 **agent-aware 的知识 SDK**，核心做三件事：
+一个 **Pinocchio Agent Harness** —— 为 AI coding agents 构建的知识层 + 约束层 harness 组件。
+
+在 Harness Engineering 的框架中（Agent = Model + Harness），Geppetto 是 harness 的关键部件：不改变 LLM 模型，而是**工程化地改造 agent 的环境**——通过类型约束、编译期验证、结构化知识注入，让 agent 不可能犯已知的错误。
+
+核心做三件事：
 
 1. **捆绑知识** — `cargo add geppetto` 后，知识以 Rust doc comments 形式内嵌在源码中。`cargo doc` 自动构建、`cargo test` 自动验证代码示例，不存在"文档过时但代码更新了"的问题。覆盖全链路：合约侧（账户模型、指令模式、安全检查、惯用法、反模式）+ 客户端侧（交易构建、PDA 推导、账户反序列化）+ 测试（litesvm/bankrun）。每次 `cargo update`，知识跟着更新。
 2. **约定代码** — 在 Pinocchio 之上提供一薄层约定模式：`AccountSchema` trait 定义账户布局、标准指令分发模式、`guard::*` 安全检查 helpers。不是宏魔法，展开后就是标准 Pinocchio 代码，agent 完全看得懂。
@@ -57,11 +61,24 @@ AI code agent 写 Solana 程序时：
 
 | 来源                                         | 借鉴了什么                             |
 | ------------------------------------------ | --------------------------------- |
+| **Harness Engineering** (2026 趋势)          | Agent = Model + Harness；工程化改造环境而非优化 prompt；编译期约束比运行期建议更可靠 |
 | Next.js bundled docs                       | 知识捆绑在包内，版本匹配，agent 不需要 web search |
 | Next.js skills (vercel-labs/next-skills)   | 结构化的最佳实践知识，可安装可更新                 |
 | Armin Ronacher "Friction Is Your Judgment" | Agent-Legible 代码库设计、机械强制执行、增加决策摩擦 |
 | dev-lifecycle                              | 开发阶段约束、技术规格先于代码                   |
 | Pinocchio                                  | 底层框架，零依赖、显式、零拷贝                   |
+
+**Geppetto 在 Harness Engineering 进化中的位置：**
+
+```
+Prompt Engineering → Context Engineering → Harness Engineering
+  "写更好的提示"     "喂更好的上下文"       "工程化改造环境"
+                                              ↑
+                                          Geppetto
+                                    (知识层 + 约束层 harness)
+```
+
+与纯 markdown skills（solana-dev-skill）的区别：skills 是 context engineering（喂更好的上下文），Geppetto 是 harness engineering（编译期强制约束 + 可验证知识 + 类型系统 guardrails）。Rust 的类型系统让 Geppetto 能做到比 JavaScript 生态更硬的 mechanical enforcement。
 
 ## 竞品分析
 
