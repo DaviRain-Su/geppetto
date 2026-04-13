@@ -174,7 +174,7 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 
 | 决策点                   | 结论                                                                                                               | 理由                                                                                    |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Re-export 策略          | `use geppetto::*` 透传核心 SDK；CPI helpers 通过子模块透传（`geppetto::system`、`geppetto::token` 等），作为 optional features 默认启用 | Geppetto 是整个 Pinocchio 生态的替代入口，一个 `cargo add geppetto` 替代 6 个 crate                   |
+| Re-export 策略          | `use geppetto::*` 透传核心 SDK；CPI helpers 通过子模块按需启用（`default = []`，提供 `token-all` / `full` 预设） | 核心（guard/schema/dispatch/知识）零 CPI 依赖；CPI helpers 按需加 feature，避免不必要的编译开销 |
 | 文档发现机制                | AGENTS.md + doc comments + `cargo doc` + docs.rs fallback                                                        | 知识写在 .rs 文件的 doc comments 里，代码和文档合一，`cargo test` 验证示例不过时                              |
 | Guard helpers 数量      | Phase 3 精确定义，第一批 6 个                                                                                             | 按 Solana 安全审计清单逐条来，不拍脑袋。第一批：signer, writable, owner, pda, discriminator, rent\_exempt |
 | 交付拆分                  | crate 和 demo 各走独立 Phase 3-6                                                                                      | 独立工作流，防止耦合                                                                            |

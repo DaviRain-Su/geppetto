@@ -45,10 +45,12 @@
 
 ## 6.2 日志（当前）
 
-- 2026-04-13：完成阶段文档自检，确认已存在 `00-05`；缺失 06-08，当前进入文档闭环准备。
-- 2026-04-13：已生成 `docs/06-implementation-log.md`（本文），用于下一阶段执行记录。
-- 2026-04-13：仓库当前已有 `Cargo.toml`、`.gitignore`、`README.md`、`docs/` 目录骨架，待补齐 `src/lib.rs` 与业务模块。
-- 2026-04-13：Code Review 修复 — Cargo.toml license 统一为 `MIT OR Apache-2.0`；README 状态更新为 Phase 3；PRD 补充扩展 guard 列表；Tech Spec 中 assert_rent_exempt 警告增强、close_account 安全文档补充、Token/ATA 程序 ID 填充真实字节数组、unsafe 文档严格化、testing.rs feature gate 统一到 lib.rs、client fixture 测试策略补充 package.json 示例。
+- 2026-04-13：Phase 0-5 文档全部完成，Phase 6/7/8 文档骨架创建。
+- 2026-04-13：A-02 完成 — `Cargo.toml` + `src/lib.rs`（re-export + 模块声明 + crate doc）+ 9 个空模块文件。`src/main.rs` 已删除。
+- 2026-04-13：Code Review 修复 — Cargo.toml license 统一为 `MIT OR Apache-2.0`；PRD 补充扩展 guard 列表；Tech Spec 多项安全文档增强。
+- 2026-04-13：Codex review + 多轮 review 修复 — 文档状态与仓库同步、SYSTEM_PROGRAM_ID 注释澄清、feature default 策略统一为 `default = []`。
+- 2026-04-13：`cargo check` 通过 default / test-utils / full 三种 feature 组合。
+- **下一步**：A-03（error.rs 实现）。
 
 ## 6.3 验收条件（进入 Phase 7）
 

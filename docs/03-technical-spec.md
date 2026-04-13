@@ -384,7 +384,10 @@ pub fn assert_system_program(account: &AccountView) -> Result<(), ProgramError> 
     }
 }
 
-/// System Program ID: 11111111111111111111111111111111
+/// System Program ID: `11111111111111111111111111111111`
+///
+/// In Base58, leading '1's represent leading zero bytes.
+/// 32 × '1' = 32 zero bytes, so `[0u8; 32]` is correct.
 pub const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
 ```
 
