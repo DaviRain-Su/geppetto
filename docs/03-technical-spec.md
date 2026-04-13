@@ -605,7 +605,7 @@ pub fn assert_ata(
     mint: &Address,
     token_program: &Address,
 ) -> Result<(), ProgramError> {
-    let derived = derive_ata(wallet, mint, token_program);
+    let derived = derive_ata(wallet, mint, token_program)?;
     if account.address() == &derived {
         Ok(())
     } else {
@@ -614,10 +614,11 @@ pub fn assert_ata(
 }
 
 /// Derive an Associated Token Account address.
-fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Address {
+fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Result<Address, ProgramError> {
     let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
-    let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID).expect("ATA seeds are always valid");
-    addr
+    let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID)
+        .ok_or(ProgramError::InvalidInstructionData)?;
+    Ok(addr)
 }
 
 /// Associated Token Account Program ID: ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL

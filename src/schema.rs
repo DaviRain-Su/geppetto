@@ -91,10 +91,8 @@ pub trait AccountSchema: Sized {
         if data.len() < Self::LEN {
             return Err(ProgramError::AccountDataTooSmall);
         }
-        if let Some(d) = Self::DISCRIMINATOR {
-            if data.is_empty() || data[0] != d {
-                return Err(ProgramError::InvalidAccountData);
-            }
+        if let Some(d) = Self::DISCRIMINATOR && data[0] != d {
+            return Err(ProgramError::InvalidAccountData);
         }
         Ok(())
     }
@@ -129,7 +127,7 @@ pub trait AccountSchema: Sized {
             return Err(ProgramError::InvalidAccountOwner);
         }
         let data = account.try_borrow()?;
-        Self::validate(&*data)?;
+        Self::validate(&data)?;
         // SAFETY: we just validated length and discriminator, and owner is correct.
         // We extend the borrow by returning a reference with lifetime `'a`.
         // This is sound as long as the caller respects the borrow invariant.
