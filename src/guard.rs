@@ -47,27 +47,49 @@ pub fn assert_pda(
     }
 }
 
-/// Derive a PDA from seeds and program_id, matching the seed layout used by
-/// `Address::derive_program_address` for up to 7 seeds (covers all common cases).
+/// Derive a PDA from seeds and program_id.
+///
+/// Solana allows up to 16 seeds (each up to 32 bytes). This helper uses a
+/// fixed-size array to call `Address::derive_program_address` without the
+/// const-generic limitation, supporting the full Solana seed limit.
 fn derive_pda(seeds: &[&[u8]], program_id: &Address) -> Option<(Address, u8)> {
+    const MAX_SEEDS: usize = 16;
+    if seeds.len() > MAX_SEEDS {
+        return None;
+    }
+
+    let mut arr: [&[u8]; MAX_SEEDS] = [&[]; MAX_SEEDS];
+    for (i, seed) in seeds.iter().enumerate() {
+        arr[i] = seed;
+    }
+
+    macro_rules! dispatch {
+        ($n:expr) => {
+            Address::derive_program_address(
+                unsafe { core::mem::transmute::<&[&[u8]; MAX_SEEDS], &[&[u8]; $n]>(&arr) },
+                program_id,
+            )
+        };
+    }
+
     match seeds.len() {
-        0 => Address::derive_program_address(&[], program_id),
-        1 => Address::derive_program_address(&[seeds[0]], program_id),
-        2 => Address::derive_program_address(&[seeds[0], seeds[1]], program_id),
-        3 => Address::derive_program_address(&[seeds[0], seeds[1], seeds[2]], program_id),
-        4 => Address::derive_program_address(&[seeds[0], seeds[1], seeds[2], seeds[3]], program_id),
-        5 => Address::derive_program_address(
-            &[seeds[0], seeds[1], seeds[2], seeds[3], seeds[4]],
-            program_id,
-        ),
-        6 => Address::derive_program_address(
-            &[seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5]],
-            program_id,
-        ),
-        7 => Address::derive_program_address(
-            &[seeds[0], seeds[1], seeds[2], seeds[3], seeds[4], seeds[5], seeds[6]],
-            program_id,
-        ),
+        0 => dispatch!(0),
+        1 => dispatch!(1),
+        2 => dispatch!(2),
+        3 => dispatch!(3),
+        4 => dispatch!(4),
+        5 => dispatch!(5),
+        6 => dispatch!(6),
+        7 => dispatch!(7),
+        8 => dispatch!(8),
+        9 => dispatch!(9),
+        10 => dispatch!(10),
+        11 => dispatch!(11),
+        12 => dispatch!(12),
+        13 => dispatch!(13),
+        14 => dispatch!(14),
+        15 => dispatch!(15),
+        16 => dispatch!(16),
         _ => None,
     }
 }

@@ -1,6 +1,6 @@
 # Phase 6: Implementation Log — Geppetto
 
-> 状态：待开始（准备中）
+> 状态：进行中
 > 日期：2026-04-13
 > 输入：Phase 5 测试规格
 
@@ -9,9 +9,10 @@
 **当前代码状态（2026-04-13）**：
 - `Cargo.toml` — 完整（依赖、features、metadata 与 Phase 3 一致）
 - `src/lib.rs` — 完整（`#![no_std]`、re-export、feature gates、模块声明、crate doc）
-- `src/{guard,schema,dispatch,error,idioms,anti_patterns,client,testing}.rs` — 空文件（骨架已创建，业务逻辑待实现）
+- `src/{error,schema,guard,dispatch,idioms}.rs` — 已实现并通过 `cargo check`
+- `src/{anti_patterns,client,testing}.rs` — 空文件（知识文档/测试工具待后续补充）
 - `src/main.rs` — 已删除（library crate 不需要 binary entrypoint）
-- A-02 任务已完成，A-03 起待实现
+- A-02 ~ A-12 已完成，A-07/A-09/A-11/A-13（测试）待实现
 
 ## 6.0 实施原则（硬约束）
 

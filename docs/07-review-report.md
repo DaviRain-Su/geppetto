@@ -1,8 +1,8 @@
 # Phase 7: Review & Deploy — Geppetto
 
-> 状态：待启动
+> 状态：准备中
 > 日期：2026-04-13
-> 输入：Phase 6 实现日志（当前未完成）
+> 输入：Phase 6 实现日志（核心模块已实现，测试待补充）
 
 ## 7.1 审查目标
 
@@ -33,9 +33,9 @@
 
 ## 7.4 风险与阻塞项（当前）
 
-- 代码骨架已落地：`Cargo.toml` + `src/lib.rs`（re-export + 模块声明）+ 9 个空模块文件。A-02 完成。
-- 业务逻辑尚未实现：guard/schema/dispatch/error/idioms 等模块为空文件，A-03 起待实现。
-- 依赖版本锁定与特性矩阵未在实现中验证（`cargo test` 尚无测试用例）。
+- A-02 ~ A-12 核心代码已完成：`error.rs`、`schema.rs`、`guard.rs`（12 guards）、`dispatch.rs`、`idioms.rs` 已按 Phase 3 规格实现并通过 `cargo check`。
+- 测试尚未实现：A-07/A-09（guard 测试）、A-11（dispatch 测试）、A-13（idioms 测试）待补充。
+- 知识文档模块为空：`anti_patterns.rs`、`client.rs`、`testing.rs` 待后续填充（A-14~A-19）。
 - `src/main.rs` 已删除，当前为纯 library crate。
 
 ## 7.5 部署策略（当前建议）
