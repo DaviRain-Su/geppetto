@@ -26,7 +26,7 @@
 
 | ID | 任务 | 预估 | 依赖 | 产出 |
 |----|------|------|------|------|
-| A-01 | **Phase 5：编写测试规格** | 4h | Phase 3 | `docs/05-test-spec.md` |
+| A-01 | **编写 `docs/05-test-spec.md`** — 为 guard/schema/dispatch/idioms/testing 所有公开 API 定义 happy/boundary/error 测试用例 | 4h | Phase 3 | `docs/05-test-spec.md` 文档 |
 | A-02 | **Cargo.toml + lib.rs 骨架** — 设置 `#![no_std]`，pinocchio 依赖，feature gates，空模块声明 | 1h | 无 | 编译通过的空 crate |
 | A-03 | **error.rs** — `GeppettoError` 枚举（4 个变体，0x4700-0x4703），`From<GeppettoError> for ProgramError` | 1h | A-02 | `cargo build` 通过 |
 | A-04 | **schema.rs** — `AccountSchema` trait（LEN, DISCRIMINATOR, layout, validate, try_from_account, from_bytes_unchecked），`assert_account_size!` 宏 | 3h | A-03 | trait 定义 + 宏 + 单元测试 |
