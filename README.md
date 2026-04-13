@@ -1,0 +1,88 @@
+# Geppetto
+
+> Make AI code agents instantly fluent in Solana/Pinocchio best practices.
+
+Geppetto is an **agent-aware knowledge SDK** for Pinocchio program development. It bundles battle-tested knowledge, guard helpers, and coding conventions into a single Rust crate—version-locked, doctest-validated, and designed for AI agents first.
+
+---
+
+## The Problem
+
+AI code agents struggle with Solana/Pinocchio because:
+- **Web search returns outdated info** (old Anchor APIs, deprecated patterns)
+- **Training data lacks Pinocchio** (too new)
+- **Generated code misses security checks** and common idioms
+- **Client-side layouts drift from on-chain programs** (the #1 client bug)
+
+Humans end up reviewing and fixing agent output line by line, canceling out the agent's value.
+
+## What Geppetto Does
+
+1. **Bundled Knowledge** — Knowledge lives as Rust doc comments inside the crate. `cargo doc` builds it, `cargo test` validates every example. No "docs are stale but code is updated" problem.
+2. **Enforced Conventions** — `AccountSchema` trait for account layouts, `guard::*` helpers for security checks, and a standard dispatch pattern. Not macro magic—just clear, explicit Pinocchio code that agents can read and follow.
+3. **AGENTS.md Guide** — Tells agents: "Your training data is outdated. Read the doc comments in `geppetto` for the source of truth."
+
+## Quick Start
+
+### Add to an existing project
+
+```bash
+cargo add geppetto
+```
+
+Then tell your agent to:
+- Import from `geppetto` instead of `pinocchio`
+- Implement `AccountSchema` for every account type
+- Use `guard::*` for all security checks
+- Follow the standard dispatch pattern in `dispatch.rs`
+
+### Start from a full-stack template
+
+```bash
+cargo generate --git https://github.com/DaviRain-Su/geppetto-template
+```
+
+Generates a monorepo with a Rust program (powered by Geppetto) and a Next.js + `@solana/kit` frontend, wired together through a shared IDL contract.
+
+## Core Modules
+
+| Module | What it covers |
+|--------|----------------|
+| `guard` | Security helpers: `assert_signer`, `assert_writable`, `assert_owner`, `assert_pda`, `assert_discriminator`, `assert_rent_exempt` |
+| `schema` | `AccountSchema` trait — zero-copy account layouts with compile-time metadata |
+| `dispatch` | Standard instruction-dispatch pattern for `process_instruction` |
+| `idioms` | Doc-only: PDA derivation, CPI calls, Token/Token-2022, self-CPI events, TLV extensions |
+| `anti_patterns` | Doc-only: common vulnerabilities and how to fix them |
+| `client` | Doc-only: TypeScript client construction, PDA derivation, account deserialization |
+| `testing` | Doc-only: litesvm / bankrun testing patterns |
+
+## Design Principles
+
+- **Zero runtime overhead** — Guards and schemas compile to hand-written Pinocchio code
+- **Zero external dependencies** — Only depends on the Pinocchio ecosystem crates
+- **Zero macros** — Explicit code agents can see, understand, and debug
+- **Agent-first** — If the agent can't see it, it can't respect it
+
+## How We Differ
+
+### vs `solana-dev-skill`
+- `solana-dev-skill` = broad advice (markdown, shallow, Anchor-first)
+- **Geppetto** = deep constraints (code + knowledge, Pinocchio-first)
+- **Relationship: complementary**
+
+### vs Quasar
+- Quasar = framework optimizing **human DX** with macros
+- **Geppetto** = knowledge SDK optimizing **agent DX** with explicit code
+- **Relationship: different dimensions**
+
+## Project Status
+
+- Phase 0: Business Validation ✅
+- Phase 1: PRD ✅
+- Phase 2: Architecture 🚧
+
+Hackathon delivery target: **2026-05-11**
+
+## License
+
+[MIT](./LICENSE) or [Apache-2.0](./LICENSE-APACHE)
