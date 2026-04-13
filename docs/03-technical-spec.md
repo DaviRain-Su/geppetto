@@ -255,11 +255,6 @@ pub fn assert_pda(
 /// array for each exact seed count (0-15) so we can call the
 /// const-generic API without unsafe transmute.
 fn derive_pda(seeds: &[&[u8]], program_id: &Address) -> Option<(Address, u8)> {
-    const MAX_SEEDS: usize = 15;
-    if seeds.len() > MAX_SEEDS {
-        return None;
-    }
-
     match seeds.len() {
         0 => Address::derive_program_address(&[], program_id),
         1 => {
@@ -617,7 +612,7 @@ pub fn assert_ata(
 fn derive_ata(wallet: &Address, mint: &Address, token_program: &Address) -> Result<Address, ProgramError> {
     let seeds: &[&[u8]] = &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()];
     let (addr, _) = derive_pda(seeds, &ATA_PROGRAM_ID)
-        .ok_or(ProgramError::InvalidInstructionData)?;
+        .ok_or(crate::error::GeppettoError::PdaMismatch)?;
     Ok(addr)
 }
 
@@ -1518,4 +1513,3 @@ When in doubt, read the pinocchio source code directly.
 - [x] 知识版本头格式已定义
 - [x] AGENTS.md Knowledge Freshness prompt 已强化
 - [x] 可进入 Phase 4: Task Breakdown
-

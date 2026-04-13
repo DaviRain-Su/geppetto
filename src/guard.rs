@@ -85,11 +85,6 @@ pub fn assert_pda(
 /// array for each exact seed count (0-15) so we can call the
 /// const-generic API without unsafe transmute.
 fn derive_pda(seeds: &[&[u8]], program_id: &Address) -> Option<(Address, u8)> {
-    const MAX_SEEDS: usize = 15;
-    if seeds.len() > MAX_SEEDS {
-        return None;
-    }
-
     match seeds.len() {
         0 => Address::derive_program_address(&[], program_id),
         1 => {

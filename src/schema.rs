@@ -119,6 +119,16 @@ pub trait AccountSchema: Sized {
     /// This function is marked `unsafe` because it returns a reference tied to
     /// the internal borrow of `account`. The caller must ensure the borrow is
     /// not violated (i.e., do not call `try_borrow_mut` while this reference lives).
+    ///
+    /// ## Pinocchio borrow model (soundness note)
+    ///
+    /// `account.try_borrow()` creates a temporary runtime borrow guard over the
+    /// account data. Dropping the guard releases borrow tracking but does not
+    /// deallocate or relocate the account's backing bytes. The returned pointer is
+    /// therefore valid for the account's transaction lifetime as long as no mutable
+    /// borrow of the same account is created while the returned reference lives.
+    /// This is why the function escapes the borrow through
+    /// `core::slice::from_raw_parts`.
     unsafe fn try_from_account<'a>(
         account: &'a AccountView,
         program_id: &Address,
