@@ -64,6 +64,36 @@ AI code agent 写 Solana 程序时：
 | dev-lifecycle | 开发阶段约束、技术规格先于代码 |
 | Pinocchio | 底层框架，零依赖、显式、零拷贝 |
 
+## 竞品分析
+
+### solana-dev-skill（Solana Foundation, 2026-01）
+
+Claude Code 官方 skill，纯 markdown 文件，覆盖 Solana 全栈（UI、SDK、Programs、Testing、Security 等）。Anchor 为默认程序框架，Pinocchio 仅作为高性能场景的备选提及。
+
+**与 Geppetto 的核心差异：**
+
+| 维度 | solana-dev-skill | Geppetto |
+|---|---|---|
+| 形态 | 纯 markdown 文件 | Rust crate（代码 + 知识合一） |
+| 知识更新 | 手动更新，锁定在 "Jan 2026" | `cargo update` 自动获取新版本知识 |
+| 程序框架 | Anchor 为默认，Pinocchio 是备选 | Pinocchio-first，深度覆盖 |
+| 强制力 | 零——只是建议 agent 怎么做 | 有——`guard::*` 是真实 API，`AccountSchema` 是必须实现的 trait |
+| 代码验证 | 无——markdown 里的示例可能过时 | doctest 自动验证——`cargo test` 确保每个示例编译通过 |
+| 覆盖策略 | 广而浅——整个 Solana 栈 | 深而专——Pinocchio 程序开发的完整实践 |
+| 安装方式 | `npx skills add` 复制文件到本地 | `cargo add geppetto` 成为项目依赖 |
+
+**关系：互补，不是竞争**
+
+`solana-dev-skill` 告诉 agent **"Solana 开发该知道什么"**。Geppetto 给 agent **"写 Pinocchio 程序时必须调用的 API + 为什么这么做的知识"**。一个是建议，一个是约束。开发者完全可以同时用两者：
+
+```bash
+# 全栈知识（前端、钱包、测试工具选型）
+npx skills add solana-foundation/solana-dev-skill
+
+# Pinocchio 程序开发的深度约束
+cargo add geppetto
+```
+
 ## 目标用户
 
 用 AI code agent（Claude Code、Codex、Cursor 等）+ Pinocchio 开发 Solana 程序的开发者。他们希望 agent 产出的代码是正确的、安全的、符合惯用法的。
