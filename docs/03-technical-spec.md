@@ -781,6 +781,18 @@ pub const SELF_CPI_EVENT_DISCRIMINATOR: u8 = 228;
 pub const BATCH_DISCRIMINATOR: u8 = 255;
 ```
 
+### 5.2 设计说明：为什么用 split_tag + match 而不是 handlers 数组
+
+另一种可能的设计是数组索引分发：`handlers[tag](program_id, accounts, data)`，O(1) 跳转。
+
+我们选择 `split_tag + match` 的理由：
+1. **与官方一致** — memo/escrow/rewards/token 四个官方仓库全部用 match 分发
+2. **Agent 可读性** — match 语句的每个分支自解释，agent 一眼看懂
+3. **灵活性** — handler 签名不需要强制统一，每个分支可以有不同的参数处理
+4. **编译器优化** — 对于 <20 个分支，rustc 通常将 match 编译为跳转表，性能等价
+
+handlers 数组模式适合 >50 条指令的极大型程序（如 token 的 fast-path dispatch），在 `idioms.rs` 中作为进阶知识文档覆盖。
+
 ## 6. src/error.rs — 自定义错误码
 
 **注意**：此模块必须兼容 `#![no_std]`。不使用 `std::error::Error`，不使用 `thiserror`。仅依赖 `core` 和 `pinocchio::error::ProgramError`。
