@@ -292,8 +292,12 @@ pub fn assert_discriminator(account: &AccountView, expected: u8) -> Result<(), P
 ///
 /// # Implementation note
 ///
-/// Uses the rent sysvar minimum balance formula:
-/// `128 + data_len * LAMPORTS_PER_BYTE_YEAR * EXEMPTION_THRESHOLD`
+/// Uses hardcoded rent constants instead of Rent::get() sysvar,
+/// because Pinocchio doesn't expose the Rent sysvar directly and
+/// these values have been stable since Solana 1.x.
+/// If Solana ever changes rent parameters, this function must be updated.
+///
+/// Formula: `(128 + data_len) * 3480 * 2`
 ///
 /// # Errors
 ///
