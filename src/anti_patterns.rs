@@ -205,13 +205,14 @@
 //! ### What goes wrong
 //!
 //! A `#[repr(C)]` struct with mixed-alignment fields gets invisible padding.
-//! `u64` requires 8-byte alignment, so a `u8` field before it gets 7 bytes
-//! of padding. The struct's `size_of` won't match your expected byte layout,
-//! causing `AccountSchema::LEN` mismatch and incorrect data reads.
+//! `u64` requires 8-byte alignment, so when the preceding fields leave the
+//! offset misaligned, the compiler inserts padding bytes before it. The
+//! struct's `size_of` won't match your expected byte layout, causing
+//! `AccountSchema::LEN` mismatch and incorrect data reads.
 //!
 //! ### Wrong code
 //! ```rust,ignore
-//! // ❌ This struct has 7 bytes of hidden padding!
+//! // ❌ This struct has 6 bytes of hidden padding before `amount`!
 //! #[repr(C)]
 //! pub struct BadEscrow {
 //!     pub discriminator: u8,    // 1 byte
