@@ -178,8 +178,7 @@ mod tests {
         let mut account_data = [1u8; 8];
         let mut recipient_data = [];
         let mut account = mock_account_view([0u8; 32], [0u8; 32], 1, &mut account_data);
-        let mut recipient =
-            mock_account_view([1u8; 32], [0u8; 32], u64::MAX, &mut recipient_data);
+        let mut recipient = mock_account_view([1u8; 32], [0u8; 32], u64::MAX, &mut recipient_data);
         assert_eq!(
             close_account(&mut account, &mut recipient),
             Err(ProgramError::ArithmeticOverflow)
