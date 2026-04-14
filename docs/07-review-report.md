@@ -118,6 +118,10 @@
 - **语义风险**：`AccountSchema::validate` 已收紧为严格定长（`== LEN`）。这能更好表达固定布局零拷贝账户，但若未来需要支持 TLV / trailer bytes，必须由具体账户类型覆盖 `validate()` 并补充专门测试，不能默认沿用当前语义。
 - **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，优先回滚至 `85b2416`；若仅是本轮文档/知识层回归，可从当前收口基线 `825a401` 重新整理。 
 
+## 7.7 发布摘要
+
+本轮收口的发布摘要见 [`docs/09-release-notes.md`](./09-release-notes.md)，当前可发布基线为 `75e1e00`。
+
 ## Phase 7 验收标准
 
 - [x] 已完成的实现通过人工与机器审查并有签字记录

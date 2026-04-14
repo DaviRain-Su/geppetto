@@ -120,6 +120,8 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 
 **代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 当前已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`npm run docs:check` 已一键串联）；E3-07 / E3-08 仍待完成。
 
+最新发布摘要见 [`docs/09-release-notes.md`](./docs/09-release-notes.md)。
+
 Hackathon delivery target: **2026-05-11**
 
 ## License
