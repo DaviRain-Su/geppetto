@@ -1,12 +1,12 @@
 # Phase 2: Architecture — Geppetto
 
-> 状态：草稿
+> 状态：已归档（Phase 2 设计基线）
 > 日期：2026-04-13
 > 输入：Phase 0 商业验证 + Phase 1 PRD
 
 ---
 
-> **注意**：Phase 2 为架构设计草稿，所有 API 签名、类型名和模块路径以 Phase 3 技术规格为准。本文档中部分类型名（如 `AccountInfo`、`Pubkey`）在 Phase 3 中已更新为 Pinocchio 0.11 风格（`AccountView`、`Address`）。
+> **注意**：本文档保留为 Phase 2 架构设计基线。所有 API 签名、类型名和模块路径以 Phase 3 技术规格与当前实现为准。本文档中部分类型名（如 `AccountInfo`、`Pubkey`）在后续阶段已更新为 Pinocchio 0.11 风格（`AccountView`、`Address`）。
 
 ## 系统概览
 
@@ -167,7 +167,7 @@ memo = ["dep:pinocchio-memo"]
 
 # 预设组合，覆盖常见场景
 token-all = ["token", "token-2022", "ata"]   # SPL Token 全家桶
-full = ["system", "token-all", "memo"]        # 所有 CPI helpers
+full = ["system", "token-all", "memo", "log", "pubkey"]  # 所有运行时 CPI / utility helpers
 
 # 测试工具（testing.rs 导出的 helpers）
 test-utils = []
@@ -493,7 +493,7 @@ pub fn assert_discriminator(data: &[u8], expected: u8);
 
 Doc comments 中还覆盖**纯知识话题**：
 
-- litesvm vs mollusk-svm vs bankrun 选择指南
+- litesvm vs mollusk-svm 选择指南
 - 测试环境搭建模式
 - CU profiling 方法
 
@@ -644,7 +644,7 @@ token-2022 = ["dep:pinocchio-token-2022"]
 ata = ["dep:pinocchio-associated-token-account"]
 memo = ["dep:pinocchio-memo"]
 token-all = ["token", "token-2022", "ata"]
-full = ["system", "token-all", "memo"]
+full = ["system", "token-all", "memo", "log", "pubkey"]
 test-utils = []
 ```
 

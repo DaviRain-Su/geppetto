@@ -1,6 +1,6 @@
 # Phase 3: Technical Spec — Geppetto
 
-> 状态：草稿
+> 状态：已验收（现行技术基线）
 > 日期：2026-04-13
 > 输入：Phase 2 架构设计
 > 重要：代码必须与本规格 100% 一致。不一致时先改规格，再改代码。
@@ -37,7 +37,7 @@ token-2022 = ["dep:pinocchio-token-2022"]
 ata = ["dep:pinocchio-associated-token-account"]
 memo = ["dep:pinocchio-memo"]
 token-all = ["token", "token-2022", "ata"]
-full = ["system", "token-all", "memo"]
+full = ["system", "token-all", "memo", "log", "pubkey"]
 test-utils = []
 ```
 
@@ -1409,7 +1409,7 @@ pub fn assert_u64_le(data: &[u8], offset: usize, expected: u64, field_name: &str
 
 纯知识话题（doc comments）：
 
-- litesvm vs mollusk-svm vs bankrun 选择指南
+- litesvm vs mollusk-svm 选择指南
 - 测试环境搭建模板
 - CU profiling 方法
 

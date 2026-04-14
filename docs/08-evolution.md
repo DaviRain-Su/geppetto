@@ -62,7 +62,7 @@
 - 状态：Accepted
 - 理由：
   - 避免用户误把测试能力带入运行时依赖预期
-  - 与当前 `Cargo.toml` 实现保持一致：`full = ["system", "token-all", "memo"]`
+  - 与当前 `Cargo.toml` 实现保持一致：`full = ["system", "token-all", "memo", "log", "pubkey"]`
   - Phase 7 review 已验证这是高频误解点，需在长期治理里固化
 - 风险：用户误以为 “full = everything”。
 - 缓解：所有后续文档、CLI 初始化模板、示例工程都必须显式区分 runtime features 与 test utilities。

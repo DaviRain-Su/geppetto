@@ -62,10 +62,10 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 | `guard`         | Security helpers: `assert_signer`, `assert_writable`, `assert_owner`, `assert_pda`, `assert_discriminator`, `assert_rent_exempt` |
 | `schema`        | `AccountSchema` trait — zero-copy account layouts with compile-time metadata                                                     |
 | `dispatch`      | Standard instruction-dispatch pattern for `process_instruction`                                                                  |
-| `idioms`        | Doc-only: PDA derivation, CPI calls, Token/Token-2022, self-CPI events, TLV extensions                                           |
+| `idioms`        | Code + knowledge: PDA derivation, CPI calls, Token/Token-2022, self-CPI events, TLV extensions, helper functions                |
 | `anti_patterns` | Doc-only: common vulnerabilities and how to fix them                                                                             |
 | `client`        | Doc-only: TypeScript client construction, PDA derivation, account deserialization                                                |
-| `testing`       | Doc-only: litesvm / bankrun testing patterns                                                                                     |
+| `testing`       | Code + knowledge: litesvm / mollusk-svm testing patterns, assertion helpers                                                      |
 
 ## Design Principles
 

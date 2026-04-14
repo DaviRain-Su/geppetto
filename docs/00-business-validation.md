@@ -46,7 +46,7 @@ AI code agent 写 Solana 程序时：
 
 核心做三件事：
 
-1. **捆绑知识** — `cargo add geppetto` 后，知识以 Rust doc comments 形式内嵌在源码中。`cargo doc` 自动构建、`cargo test` 自动验证代码示例，不存在"文档过时但代码更新了"的问题。覆盖全链路：合约侧（账户模型、指令模式、安全检查、惯用法、反模式）+ 客户端侧（交易构建、PDA 推导、账户反序列化）+ 测试（litesvm/bankrun）。每次 `cargo update`，知识跟着更新。
+1. **捆绑知识** — `cargo add geppetto` 后，知识以 Rust doc comments 形式内嵌在源码中。`cargo doc` 自动构建、`cargo test` 自动验证代码示例，不存在"文档过时但代码更新了"的问题。覆盖全链路：合约侧（账户模型、指令模式、安全检查、惯用法、反模式）+ 客户端侧（交易构建、PDA 推导、账户反序列化）+ 测试（litesvm/mollusk-svm）。每次 `cargo update`，知识跟着更新。
 2. **约定代码** — 在 Pinocchio 之上提供一薄层约定模式：`AccountSchema` trait 定义账户布局、标准指令分发模式、`guard::*` 安全检查 helpers。不是宏魔法，展开后就是标准 Pinocchio 代码，agent 完全看得懂。
 3. **AGENTS.md 指引** — 告诉 agent："你的训练数据过时了，读 geppetto 源码的 doc comments 才是真相来源。运行 `cargo doc --open` 查看完整知识。"
 
@@ -195,7 +195,7 @@ Geppetto 将步骤 1-5 自动化：agent 自动读捆绑知识，自动用 guard
 - `src/idioms.rs` — 代码 + 知识模块：导出 close\_account、read\_u64\_le 等 helper 函数，同时覆盖 PDA、CPI、Token 交互等惯用法（doc comments）[^1]
 - `src/anti_patterns.rs` — 纯文档模块：常见漏洞 + 修复（doc comments，无导出代码）
 - `src/client.rs` — 纯文档模块：客户端知识（交易构建、PDA 推导、账户反序列化，TypeScript 示例）
-- `src/testing.rs` — 代码 + 知识模块：导出测试断言工具函数（feature-gated），同时覆盖 litesvm/bankrun 测试惯用法（doc comments）[^1]
+- `src/testing.rs` — 代码 + 知识模块：导出测试断言工具函数（feature-gated），同时覆盖 litesvm/mollusk-svm 测试惯用法（doc comments）[^1]
 - `examples/escrow/` — 完整 escrow 示例程序
 - `AGENTS.md` — agent 指引
 
