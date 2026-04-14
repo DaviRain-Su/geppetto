@@ -42,7 +42,7 @@ test('new command creates expected scaffold files', () => {
 
     const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
     assert.match(cargo, /name = "sample_program"/);
-    assert.match(stdout, /done new sample-program created=4 skipped=0/);
+    assert.match(stdout, /done new sample-program created=7 skipped=0/);
   } finally {
     removeDir(tempDir);
   }
@@ -120,7 +120,7 @@ test('new command allows creating into an existing empty directory', () => {
     const stdout = runCli(tempDir, ['new', projectName]);
 
     assert.equal(fs.existsSync(path.join(projectDir, 'Cargo.toml')), true);
-    assert.match(stdout, /done new empty-program created=4 skipped=0/);
+    assert.match(stdout, /done new empty-program created=7 skipped=0/);
   } finally {
     removeDir(tempDir);
   }
@@ -150,7 +150,7 @@ test('new command fails when directory already has generated files', () => {
   try {
     const projectDir = path.join(tempDir, projectName);
     const firstRun = runCli(tempDir, ['new', projectName]);
-    assert.match(firstRun, /done new sample-program created=4 skipped=0/);
+    assert.match(firstRun, /done new sample-program created=7 skipped=0/);
 
     assert.throws(() => {
       runCli(tempDir, ['new', projectName]);

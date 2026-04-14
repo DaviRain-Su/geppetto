@@ -9,6 +9,9 @@ test('new project manifest contains expected entries', () => {
     'Cargo.toml',
     'src/lib.rs',
     'src/processor.rs',
+    'src/state.rs',
+    'src/error.rs',
+    'src/instructions/mod.rs',
     'tests/svm.rs',
   ]);
 });
