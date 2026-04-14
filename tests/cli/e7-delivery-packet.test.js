@@ -5,9 +5,12 @@ const path = require('node:path');
 const test = require('node:test');
 
 const {
+  assertDeliveryPacketSchema,
   buildDeliveryPacket,
   parseActionPlanText,
   parseDiscussionTitle,
+  validateActionPlanSchema,
+  validateChecklistSchema,
 } = require('../../lib/e7-delivery-packet');
 
 function createTempDir() {
@@ -166,4 +169,62 @@ test('buildDeliveryPacket reports working tree dirty for send-now with strict=fa
   } finally {
     removeDir(tempDir);
   }
+});
+
+test('validateActionPlanSchema reports missing required fields', () => {
+  const content = `
+# E7-02 Action Plan
+
+## 1. 目标仓库
+
+- **目标仓库**：\`create-solana-dapp\`
+`;
+
+  const parsed = parseActionPlanText(content);
+  const errors = validateActionPlanSchema(content, parsed);
+
+  assert.ok(errors.some((item) => item.includes('动作类型')));
+  assert.ok(errors.some((item) => item.includes('决策')));
+  assert.ok(errors.some((item) => item.includes('拟议 PR 标题')));
+  assert.ok(errors.some((item) => item.includes('预期修改文件')));
+});
+
+test('validateChecklistSchema reports missing sections and items', () => {
+  const content = `
+# E7-04
+
+- 决策：\`Hold\`
+`;
+
+  const parsed = {
+    decision: 'hold',
+    conditions: [],
+  };
+  const errors = validateChecklistSchema(content, parsed);
+
+  assert.ok(errors.some((item) => item.includes('发送状态')));
+  assert.ok(errors.some((item) => item.includes('发送前必需条件')));
+  assert.ok(errors.some((item) => item.includes('checklist items')));
+});
+
+test('assertDeliveryPacketSchema throws on drifted inputs', () => {
+  const planContent = `
+# E7-02 Action Plan
+`;
+  const checklistContent = `
+## 发送状态
+- 决策：\`unknown\`
+`;
+
+  assert.throws(() => {
+    assertDeliveryPacketSchema({
+      planContent,
+      checklistContent,
+      plan: parseActionPlanText(planContent),
+      checklist: {
+        decision: 'unknown',
+        conditions: [],
+      },
+    });
+  }, /Delivery packet schema validation failed/);
 });
