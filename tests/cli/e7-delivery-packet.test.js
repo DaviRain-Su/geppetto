@@ -7,8 +7,10 @@ const test = require('node:test');
 const {
   assertDeliveryPacketSchema,
   buildDeliveryPacket,
+  parseArgv,
   parseActionPlanText,
   parseDiscussionTitle,
+  validateDeliveryPacketInputs,
   validateActionPlanSchema,
   validateChecklistSchema,
 } = require('../../lib/e7-delivery-packet');
@@ -227,4 +229,39 @@ test('assertDeliveryPacketSchema throws on drifted inputs', () => {
       },
     });
   }, /Delivery packet schema validation failed/);
+});
+
+test('parseArgv accepts validate-only with json', () => {
+  const parsed = parseArgv(['--validate-only', '--json']);
+
+  assert.equal(parsed.validateOnly, true);
+  assert.equal(parsed.json, true);
+  assert.equal(parsed.error, undefined);
+});
+
+test('parseArgv rejects validate-only with strict', () => {
+  const parsed = parseArgv(['--validate-only', '--strict']);
+
+  assert.equal(parsed.error, '--validate-only cannot be used with --strict');
+});
+
+test('validateDeliveryPacketInputs returns schema-only validation result', () => {
+  const tempDir = createTempDir();
+
+  try {
+    writeFixtures(tempDir);
+
+    const result = validateDeliveryPacketInputs({
+      cwd: tempDir,
+      validatedAt: '2026-04-14T00:00:00.000Z',
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.validatedAt, '2026-04-14T00:00:00.000Z');
+    assert.equal(result.decision, 'send-now');
+    assert.equal(result.conditions, 2);
+    assert.equal(result.sources.actionPlan, 'docs/11-e7-02-create-solana-dapp-action-plan.md');
+  } finally {
+    removeDir(tempDir);
+  }
 });
