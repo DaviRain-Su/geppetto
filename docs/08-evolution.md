@@ -1,307 +1,271 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：已完成
-> 日期：2026-04-13
-> 输入：Phase 7 审查报告（reviewed baseline = `85b2416`）
-> 目标：把 A-02 ~ A-23 的已交付结果固化为后续演化基线，并明确子模块 B/C 的推进顺序、复杂度预算与回滚策略。
+> 状态：进行中（起草版）
+> 日期：2026-04-14
+> 输入：Phase 7 最终审查报告 + 已验证基线 `ffa5535`
+> 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
 
-## 8.1 当前基线
+## 8.1 当前基线（Phase 8 起点）
 
-截至 Phase 7 最终审查基线 `85b2416`，Geppetto 已完成以下闭环：
+截至 `ffa5535`，Geppetto 已具备可继续演化的稳定基线：
 
-- 核心 crate：`guard` / `schema` / `dispatch` / `error` / `idioms`
-- 知识模块：`anti_patterns` / `client` / `testing` / crate-level docs
-- Agent 入口：`AGENTS.md` + 7 个多 agent 入口文件
-- 验证状态：`cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps`、`cargo fmt --check` 全通过
+- **核心 crate**：`guard` / `schema` / `dispatch` / `error` / `idioms` / `anti_patterns` / `client` / `testing`
+- **示例程序**：`examples/escrow/` 已覆盖 create / exchange / close 的状态流转，并通过 integration + svm 回归测试
+- **CLI MVP**：`geppetto-cli init` 已能生成 `AGENTS.md` 与多 agent 入口文件，且默认不覆盖已有文件
+- **多 agent 入口**：`AGENTS.md` + `CLAUDE.md` / `GEMINI.md` / `.cursor` / `.windsurf` / `.github` / `.amazonq` / `.aider`
+- **文档闭环**：PRD、架构、技术规格、测试规格、实现日志、审查报告、演化文档已形成单仓库链路
 
-这意味着 Phase 8 不再讨论“是否实现”，而是确认：
+当前稳定性结论：
 
-1. 哪些设计已经稳定，后续只能通过 ADR 变更；
-2. 哪些能力应放到子模块 B/C 演化，而不是继续膨胀核心 crate；
-3. 未来升级 `pinocchio` 或扩展 feature 时，如何保持文档、agent 指令与实现一致。
+- `cargo test --all-features --locked` 通过
+- `RUSTC_WRAPPER= cargo test --doc --locked` 通过
+- `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features --locked` 通过
+- `cargo fmt --check` 通过
+- `RUSTC_WRAPPER= cargo clippy --all-features --locked` 通过
+- `RUSTC_WRAPPER= cargo doc --no-deps --locked` 通过
 
-## 8.2 决策日志（ADR 风格）
+因此，Phase 8 的核心问题不再是“补齐基础实现”，而是：
 
-### ADR-001：单 crate 继续作为 Pinocchio 透传入口
+1. 如何在不破坏当前稳定契约的前提下继续扩展工具层；
+2. 如何让 CLI / 示例 / 文档 / agent 入口持续同步；
+3. 如何把当前已经验证过的规则沉淀为更低维护成本的流程。
 
-- 决策：`geppetto` 继续保持单 crate 结构；核心 SDK 直接 re-export，CPI helpers 维持 feature-gated 子模块。
+## 8.2 已稳定决策（ADR 风格）
+
+### ADR-001：公共使用面继续以 `geppetto::*` facade 为唯一教学入口
+
 - 状态：Accepted
+- 决策：所有面向用户、下游项目、agent 的公开文档与示例，统一使用 `geppetto::*`、`geppetto::token::*`、`geppetto::log::*`、`geppetto::pubkey::*`。
 - 理由：
-  - 对 agent 最友好，入口固定为 `geppetto::*`
-  - 迁移成本低，适合从官方 Pinocchio 模板逐步引入
-  - 与 PRD 中 “不包装、不改 API、仅透传 + 约束” 的定位一致
-- 风险：feature 组合增多后，说明文档和示例容易漂移。
-- 约束：新增 helper crate 只允许通过新 feature 引入，不拆第二个核心 crate。
+  - 这是产品契约，而非单纯实现细节；
+  - 能把上游 Pinocchio 生态差异隔离在 Geppetto 的知识层中；
+  - 已经在 Phase 7 中被证明是高频漂移点，必须固化。
+- 约束：内部架构/技术规格允许提及 `pinocchio::*`，但必须明确标为底层实现细节。
 
-### ADR-002：`AccountSchema` 继续使用 trait + const，暂不引入 derive 宏
+### ADR-002：`AccountSchema` 严格定长语义保持不变
 
-- 决策：保留当前 `AccountSchema` + `assert_account_size!` 模型，短期内不引入 proc-macro 自动派生。
 - 状态：Accepted
+- 决策：`AccountSchema::validate` 继续采用 `data.len() == LEN` 的严格定长语义。
 - 理由：
-  - 当前实现已经通过人工审查、单测和 doctest 验证
-  - trait + const 对 agent 可见性最好，字段布局信息可直接阅读
-  - 避免宏展开隐藏逻辑，降低审计成本
-- 风险：调用方手写 offset 时仍可能出错。
-- 缓解：
-  - 继续要求 `layout()`、`LEN`、`DISCRIMINATOR` 与测试夹具同步
-  - 若未来确实需要生成能力，优先放进子模块 B（CLI / codegen），而不是污染核心 runtime API
+  - 与固定布局、零拷贝账户模型一致；
+  - 能更早暴露错误布局、隐藏 padding 和错误反序列化；
+  - 已完成代码、测试和文档同步。
+- 约束：需要支持 TLV / trailer bytes 的账户类型，必须显式覆写 `validate()`，不能依赖默认实现。
 
-### ADR-003：知识文档与 agent 入口继续采用版本头 + 单一事实源
+### ADR-003：运行时 feature 与测试/工具 feature 持续分离
 
-- 决策：所有知识模块保持 `geppetto 版本 | pinocchio 版本 | 日期` 三段版本头；`AGENTS.md` 作为所有 agent 入口文件的单一事实源。
 - 状态：Accepted
+- 决策：`full` 只表示运行时 CPI helper 全集，不包含测试工具或其他开发期能力。
+- 当前定义：`full = ["system", "token-all", "memo", "log", "pubkey"]`
 - 理由：
-  - 已在 Phase 7 中证明这套机制能暴露知识新鲜度并承载审查修复
-  - 多入口文件只做跳转，减少规则分叉
-- 风险：入口文件与 `AGENTS.md` 内容漂移。
-- 缓解：子模块 B 的 `geppetto-cli init` 必须从同一模板生成所有入口文件。
+  - 避免把测试能力误表述为运行时依赖；
+  - 与当前 Cargo feature matrix 保持一致；
+  - 已是文档漂移的历史问题之一。
 
-### ADR-004：运行时 feature 与测试工具 feature 明确分离
+### ADR-004：安全语义继续遵循 docs-first + review-first
 
-- 决策：`full` 仅表示运行时 CPI helper 的全集，不包含 `test-utils`；测试工具保持独立 opt-in。
 - 状态：Accepted
+- 决策：涉及 signer / owner / PDA / discriminator / rent / close / schema 长度语义的变更，必须先更新 `docs/03-technical-spec.md`，再改代码，并在审查报告中留痕。
 - 理由：
-  - 避免用户误把测试能力带入运行时依赖预期
-  - 与当前 `Cargo.toml` 实现保持一致：`full = ["system", "token-all", "memo", "log", "pubkey"]`
-  - Phase 7 review 已验证这是高频误解点，需在长期治理里固化
-- 风险：用户误以为 “full = everything”。
-- 缓解：所有后续文档、CLI 初始化模板、示例工程都必须显式区分 runtime features 与 test utilities。
+  - Geppetto 的核心价值不仅是 helper API，还包括 agent 不会被错误知识误导；
+  - 这类语义漂移会直接影响生成质量和安全性。
 
-### ADR-005：核心安全语义继续走 docs-first + review-first 变更流程
+### ADR-005：escrow 示例继续作为“状态机示例”，而非盲目膨胀为全功能 token demo
 
-- 决策：凡是涉及 signer / owner / PDA / discriminator / rent / close 语义的变更，必须先更新 `docs/03-technical-spec.md`，再改代码，并在 Phase 7 风格报告中留痕。
 - 状态：Accepted
+- 决策：`examples/escrow/` 目前继续定位为最小、可审计、可回归的 escrow 状态机示例。
 - 理由：
-  - 当前项目的价值不只是代码，还包括“agent 能读懂且不会被误导”的契约
-  - 这些路径一旦漂移，会直接影响安全性或生成结果
-- 风险：为了赶进度绕过规格更新，导致文档与代码脱节。
-- 缓解：未来任何发布前检查都要把 spec diff、实现 diff、review report 一起核对。
+  - 当前示例的价值在于演示 `AccountSchema`、`guard::*`、`dispatch`、create 初始化语义与测试模式；
+  - 若直接扩张到完整 Token CPI / TS 客户端 / 多账户复杂路径，会让示例失去“最小可验证”的属性。
+- 约束：未来若要增加 token CPI 或 TS client，应以新增阶段性交付形式推进，而非破坏当前最小示例可读性。
 
-## 8.3 复杂度预算（按真实状态修订）
+### ADR-006：CLI 模板与仓库内 canonical 文件必须单源同步
+
+- 状态：Accepted
+- 决策：`geppetto-cli init` 生成的文件必须始终来自仓库内 canonical 模板，不允许 CLI 与仓库文档分叉维护。
+- 理由：
+  - 当前 CLI MVP 已验证生成与 skip 语义；
+  - 后续复杂度主要来自模板漂移，而不是命令本身。
+- 约束：所有入口模板修改必须同时更新仓库源文件与 CLI 测试。
+
+## 8.3 复杂度预算（以当前真实状态修订）
 
 ### 运行时公开面预算
 
-当前公开面已包含：
+当前运行时公开面已包含：
 
 - 1 个核心 trait：`AccountSchema`
 - 1 个编译期宏：`assert_account_size!`
-- 12 个 guard helpers + 若干 well-known constants
+- 12 个 guard helpers + well-known program constants
 - 1 个 dispatch helper + 2 个 discriminator constants
 - 4 个 idioms helpers
-- 3 个测试辅助函数（`test-utils` feature-gated）
+- 多个 feature-gated CPI re-export 子模块
 
-后续预算规则：
+预算规则：
 
-- 在 `1.0` 前，每个新里程碑最多新增 `<= 3` 个运行时公开 API；
-- 若新增 API 会改变 agent 推荐写法，必须先补 ADR；
-- 能放入示例、CLI 模板、测试工具层解决的问题，不进入核心运行时模块。
+- 在 `0.2.x` 之前，每个里程碑最多新增 `<= 3` 个核心运行时 API；
+- 能通过文档、示例、CLI、测试工具解决的问题，不新增到 runtime 核心面；
+- 若新增 API 会改变 agent 推荐写法，必须先补 ADR 和技术规格。
 
-### 依赖与版本预算
+### 示例与工具预算
 
-- `pinocchio` 主依赖短期锁定在 `0.11.x`
-- 升级 `pinocchio` minor/major 前，必须完成：
-  - feature matrix 复核
-  - knowledge version header 更新
-  - `cargo test --all-features`
-  - `cargo clippy --all-features`
-  - `cargo doc --no-deps`
+- 每个示例目录必须满足：
+  - 至少一个 happy-path integration test
+  - 至少一个失败路径回归 test
+  - 若依赖 `.so`，必须给出缺失时的可执行提示
+- CLI / 脚手架层功能必须保持“薄包装”：
+  - 调用 cargo / npm / mollusk / litesvm
+  - 不重复发明自己的构建系统
 
-### 文档与规则预算
+### 文档治理预算
 
-- `AGENTS.md` 保持唯一源文件；其他入口文件不允许手写分叉规则
-- 知识模块只在以下情况扩容：
-  - 新增了真实功能
-  - 审查发现高频误导点
-  - `pinocchio` / Solana 官方模式发生演化
+- `AGENTS.md` 继续为单一事实源；
+- 多 agent 入口文件仅作为同步镜像，不承载独立规则；
+- 知识模块只有在以下情况下扩容：
+  - 新增真实功能；
+  - 审查发现高频误导点；
+  - 上游 Pinocchio / Solana 模式发生变化。
 
-## 8.4 长期演化路径（Milestones）
+## 8.4 下一阶段里程碑（按优先级排序）
 
-### Milestone E1：子模块 B — `geppetto-cli init`
+### Milestone E1：CLI 硬化与模板同步自动校验
 
-- 目标：实现 `npx geppetto-cli init`
-- 范围：B-01 ~ B-03
-- 交付：
-  - 生成 `AGENTS.md`
-  - 生成 7 个 agent 入口文件
-  - 已有文件默认不覆盖
-- 风险：
-  - 模板内容与仓库内 `AGENTS.md` 漂移
-  - CLI 初始化出的内容与最新 feature 说明不一致
-- 回滚策略：
-  - 若模板校验失败，停止发布 npm 包，仅保留仓库内手工入口文件为 canonical source
+- 状态：**Partially delivered / MVP 已有**
+- 当前已有：
+  - `geppetto-cli init`
+  - 初始化测试
+  - 默认不覆盖已有文件
+- 下一步：
+  1. 增加模板完整性检查，确保 npm 包内容与仓库 canonical 文件一致；
+  2. 增加 `--dry-run` 或等价预览能力；
+  3. 明确模板版本与 crate/doc 版本的对应关系。
+- 风险：模板漂移造成 agent 入口与仓库规则不一致。
+- 回滚策略：若自动同步链路不稳定，保留当前 MVP，只做严格测试，不增加额外 CLI 表面。
 
-### Milestone E2：子模块 C — escrow demo + fixture 对齐
+### Milestone E2：escrow 示例扩展为“端到端对齐示例”
 
-- 目标：提供一个从合约到 TypeScript 客户端的端到端示例
-- 范围：C-01 ~ C-03
-- 交付：
-  - escrow 示例程序
-  - litesvm 端到端测试
-  - Rust fixture → TypeScript 反序列化对齐验证
-- 风险：
-  - 示例随着核心 crate 演化而失效
-  - client 文档与真实 fixture 偏移量不一致
-- 回滚策略：
-  - 若示例先失稳，不回滚核心 crate；先冻结 demo 到最后一个已验证 tag，并标记示例版本
+- 状态：**Partially delivered**
+- 当前已有：
+  - Rust 合约
+  - integration / svm 测试
+  - create 初始化路径和防重初始化语义
+- 下一步：
+  1. 增加 Rust fixture → TypeScript 反序列化对齐验证；
+  2. 让 `client.rs` 中的客户端示例与 escrow fixture 建立明确映射；
+  3. 在不增加过多复杂度的前提下，提供一条最小 TS 读取路径。
+- 风险：示例很容易因文档演化而失配。
+- 回滚策略：若端到端 client 层先失稳，不回滚核心 crate；冻结 demo 到最后一个已验证 tag。
 
-### Milestone E3：文档与规则自动化
+### Milestone E3：文档/规则自动一致性检查
 
-- 目标：减少“知识对了，但入口文件或示例漂移”的维护成本
-- 候选内容：
-  - AGENTS 多入口文件自动生成脚本
-  - knowledge version / pinocchio version 一致性检查
-  - `client.rs` 示例与 fixture 存在性校验
-- 风险：自动化本身成为额外维护负担
-- 回滚策略：若自动化复杂度高于收益，保留人工流程，但必须保留检查清单
+- 状态：**Planned**
+- 目标：降低“代码已对，但知识入口漂移”的维护成本。
+- 候选能力：
+  - 校验知识模块版本头与 `Cargo.toml` 一致；
+  - 校验多 agent 入口文件与 `AGENTS.md` 的同步状态；
+  - 校验 `docs/03-technical-spec.md` 中的关键 feature matrix 与 `Cargo.toml` 一致。
+- 风险：检查器本身成为新的维护负担。
+- 回滚策略：若自动化过重，退回人工 checklist，但保留脚本接口与最小 smoke checks。
 
-### Milestone E4：上游变更自动追踪
+### Milestone E4：上游依赖更新追踪
 
-- 目标：当 pinocchio / mollusk / litesvm 发布新版本时，自动检测并创建更新 PR
-- 实现方案（GitHub Actions）：
-  - **定期检查**（每周 cron）：对比 Cargo.toml 中的 pinned version 与 crates.io 最新版本
-  - **自动 PR**：如果上游有新版本，创建 PR，内容包括：
-    1. Cargo.toml 版本 bump
-    2. `cargo check --all-features` 结果
-    3. `cargo test --all-features` 结果
-    4. 上游 CHANGELOG 链接
-    5. 需要人工检查的知识模块列表（根据 lib.rs Upstream Dependency Map）
-  - **标签**：`upstream-update`，不自动合并，需人工审查知识模块
-- 最小 CI workflow 草案：
+- 状态：**Planned**
+- 目标：在 pinocchio / mollusk / litesvm 更新时，自动触发版本审查流程。
+- 最小能力：
+  - 定时发现新版本；
+  - 自动创建依赖 bump PR；
+  - 附带 `cargo check/test/doc` 结果与上游 changelog 链接；
+  - 列出需要人工复核的知识模块。
+- 风险：上游 minor/major 更新触发大面积知识失效。
+- 回滚策略：PR 可自动创建，但永不自动合并；知识模块必须人工签字。
 
-```yaml
-# .github/workflows/upstream-check.yml
-name: Check upstream versions
-on:
-  schedule:
-    - cron: '0 0 * * 1'  # every Monday
-  workflow_dispatch:
+### Milestone E5：`geppetto new` 约定式项目脚手架
 
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check pinocchio
-        run: |
-          CURRENT=$(grep 'pinocchio =' Cargo.toml | head -1 | grep -oP '"\K[^"]+')
-          LATEST=$(cargo search pinocchio --limit 1 | grep -oP '"\K[^"]+')
-          if [ "$CURRENT" != "$LATEST" ]; then
-            echo "pinocchio update available: $CURRENT → $LATEST"
-            echo "NEEDS_UPDATE=true" >> $GITHUB_ENV
-          fi
-      # Similar for mollusk-svm, litesvm
-      - name: Create PR if needed
-        if: env.NEEDS_UPDATE == 'true'
-        uses: peter-evans/create-pull-request@v5
-        with:
-          title: 'deps: upstream version update available'
-          labels: upstream-update
-```
+- 状态：**Planned**
+- 前置条件：E1 完成并稳定。
+- 目标：从“init 入口文件”升级到“生成一套标准 Pinocchio + Geppetto 结构”。
+- 交付方向：
+  - `src/lib.rs` / `processor.rs` / `state.rs` / `error.rs` / `instructions/`
+  - `tests/svm.rs`
+  - `AGENTS.md` 与多 agent 入口
+- 不做：derive macro、隐藏逻辑、重型框架封装。
+- 风险：约定过强引发高级用户抵触。
+- 缓解：脚手架只负责生成起点，不限制用户后续重构。
 
-- 风险：上游 breaking change 可能导致大量知识模块需要重写
-- 缓解：PR 模板中包含"受影响模块清单"（从 lib.rs Dependency Map 自动生成），人工逐个验证
+### Milestone E6：`geppetto test` / `geppetto audit` 工具层
 
-### Milestone E5：约定层 — `geppetto new` 项目脚手架
+- 状态：**Planned**
+- 目标：把当前散落的最佳实践收敛为统一命令。
+- `geppetto test` 候选能力：
+  - 自动判定是否需要 `cargo build-sbf`
+  - 统一执行 root tests + example tests
+  - 输出 compute units / budget 报告
+- `geppetto audit` 候选能力：
+  - 扫描 7 个已知反模式
+  - 检查 handler 是否遗漏关键 guard
+  - 检查 `AccountSchema::LEN` / `layout()` 自洽性
+- 风险：工具本身升级维护成本过高。
+- 缓解：必须建立在现有 cargo / mollusk / 文档契约之上做薄包装。
 
-- 目标：从"知识告诉你怎么做"升级到"约定帮你做对"
-- 类比：Next.js 早期的 `pages/` 约定——不是框架魔法，是目录结构 = 行为
-- 交付：
-  - `geppetto new <project-name>` 命令，生成标准 Pinocchio 项目结构：
-    ```
-    my-program/
-    ├── Cargo.toml              ← geppetto 依赖 + crate-type = ["cdylib", "lib"]
-    ├── AGENTS.md               ← 自动生成
-    ├── CLAUDE.md / GEMINI.md   ← 多 agent 入口
-    ├── src/
-    │   ├── lib.rs              ← entrypoint 骨架（program_entrypoint + nostd_panic_handler）
-    │   ├── processor.rs        ← dispatch::split_tag + match 骨架
-    │   ├── state.rs            ← AccountSchema 示例
-    │   ├── error.rs            ← 自定义错误枚举骨架
-    │   └── instructions/
-    │       └── mod.rs
-    └── tests/
-        └── svm.rs              ← mollusk-svm 测试骨架
-    ```
-  - 约定规则（写入 AGENTS.md）：
-    - `src/instructions/` 下每个文件 = 一条指令
-    - `src/state.rs` 中每个 `impl AccountSchema` = 一个账户类型
-    - `src/processor.rs` 的 match 分支 = 指令路由表
-  - Agent 打开项目，读 AGENTS.md，立刻知道文件在哪、该改哪里
-- 前置条件：E1（geppetto-cli）完成
-- 风险：约定过死导致高级用户抵触
-- 缓解：约定是建议不是强制——生成后用户可以自由修改结构
-- 不做：不做 derive macro，不做代码生成，不隐藏任何逻辑
+### Milestone E7：生态协同与上游反馈
 
-### Milestone E6：工具层 — `geppetto test` / `geppetto audit`
+- 状态：**Backlog**
+- 目标：将已验证的 agent-first 规则反馈到更大的 Pinocchio / Solana 生态。
+- 候选动作：
+  1. 向 Pinocchio 或相关官方仓库贡献 AGENTS / skill / getting-started 资料；
+  2. 向 `create-solana-dapp` 贡献 Geppetto 友好模板；
+  3. 把 Geppetto 的“公共 facade + 知识约束”方法沉淀为外部可复用规范。
+- 前置条件：E1~E3 至少有一项完成并获得真实项目验证。
 
-- 目标：从"知识教你用 mollusk"升级到"一个命令帮你跑完"
-- 类比：Next.js 的 `next build` / `next lint`——底层是 webpack + eslint，但开发者不需要配置
-- 交付：
-  - `geppetto test`：
-    1. 自动执行 `cargo build-sbf`（如果 .so 不存在或源码更新了）
-    2. 执行 `cargo test --all-features`
-    3. 输出 CU 消耗报告（从 mollusk 的 `compute_units_consumed` 提取）
-    4. 如果有 CU 预算文件（`cu-budget.toml`），对比并报告超标
-  - `geppetto audit`：
-    1. 静态检查：扫描源码中是否存在 `anti_patterns.rs` 列出的 7 个反模式
-    2. Guard 覆盖率：检查每条指令的 handler 是否调用了 `assert_signer` / `assert_owner` 等
-    3. AccountSchema 一致性：检查 `LEN` 和 `layout()` 的偏移量是否自洽
-    4. 输出报告：通过 / 警告 / 错误
-  - `geppetto docs`：
-    1. 执行 `cargo doc --no-deps`
-    2. 验证所有知识模块的版本头是否与 Cargo.toml 匹配
-    3. 检查是否有过期知识（>3 个月）
-- 前置条件：E5（约定层）完成，项目结构可预测
-- 风险：工具维护成本高，工具本身也需要跟随上游更新
-- 缓解：工具层是薄包装，底层调用 cargo/mollusk/clippy，不重新实现
-- 不做：不做 LSP 集成，不做 IDE 插件，不做实时 watch 模式（初版）
+## 8.5 Phase 8 近期执行顺序（建议）
 
-### Milestone E7：生态整合 — 官方合作
+建议按以下顺序推进，而不是并行摊大饼：
 
-- 目标：将 Geppetto 的知识和约定回馈官方生态
-- 可能的合作方式：
-  1. 给 `anza-xyz/pinocchio` 提 PR：添加 AGENTS.md + 官方 skill
-  2. 给 `anza-xyz/mollusk` 提 PR：添加 "Getting Started" agent 知识
-  3. 给 `solana-foundation/solana-dev-skill` 提 PR：增强 Pinocchio 部分
-  4. 给 `create-solana-dapp` 提 PR：添加 `pinocchio-geppetto` 模板
-  5. 将 Geppetto 提交为官方推荐的 Pinocchio skill/harness
-- 前置条件：E6 完成，有真实用户验证
-- 指标：
-  - Geppetto 被 >=3 个独立项目使用
-  - escrow demo 的 A/B 对比数据有说服力
-  - 官方核心贡献者认可 agent-first 方向
-- 不做：不主动分裂社区，不定位为"替代 pinocchio"
+1. **先做 E1：CLI 硬化**
+   - 成本低、收益高、最容易锁定模板漂移问题；
+2. **再做 E2：escrow ↔ client 对齐示例**
+   - 直接强化 Geppetto 的“合约到客户端”价值主张；
+3. **然后做 E3：文档一致性检查**
+   - 用自动化守住前两步成果；
+4. **最后再考虑 E5/E6**
+   - 脚手架和工具命令应建立在稳定模板与稳定示例之上。
 
-## 8.5 演化治理规则
+不建议当前阶段优先做的内容：
 
-- 任何关键逻辑变更都必须先更新 `docs/03-technical-spec.md` 再改代码。
+- 大规模扩张 runtime API
+- 引入 derive macro
+- 在 example 中一次性加入完整 Token CPI、前端、IDL/codegen 全家桶
+- 将 Geppetto 变成重型框架
+
+## 8.6 Phase 8 治理规则
+
+- 任何关键逻辑变更必须先更新 `docs/03-technical-spec.md` 再改代码；
 - 任何新增错误码必须同步更新：
-  - `src/error.rs`
+  - `src/error.rs` 或示例错误定义
   - 相关测试
-  - 对应知识文档
-  - 客户端错误映射示例
-- `AGENTS.md` 与多入口文件必须同次变更、同次审查。
-- 若 `pinocchio` 版本变化或知识头超过 3 个月未刷新，必须重新验证并更新时间戳。
-- 发布前最小检查集合固定为：
-  - `cargo test --all-features`
-  - `cargo clippy --all-features`
-  - `cargo doc --no-deps`
-  - `cargo fmt --check`
+  - 相关知识文档
+  - 客户端错误映射示例（若对外可见）
+- `AGENTS.md` 与多入口文件必须同次变更、同次审查；
+- escrow 示例若改变 create / exchange / close 语义，必须同步更新：
+  - `examples/escrow/src/lib.rs`
+  - integration / svm tests
+  - `docs/07-review-report.md`（若为安全/契约级修正）
+- 遇到本地 `sccache: Operation not permitted` 环境问题，不视为代码回归；必要时统一使用 `RUSTC_WRAPPER=` 运行 Rust 命令。
 
-## 8.6 退化与回滚原则
+## 8.7 退化与回滚原则
 
-- 核心安全语义（`AccountSchema`、`assert_pda`、`assert_owner`、`close_account`）出现回归时，优先回滚到 `85b2416` 这一最新 Phase 7 审查完成基线。
-- 子模块 B/C 允许独立冻结，不应为了示例或 CLI 问题回滚核心 crate 的已验证安全修复。
-- 若出现文档/agent 入口与实现不一致：
-  - 暂停新发布
-  - 先修复文档与入口文件
-  - 再恢复后续开发
-- 遇到签名、owner、PDA、rent、close 相关高风险变更，必须先完成离线审查再合并。
+- 核心安全语义（`AccountSchema`、`assert_pda`、`assert_ata`、`assert_owner`、`close_account`）出现回归时，优先回滚到 `ffa5535` 这一 Phase 8 起点基线；
+- 示例、CLI、自动化工具允许独立冻结，不应为了它们的问题回滚核心 crate 已验证语义；
+- 若出现文档 / agent 入口 / 示例与实现不一致：
+  1. 暂停新发布；
+  2. 优先修复知识层与入口文件；
+  3. 再继续功能开发；
+- 涉及 signer / owner / PDA / rent / close / schema length 的高风险变更，必须重新进入 Phase 7 风格的人工审查流程。
 
-## 8.7 Phase 8 验收标准
+## 8.8 Phase 8 验收标准（草案）
 
-- [x] ADR 与复杂度预算更新为项目真实状态
-- [x] 长期演化路径清晰，包含下一阶段里程碑与回退条件
-- [x] 版本治理规则可执行，且与实际发布流程对齐
-- [x] Phase 7 审查报告与变更历史可追溯
-
+- [ ] 至少完成 1 个工具层或模板层里程碑（优先 E1 / E2 / E3）
+- [ ] CLI、示例、文档三者至少建立 1 条自动一致性检查链路
+- [ ] 不新增未经 ADR 记录的核心运行时公开语义
+- [ ] 保持 `ffa5535` 基线以来的测试/文档/格式检查可稳定复现
+- [ ] 所有新增演化能力都具备明确回滚策略
