@@ -16,7 +16,7 @@
 //! │   ├── mod.rs                  ← pub mod per instruction
 //! │   └── create/                 ← one directory per instruction
 //! │       ├── mod.rs              ← re-exports
-//! │       ├── accounts.rs         ← TryFrom<&[AccountView]> with all guard checks
+//! │       ├── accounts.rs         ← TryFrom<&mut [AccountView]> with all guard checks
 //! │       ├── data.rs             ← TryFrom<&[u8]> for instruction payload
 //! │       └── processor.rs        ← business logic only (no validation here)
 //! ├── state/
@@ -81,7 +81,7 @@
 //! |--------|-----------|
 //! | Entrypoint | `program_entrypoint!` + `nostd_panic_handler!` |
 //! | Dispatch | `split_first()` on instruction data, match on tag |
-//! | Accounts | `TryFrom<&[AccountView]>` in dedicated `accounts.rs` |
+//! | Accounts | `TryFrom<&mut [AccountView]>` in dedicated `accounts.rs` |
 //! | Data | `TryFrom<&[u8]>` in dedicated `data.rs` |
 //! | Validation | ALL in `accounts.rs`, NONE in `processor.rs` |
 //! | State | Unit struct + offset constants OR `#[repr(C)]` + explicit padding |
