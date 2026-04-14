@@ -21,3 +21,14 @@ test('new project manifest validates manifest invariants', () => {
     assertNewProjectManifest();
   });
 });
+
+test('new project test template includes E5-05 svm test scaffold', () => {
+  const testsTemplate = NEW_PROJECT_TEMPLATE_FILES.find(
+    (entry) => entry.relativePath === 'tests/svm.rs',
+  );
+  assert.ok(testsTemplate);
+  assert.match(testsTemplate.content, /build_ix_data/);
+  assert.match(testsTemplate.content, /setup_mollusk\(\)/);
+  assert.match(testsTemplate.content, /test_svm_placeholder_happy_path/);
+  assert.match(testsTemplate.content, /test_svm_placeholder_error_path/);
+});
