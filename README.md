@@ -148,10 +148,10 @@ Use `--skip-build-sbf` only when you intentionally only want core tests.
 | Phase 5: Test Spec           | ✅ 完成                           |
 | Phase 6: Implementation      | ✅ 完成                           |
 | Phase 7: Review & Deploy     | ✅ 完成                           |
-| Phase 8: Evolution           | 进行中（E1/E2/E3/E4/E5/E6 已交付；下一步 E7） |
+| Phase 8: Evolution           | 进行中（E1/E2/E3/E4/E5/E6 已交付；E7-01~E7-03 已闭环，E7-04 已确认：外部发送窗口暂缓） |
 | E5: geppetto new scaffolding  | 已交付（E5-01 ~ E5-09 全部完成） |
 
-**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`），并完成跨文档收口；E4（上游依赖追踪 + 差异检查 + 人工审查门禁）、E5（`geppetto new` 约定式脚手架）与 E6（`geppetto test` / `geppetto audit`）均已交付。下一步进入 E7。
+**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`），并完成跨文档收口；E4（上游依赖追踪 + 差异检查 + 人工审查门禁）、E5（`geppetto new` 约定式脚手架）与 E6（`geppetto test` / `geppetto audit`）均已交付。E7 文档与里程碑已对齐：E7-01~E7-03 已完成，E7-04 决策为“先不对外发送，待窗口确认后执行 discussion / PR”。
 
 最新发布摘要见 [`docs/09-release-notes.md`](./docs/09-release-notes.md)。
 

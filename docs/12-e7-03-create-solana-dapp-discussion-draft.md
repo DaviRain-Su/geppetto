@@ -1,6 +1,6 @@
 # E7-03 Discussion Draft — create-solana-dapp
 
-> 状态：草稿（待外部提交）
+> 状态：草稿（内部暂缓）
 > 目标仓库：`create-solana-dapp`
 > 动作类型：Discussion 优先，必要时再转 docs-only PR
 > 路径约束：本轮仅推进 `create-solana-dapp`，不并行扩展到其他上游仓库
@@ -181,7 +181,7 @@ npx geppetto-cli init
 
 - [ ] 工作树干净，仅保留本次外联相关改动
 - [ ] `docs/11-e7-02-create-solana-dapp-action-plan.md` 与本草稿一致
-- [ ] 决策状态保持为 `Send now`
+- [ ] 决策状态保持为 `Hold（待窗口确认）`
 - [ ] 本轮仅选择 `create-solana-dapp` 作为单一路径
 - [ ] 如需转 PR，优先使用 docs-only 最小改动范围
 
@@ -192,7 +192,7 @@ npx geppetto-cli init
 - [x] 已完成单路径约束：当前只推进 create-solana-dapp，不并行发起 Pinocchio / agent-skill 其他外部动作。
 - [x] 已完成发送策略：先从 Discussion 起步，获得反馈后再按最小 `docs-only` PR 路径推进；本阶段不在本仓库内直接发起外部变更。
 - [x] 已完成文档链路：`docs/10-e7-01-external-alignment.md`、`docs/11-e7-02-create-solana-dapp-action-plan.md` 与本讨论草案保持同口径。
-- [ ] 外部发送执行：在时机窗口确认后，将该草案转为 discussion / PR（当前状态：待执行）。
+- [ ] 外部发送执行：在时机窗口确认后，将该草案转为 discussion / PR（当前状态：待窗口确认，暂缓）。
 
 ## 下一个内部动作
 
