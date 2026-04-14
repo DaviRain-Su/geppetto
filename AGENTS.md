@@ -7,16 +7,21 @@
 
 | Task | Read this FIRST | Where |
 |------|----------------|-------|
-| Writing an instruction handler | Account destructuring, guard pattern | `src/idioms.rs` module docs |
-| Defining account state | AccountSchema trait, layout, offsets | `src/schema.rs` module docs |
-| Adding security checks | 12 assert_* functions | `src/guard.rs` module docs |
-| Setting up dispatch | split_tag, no catch-all | `src/dispatch.rs` module docs |
-| Writing tests | mollusk-svm + litesvm complete guides | `src/testing.rs` module docs |
-| Building TypeScript client | PDA, deserialization, offsets | `src/client.rs` module docs |
-| Reviewing for vulnerabilities | 6 common attack patterns | `src/anti_patterns.rs` module docs |
-| Choosing features / dependencies | Feature matrix | `src/lib.rs` crate docs |
-| Understanding error codes | GeppettoError 0x4700-0x4703 | `src/error.rs` module docs |
-| Upgrading upstream deps | Dependency map + upgrade protocol | `src/lib.rs` "Upstream Dependency Map" section |
+| Setting up a new program | Entrypoint, Cargo.toml template | `src/idioms/entrypoint.rs` |
+| Writing an instruction handler | Account destructuring, TryFrom | `src/idioms/accounts.rs` |
+| Doing CPI calls | Transfer, CreateAccount, Token | `src/idioms/cpi.rs` |
+| Working with PDAs | derive_program_address (const-generic!) | `src/idioms/pda.rs` |
+| Emitting events / logging | Self-CPI events, pinocchio-log | `src/idioms/events.rs` |
+| Structuring a production program | Official file layout, conventions | `src/idioms/architecture.rs` |
+| Defining account state | AccountSchema trait, layout, offsets | `src/schema.rs` |
+| Adding security checks | 12 assert_* functions | `src/guard.rs` |
+| Setting up dispatch | split_tag, no catch-all | `src/dispatch.rs` |
+| Writing mollusk-svm tests | Complete API reference + guide | `src/testing/mollusk.rs` |
+| Writing litesvm tests | Stateful transaction tests | `src/testing/litesvm.rs` |
+| Building TypeScript client | PDA, deserialization, Codama | `src/client.rs` |
+| Reviewing for vulnerabilities | 7 common attack patterns | `src/anti_patterns.rs` |
+| Choosing features / dependencies | Feature matrix, upstream map | `src/lib.rs` |
+| Understanding error codes | GeppettoError 0x4700-0x4703 | `src/error.rs` |
 
 ## Rules (non-negotiable)
 
