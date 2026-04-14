@@ -30,8 +30,9 @@
     "geppetto:test": "node ./bin/geppetto-cli.js test",
     "geppetto:audit": "node ./bin/geppetto-cli.js audit",
     "geppetto:audit:strict": "node ./bin/geppetto-cli.js audit --strict",
-    "test": "node --test tests/cli/init.test.js tests/cli/templates.test.js tests/cli/pack.test.js tests/cli/knowledge.test.js tests/cli/agent-entry.test.js tests/cli/feature-matrix.test.js tests/cli/upstream-version-check.test.js tests/cli/upstream-impact-map.test.js tests/cli/upstream-diff-check.test.js tests/cli/upstream-pr-template.test.js tests/cli/new-manifest.test.js tests/cli/new.test.js tests/cli/test-command.test.js tests/cli/e7-readiness.test.js",
+    "test": "node --test tests/cli/init.test.js tests/cli/templates.test.js tests/cli/pack.test.js tests/cli/knowledge.test.js tests/cli/agent-entry.test.js tests/cli/feature-matrix.test.js tests/cli/upstream-version-check.test.js tests/cli/upstream-impact-map.test.js tests/cli/upstream-diff-check.test.js tests/cli/upstream-pr-template.test.js tests/cli/new-manifest.test.js tests/cli/new.test.js tests/cli/test-command.test.js tests/cli/e7-readiness.test.js tests/cli/e7-delivery-packet.test.js",
     "e7:readiness": "node ./lib/e7-readiness-check.js",
+    "e7:delivery": "node ./lib/e7-delivery-packet.js",
     "upstream:check": "node ./lib/upstream-diff-check.js",
     "upstream:pr-body": "node ./lib/upstream-pr-template.js",
     "test:escrow-client-alignment": "cargo test --manifest-path examples/escrow/Cargo.toml --test generate_fixtures && tsx examples/escrow/tests/client_alignment.ts"

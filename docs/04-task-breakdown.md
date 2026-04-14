@@ -409,6 +409,37 @@ E7-01 → E7-02 → E7-03 → E7-04 → E7-05
 
 ---
 
+## Phase 8 增量任务：E8 外部动作执行封包
+
+> 基线：`1a1d429`
+> 前提：E7-01~E7-05 已完成，外部发送仍处于 Hold
+> 目标：把对外动作计划从“文档口径”转成“可复用执行包”，用于窗口确认前后的一致交接。
+> 状态：已交付（E8-01~E8-03 已完成；发送仍 Hold）
+
+### E8 Sprint 1：执行材料标准化
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E8-01 | **外部发送执行包生成器** — 将 E7 action plan / discussion draft / send checklist 组装为可复用输出（可读文案 + JSON） | 2h | E7-05 | `lib/e7-delivery-packet.js`、`tests/cli/e7-delivery-packet.test.js` |
+| E8-02 | **执行包命令接入** — 在 `package.json` 增加 `e7:delivery` 命令并更新任务文档接线口径 | 1h | E8-01 | `npm run e7:delivery` |
+| E8-03 | **E8 闭口更新** — 将 8 系列文档状态从 E7 进行中转到 E8 已收口（不发送不扩展） | 1h | E8-02 | README + 关键 8 系列文档（`docs/04-task-breakdown.md` / `docs/06-implementation-log.md` / `docs/07-review-report.md` / `docs/08-evolution.md`）口径一致 |
+
+### E8 关键路径
+
+```
+E8-01 → E8-02 → E8-03
+```
+
+**E8 总工时**：约 4h
+
+**E8 完成定义（DoD）**：
+- 可用命令自动生成 E7 外部执行材料清单与状态；
+- `npm run e7:delivery` 与 `npm test` 对接到代码回归；
+- 持续保持 E7→E8 的状态接线一致（docs 与 README 同步）。
+- E8-03 完成：`E8-01`/`E8-02` 成果已收口到 `README.md`、`docs/04-task-breakdown.md`、`docs/06-implementation-log.md`、`docs/07-review-report.md`、`docs/08-evolution.md`；`E7-04` Hold 条件与发送边界仍保持。
+
+---
+
 ## 关键路径
 
 ```

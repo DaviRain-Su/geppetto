@@ -201,6 +201,17 @@
   - 不在本仓库内做对外提交或 PR 草案的实际投递；
   - 任何外部动作必须等窗口恢复再统一出发。
 
+## 7.12 E8 外部动作执行材料标准化（已完成）
+
+- 目标：将 E7 对外文档（action plan / discussion draft / checklist）转为统一的“发送执行包”，减少手工转写。
+- 交付：
+  - `lib/e7-delivery-packet.js`：聚合 `docs/11-e7-02`、`docs/12-e7-03`、`docs/13-e7-04`；
+  - `tests/cli/e7-delivery-packet.test.js`：覆盖发送预检通过、缺失条件、工作树脏态场景；
+  - `npm run e7:delivery`：对外动作材料生成入口，支持 `--json` / `--out` / `--strict`；
+  - `docs/04-task-breakdown.md` / `docs/06-implementation-log.md` / `docs/08-evolution.md`：更新为 E8 口径收口。
+- 当前约束：执行包仅用于内部窗口评估，不代表立即对外发送；`send-now` 在 E7 checklist 未满足时仍保持阻塞。
+- 回归关注：`docs/11/12/13` 命名与结构变动可能影响解析，需与外部动作前确认后更新脚本提取规则。
+
 ## Phase 7 验收标准
 
 - [x] 已完成的实现通过人工与机器审查并有签字记录
