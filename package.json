@@ -27,7 +27,7 @@
   "scripts": {
     "docs:check": "node ./lib/knowledge-check.js && node ./lib/agent-entry-check.js && node ./lib/feature-matrix-check.js && node ./lib/upstream-version-check.js",
     "release:check": "node ./lib/release-check.js",
-    "test": "node --test tests/cli/init.test.js tests/cli/templates.test.js tests/cli/pack.test.js tests/cli/knowledge.test.js tests/cli/agent-entry.test.js tests/cli/feature-matrix.test.js tests/cli/upstream-version-check.test.js",
+    "test": "node --test tests/cli/init.test.js tests/cli/templates.test.js tests/cli/pack.test.js tests/cli/knowledge.test.js tests/cli/agent-entry.test.js tests/cli/feature-matrix.test.js tests/cli/upstream-version-check.test.js tests/cli/upstream-impact-map.test.js",
     "test:escrow-client-alignment": "cargo test --manifest-path examples/escrow/Cargo.toml --test generate_fixtures && tsx examples/escrow/tests/client_alignment.ts"
   },
   "engines": {
