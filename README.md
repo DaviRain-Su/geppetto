@@ -78,6 +78,21 @@ npx geppetto-cli new my-program
 
 After generation, users are expected to customize the skeleton directly for their domain logic; the output is intentionally small and explicit.
 
+### Additional CLI helpers
+
+Run unified local checks:
+
+```bash
+# Validate both crates: root + escrow example tests
+npx geppetto-cli test
+
+# Minimal static audit gate (fmt + check, add --strict for clippy)
+npx geppetto-cli audit --strict
+```
+
+`geppetto test` will auto-build `examples/escrow` SBF artifact if missing.  
+Use `--skip-build-sbf` only when you intentionally only want core tests.
+
 ### CLI template/version contract
 
 - `geppetto-cli init` copies the canonical agent entry files that live at this repository root (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor`, `.windsurf`, `.github`, `.amazonq`, `.aider.conf.yml`).
@@ -133,10 +148,10 @@ After generation, users are expected to customize the skeleton directly for thei
 | Phase 5: Test Spec           | ✅ 完成                           |
 | Phase 6: Implementation      | ✅ 完成                           |
 | Phase 7: Review & Deploy     | ✅ 完成                           |
-| Phase 8: Evolution           | 进行中（E1/E2/E3/E4/E5 已交付；E6 规划中） |
+| Phase 8: Evolution           | 进行中（E1/E2/E3/E4/E5/E6 已交付；下一步 E7） |
 | E5: geppetto new scaffolding  | 已交付（E5-01 ~ E5-09 全部完成） |
 
-**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`，并完成跨文档收口）；E4 已完成（上游依赖追踪 + 差异检查 + 人工审查门禁）；E5 已完成（`geppetto new` 脚手架交付与收口）。下一步进入 E6。
+**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`），并完成跨文档收口；E4（上游依赖追踪 + 差异检查 + 人工审查门禁）、E5（`geppetto new` 约定式脚手架）与 E6（`geppetto test` / `geppetto audit`）均已交付。下一步进入 E7。
 
 最新发布摘要见 [`docs/09-release-notes.md`](./docs/09-release-notes.md)。
 

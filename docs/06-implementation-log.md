@@ -1,16 +1,16 @@
 # Phase 6: Implementation Log — Geppetto
 
-> 状态：已完成（E5-09 收口完成）
+> 状态：已完成（E6-01 ~ E6-04 已完成）
 > 日期：2026-04-14
 > 输入：Phase 5 测试规格
 
 本阶段从 Phase 3/5 的契约开始实现。
 
-**当前代码状态（2026-04-13）**：
+**当前代码状态（2026-04-14）**：
 - `Cargo.toml` — 完整（依赖、features、metadata 与 Phase 3 一致）
 - `src/lib.rs` — 完整（`#![no_std]`、re-export、feature gates、模块声明、crate doc）
 - `src/{error,schema,guard,dispatch,idioms}.rs` — 已实现并通过 `cargo check`
-- `src/{anti_patterns,client,testing}.rs` — 空文件（知识文档/测试工具待后续补充）
+- `src/{anti_patterns,client,testing}.rs` — 7 个反模式文档、客户端知识、测试知识与断言工具文档已补齐
 - `src/main.rs` — 已删除（library crate 不需要 binary entrypoint）
 - A-02 ~ A-13 全部已完成
 
@@ -86,7 +86,9 @@
 - 2026-04-14：Phase 8 E5-04/E5-05/E5-06 完成 — 生成 Rust 骨架、测试骨架与 agent 入口复用，确保 `new` 与 `init` 共享 canonical 规则入口。
 - 2026-04-14：Phase 8 E5-07/E5-08 完成 — 完成生成结果 smoke test 与 README / `docs/08-evolution.md` 文档接线，明确“起点骨架、非框架”定位。
 - 2026-04-14：Phase 8 E5-09 完成 — 本阶段补入 E5 收口记录，完成 `docs/06-implementation-log.md` 与 `docs/07-review-report.md` 闭环更新，下一阶段转向 E6。
-- **下一步**：转入 E6（`geppetto test` / `geppetto audit`）工具层扩展规划。
+- 2026-04-14：Phase 8 E6-01/E6-02 完成 — `geppetto test` / `geppetto audit` 命令落地，支持 root 示例统一测试、SBF 缺失自动构建提示、`fmt/check` 与可选 `clippy` 检查。
+- 2026-04-14：Phase 8 E6-03/E6-04 完成 — README / `docs/04/06/07/08` 接线并补齐 `release:check`（新增 `geppetto:test` + `geppetto:audit` 执行路径），形成 E6 工具门禁最小链路。
+- **下一步**：转入 E7（生态协同与上游反馈）规划。
 
 ## 6.3 验收条件（进入 Phase 7）
 
@@ -97,3 +99,4 @@
 - [x] `cargo doc --no-deps` 0 警告，`cargo clippy --all-features` 0 警告。
 - [x] 关键任务间无阻塞，执行日志持续记录并附 1 句风险说明。
 - [x] E5（`geppetto new` 约定式项目脚手架）交付闭环完成，收口文档已更新至 `docs/06` / `docs/07` / `docs/08`。
+- [x] E6 最小工具层已完成：`geppetto test`、`geppetto audit` 落地并接入 `release:check`，配套文档与日志可追溯。

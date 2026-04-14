@@ -26,6 +26,9 @@
 | escrow 示例构建 | `RUSTC_WRAPPER= cargo build-sbf --manifest-path examples/escrow/Cargo.toml` | 通过 |
 | escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features --locked` | integration 与 svm 全部通过 |
 | CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试套件、`docs:check` 与 `npm pack --dry-run --json` 打包校验） |
+| `geppetto test` | `NPM_CONFIG_CACHE=/tmp/npm-cache-test geppetto-cli test` | 通过（root + escrow 示例测试；缺失 SBF 时自动构建） |
+| `geppetto audit` | `geppetto-cli audit` | 通过（`fmt` + `check`；`--strict` 启用 `clippy`） |
+| CLI 发布链路 | `npm run release:check` | 通过（`npm test`、`docs:check`、`geppetto:test`、`geppetto:audit` 与 `npm pack --dry-run --json`） |
 | escrow ↔ client 对齐检查 | `npm run test:escrow-client-alignment` | 通过（Rust fixture 生成 + TypeScript 字段对齐） |
 | 文档一致性检查 | `npm run docs:check` | 通过（19 个知识头目标 + 7 个 agent 入口镜像 + feature matrix） |
 
@@ -103,10 +106,11 @@
 - `CLAUDE.md` / `GEMINI.md` / `.cursor/rules/geppetto.md` / `.windsurf/rules/geppetto.md` / `.github/copilot-instructions.md` / `.amazonq/rules/geppetto.md` / `.aider.conf.yml`
 
 **CLI / 发布校验**：
-- `bin/geppetto-cli.js` — `init` / `new` 命令入口、`--dry-run` 参数解析与 usage/help 输出
+- `bin/geppetto-cli.js` — `init` / `new` / `test` / `audit` 命令入口、参数解析与 usage/help 输出
 - `lib/init.js` / `lib/templates.js` / `lib/release-check.js` — canonical 模板复制逻辑、manifest 约束与发布前检查入口
 - `lib/new-manifest.js` / `lib/new.js` — `geppetto new` 模板清单、生成规则与非覆盖校验
-- `tests/cli/init.test.js` / `tests/cli/templates.test.js` / `tests/cli/pack.test.js` / `tests/cli/new-manifest.test.js` / `tests/cli/new.test.js` — init/new 创建、模板一致性、非覆盖与 smoke 生成行为
+- `lib/test.js` / `lib/audit.js` — `geppetto test` / `geppetto audit` 命令的计划生成与执行层
+- `tests/cli/init.test.js` / `tests/cli/templates.test.js` / `tests/cli/pack.test.js` / `tests/cli/knowledge.test.js` / `tests/cli/agent-entry.test.js` / `tests/cli/feature-matrix.test.js` / `tests/cli/upstream-version-check.test.js` / `tests/cli/upstream-impact-map.test.js` / `tests/cli/upstream-diff-check.test.js` / `tests/cli/upstream-pr-template.test.js` / `tests/cli/new-manifest.test.js` / `tests/cli/new.test.js` / `tests/cli/test-command.test.js` — init/new/uptest/audit/test 命令创建、模板一致性与行为回归
 
 **文档一致性校验**：
 - `lib/knowledge-manifest.js` / `lib/knowledge-check.js` — 知识版本头目标清单与可执行检查器
@@ -127,6 +131,7 @@
 - **已知风险**：PDA/ATA 单元测试依赖 `solana-address` 的 `curve25519` dev-dependency。若未来升级 `pinocchio` 导致 `solana-address` major 版本变更，需重新确认该 feature 的可用性。
 - **语义风险**：`AccountSchema::validate` 已收紧为严格定长（`== LEN`）。这能更好表达固定布局零拷贝账户，但若未来需要支持 TLV / trailer bytes，必须由具体账户类型覆盖 `validate()` 并补充专门测试，不能默认沿用当前语义。
 - **E5 风险**：`geppetto new` 为最小起步模板工具，默认不覆盖既有目录；若后续引入覆盖/模板行为变更，必须补充 `tests/cli/new*.test.js` 与 `README/docs/08` 对应约束更新。
+- **E6 风险**：`geppetto test` 与 `geppetto audit` 依赖 cargo 环境、sbf 构建器与脚本执行上下文；建议在 release 与本地脚本中保留可重现参数（如 `NPM_CONFIG_CACHE=/tmp/npm-cache-test`）并输出失败重试建议。
 - **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，回滚到当前可发布基线 `1a1d429`。文档/知识层回归也从 `1a1d429` 重新整理。
 
 ## 7.7 发布摘要
@@ -163,6 +168,23 @@
   - 变量替换严格化：未知变量 fail-fast，不保留 `{{...}}` 占位；
   - 模板源统一：`new` 与 `init` 共享 canonical 模板源。
 - E5 交付物已进入 `docs/06-implementation-log.md` 与 `docs/08-evolution.md`，当前状态转入 E6 计划（`geppetto test` / `geppetto audit`）。
+
+## 7.10 E6 工具层闭环（已交付）
+
+- `geppetto test` 已上线：
+  - 默认行为：执行 root crate 与 `examples/escrow` 的 `--all-features` 测试；
+  - `examples/escrow` 缺失 `.so` 时，默认执行 `cargo build-sbf --manifest-path examples/escrow/Cargo.toml`；
+  - 支持 `--skip-examples`、`--build-sbf`、`--skip-build-sbf`。
+- `geppetto audit` 已上线：
+  - 默认静态检查：`cargo fmt --check` + `cargo check --all-features`；
+  - `--strict` 新增 `cargo clippy --all-targets --all-features -- -D warnings`。
+- 接线与发布：
+  - `package.json` 新增 `geppetto:test`、`geppetto:audit`、`geppetto:audit:strict`；
+  - `release:check` 已将 `geppetto:test` 与 `geppetto:audit` 纳入统一门禁链路；
+  - `docs/04-task-breakdown.md`、`docs/06-implementation-log.md`、`docs/08-evolution.md` 已同步接线口径。
+- 人工约束：
+  - 工具入口行为按最小命令语义保留，不自动替代业务审查；
+  - 新增命令参数需同步更新 docs 与单元回归测试。
 
 ## Phase 7 验收标准
 

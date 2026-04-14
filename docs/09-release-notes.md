@@ -2,7 +2,7 @@
 
 > 基线：`75e1e00`（功能基线）
 > 文档收口补丁：`1a1d429`
-> 标题：Phase 8 E3/E4/E5：文档一致性、上游更新追踪与脚手架收口
+> 标题：Phase 8 E3/E4/E5/E6：文档一致性、上游更新追踪与工具层收口
 > 日期：2026-04-14
 > 状态：可发布基线
 
@@ -89,6 +89,14 @@ npm run docs:check
 - 与 `init` 共享 canonical agent 入口模板源；
 - `README` / `docs/08-evolution.md` / `docs/06` / `docs/07` 完成跨文档闭环同步；
 
+### 6. `geppetto test` / `geppetto audit` 工具层收口
+
+命令集已扩展为开发/发布一体的最小工具层：
+
+- `geppetto test`：统一运行 root 与 escrow 示例测试，示例测试前支持缺失 `.so` 的自动构建；
+- `geppetto audit`：最小静态审查门禁，默认 `fmt/check`，`--strict` 开启 `clippy`；
+- `npm run release:check` 串联文档一致性与上述两个命令，形成一次性发布前检查入口。
+
 ## Changelog
 
 ### 新增
@@ -121,6 +129,7 @@ npm run docs:check
 - 反模式条目数与 hidden padding 文案一致性
 - escrow 顶层示例说明与当前状态机实现对齐
 - geppetto new 约定式脚手架与 E5 收口
+- `geppetto test` 与 `geppetto audit` 最小工具层
 
 ### 更新文档
 
@@ -130,6 +139,7 @@ npm run docs:check
 - `docs/06-implementation-log.md`
 - `docs/07-review-report.md`
 - `docs/08-evolution.md`
+- `docs/09-release-notes.md`
 
 这些文档现已反映：
 
@@ -138,7 +148,7 @@ npm run docs:check
 - E3 已交付到 E3-08（文档收口已完成）
 - E4 已完成到 E4-09（上游依赖追踪与审查发布门禁收口）
 - E5 已完成到 E5-09（`geppetto new` 脚手架收口）
-- 当前 Phase 8 的后续事项主要是 E6 的工具层扩展
+- 当前 Phase 8 的后续事项主要是 E7（生态协同与上游反馈）
 
 ## 验证状态
 
@@ -153,6 +163,8 @@ npm run docs:check
 - `npm test` ✅
 - `npm run docs:check` ✅
 - `npm run test:escrow-client-alignment` ✅
+- `npm run geppetto:test` ✅
+- `npm run geppetto:audit` ✅
 - `npm run release:check` ✅
 
 ## 已知非阻塞项
@@ -174,3 +186,4 @@ RUSTC_WRAPPER=
 - strengthened CLI template packaging and dry-run flow
 - introduced executable docs consistency gates for knowledge headers, agent entry mirrors, and feature matrix alignment
 - added `geppetto new` minimal scaffolding and E5-09 closure
+- added `geppetto test` / `geppetto audit` delivery (E6)

@@ -1,6 +1,6 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：进行中（E1/E2/E3/E4/E5 已交付；E6 规划中）
+> 状态：进行中（E1/E2/E3/E4/E5 已交付；E6 已上线；E7 进行中）
 > 日期：2026-04-14
 > 输入：Phase 7 最终审查报告 + 已验证基线 `1a1d429`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
@@ -235,34 +235,41 @@
   - `AGENTS.md` 与多 agent 入口
 - 不做：derive macro、隐藏逻辑、重型框架封装。
 - 下一步：
-  - 进入 E6 规划，聚焦 `geppetto test` / `geppetto audit`。
+  - 进入 E7：生态协同与上游反馈（优先输出可执行对齐建议，不先做并行提 PR）。
 - 风险：约定过强引发高级用户抵触。
 - 缓解：脚手架只负责生成起点，不限制用户后续重构。
 
 ### Milestone E6：`geppetto test` / `geppetto audit` 工具层
 
-- 状态：**Planned**
-- 目标：把当前散落的最佳实践收敛为统一命令。
+- 状态：**Delivered**
+- 目标：把当前散落的最佳实践收敛为统一命令（已交付 `geppetto test` 与 `geppetto audit` 最小能力）。
 - `geppetto test` 候选能力：
-  - 自动判定是否需要 `cargo build-sbf`
+  - 自动判定是否需要 `cargo build-sbf`（缺失时默认触发）
   - 统一执行 root tests + example tests
   - 输出 compute units / budget 报告
-- `geppetto audit` 候选能力：
-  - 扫描 7 个已知反模式
-  - 检查 handler 是否遗漏关键 guard
-  - 检查 `AccountSchema::LEN` / `layout()` 自洽性
+- `geppetto audit` 最小能力：
+  - fmt/check 静态门禁
+  - `--strict` 启用 clippy（可复用现有 CI 风格）
+- 里程碑成果：
+  - `geppetto test` / `geppetto audit` CLI 命令已接入 `package.json` 与 `release:check`
+  - 文档与交付报告已同步到 `docs/04/06/07/08`
 - 风险：工具本身升级维护成本过高。
-- 缓解：必须建立在现有 cargo / mollusk / 文档契约之上做薄包装。
+- 缓解：仅做薄包装，严格复用 cargo / docs / 示例已有语义边界。
 
 ### Milestone E7：生态协同与上游反馈
 
-- 状态：**Backlog**
+- 状态：**进行中**
 - 目标：将已验证的 agent-first 规则反馈到更大的 Pinocchio / Solana 生态。
 - 候选动作：
   1. 向 Pinocchio 或相关官方仓库贡献 AGENTS / skill / getting-started 资料；
   2. 向 `create-solana-dapp` 贡献 Geppetto 友好模板；
   3. 把 Geppetto 的“公共 facade + 知识约束”方法沉淀为外部可复用规范。
 - 前置条件：E1~E3 至少有一项完成并获得真实项目验证。
+- 当前状态建议：
+  - 已完成文档级对齐与任务拆解；
+  - 已形成 create-solana-dapp 优先外部动作草案（单一路径）；
+  - 外部草案详见 `docs/10-e7-01-external-alignment.md`。
+  - 可执行提交计划详见 `docs/11-e7-02-create-solana-dapp-action-plan.md`。
 
 ## 8.5 Phase 8 近期执行顺序（建议）
 
@@ -277,12 +284,13 @@
 4. **推进 E4：上游依赖更新追踪**
    - 已完成：manifest、版本检查、影响映射、diff 检查脚本、workflow 草案、PR 审查模板、人工审查门禁与最小验证；
    - 里程碑闭环（E4-09）已完成；
-   - 下一步：转向 E6；
+   - 下一步：转向 E5-E7；
 5. **完成 E5 收口**
-   - E5-01 到 E5-09 已全部完成；
-   - E5 已形成文档闭环，`docs/06` / `docs/07` / `docs/08` 均同步为已交付；
-   - 下一步进入 E6 工具化方向（`geppetto test` / `geppetto audit`）。
-   - E6 工具命令应建立在稳定模板与稳定示例之上。
+  - E5-01 到 E5-09 已全部完成；
+  - E5 已形成文档闭环，`docs/06` / `docs/07` / `docs/08` 均同步为已交付；
+  - E6 已上线：`geppetto test` / `geppetto audit`，并接入 `release:check`。
+6. **进入 E7**
+  - 由 E7 讨论工具输出可复用度、生态协同与上游反馈扩展路径。
 
 不建议当前阶段优先做的内容：
 
