@@ -27,6 +27,28 @@ function runCli(cwd, args = []) {
   });
 }
 
+function listFilesRecursively(rootDir) {
+  const results = [];
+
+  function walk(currentDir) {
+    for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+      const absolutePath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        walk(absolutePath);
+      } else {
+        results.push(path.relative(rootDir, absolutePath).split(path.sep).join('/'));
+      }
+    }
+  }
+
+  walk(rootDir);
+  return results.sort();
+}
+
+function getSmokeTestTemplateFiles() {
+  return getNewProjectTemplateEntries().map((entry) => entry.relativePath).sort();
+}
+
 test('new command creates expected scaffold files', () => {
   const tempDir = createTempDir();
   const projectName = 'sample-program';
@@ -44,6 +66,53 @@ test('new command creates expected scaffold files', () => {
     const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
     assert.match(cargo, /name = "sample_program"/);
     assert.match(stdout, /done new sample-program created=15 skipped=0/);
+  } finally {
+    removeDir(tempDir);
+  }
+});
+
+test('new command smoke test generates a complete scaffold', () => {
+  const tempDir = createTempDir();
+  const projectName = 'demo-program';
+  const expectedTemplateFiles = getSmokeTestTemplateFiles();
+  const expectedCreated = expectedTemplateFiles.length;
+
+  try {
+    const stdout = runCli(tempDir, ['new', projectName]);
+    const projectDir = path.join(tempDir, projectName);
+
+    assert.deepEqual(listFilesRecursively(projectDir), expectedTemplateFiles);
+    assert.match(stdout, new RegExp(`done new ${projectName} created=${expectedCreated} skipped=0`));
+
+    for (const relativePath of [
+      'Cargo.toml',
+      'src/lib.rs',
+      'src/processor.rs',
+      'src/state.rs',
+      'src/error.rs',
+      'src/instructions/mod.rs',
+      'tests/svm.rs',
+      'AGENTS.md',
+      'CLAUDE.md',
+      'GEMINI.md',
+      '.aider.conf.yml',
+      '.amazonq/rules/geppetto.md',
+      '.cursor/rules/geppetto.md',
+      '.windsurf/rules/geppetto.md',
+      '.github/copilot-instructions.md',
+    ]) {
+      const outputPath = path.join(projectDir, relativePath);
+      assert.equal(fs.existsSync(outputPath), true, `${relativePath} was not created`);
+    }
+
+    const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
+    const processor = fs.readFileSync(path.join(projectDir, 'src/processor.rs'), 'utf8');
+    const svmTest = fs.readFileSync(path.join(projectDir, 'tests/svm.rs'), 'utf8');
+
+    assert.match(cargo, /name = "demo_program"/);
+    assert.match(processor, /\/\/ demo_program/);
+    assert.match(svmTest, /CHANGE_ME/);
+    assert.equal(/\{\{[A-Z0-9_]+\}\}/.test(svmTest), false, 'generated svm test contains unresolved placeholder');
   } finally {
     removeDir(tempDir);
   }
