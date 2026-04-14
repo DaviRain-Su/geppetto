@@ -245,8 +245,8 @@ E3-01 → E3-02 → E3-03 → E3-06 → E3-07 → E3-08
 
 | ID | 任务 | 预估 | 依赖 | 产出 |
 |----|------|------|------|------|
-| E4-01 | **上游依赖清单固化** — 明确需要追踪的 crates（`pinocchio`、`pinocchio-system`、`pinocchio-token`、`pinocchio-token-2022`、`pinocchio-associated-token-account`、`pinocchio-memo`、`pinocchio-log`、`pinocchio-pubkey`、`mollusk-svm`、`litesvm`）与当前仓库来源位置 | 2h | 无 | 依赖追踪 manifest |
-| E4-02 | **版本解析脚本** — 从 `Cargo.toml` / lockfile 中提取当前 pinned 版本，形成机器可读输出 | 2h | E4-01 | 当前版本解析脚本 |
+| E4-01 | **上游依赖清单固化** — 产出机器可读 manifest（JSON/JS 常量），明确需要追踪的 crates 及来源位置：`pinocchio*` 系列来自根 `Cargo.toml`，`mollusk-svm` 来自 `examples/escrow/Cargo.toml`，`litesvm` 当前按“文档/知识版本源”记录（主要对应 `src/testing/litesvm.rs`） | 2h | 无 | 依赖追踪 manifest（含来源/上游/当前版本字段） |
+| E4-02 | **版本解析脚本** — 从根 `Cargo.toml`、`examples/escrow/Cargo.toml`、lockfile 与知识头/文档源中提取当前版本，形成机器可读输出 | 2h | E4-01 | 当前版本解析脚本 |
 | E4-03 | **知识影响映射** — 为每个上游依赖列出需要人工复核的知识模块/文档范围（如 `idioms`、`testing`、`client`） | 2h | E4-01 | 影响模块清单 |
 
 ### E4 Sprint 2：检查与 PR 草案自动化
@@ -254,7 +254,7 @@ E3-01 → E3-02 → E3-03 → E3-06 → E3-07 → E3-08
 | ID | 任务 | 预估 | 依赖 | 产出 |
 |----|------|------|------|------|
 | E4-04 | **上游检查脚本** — 查询 crates.io 最新版本并比较当前版本，输出“是否存在更新”与差异摘要 | 3h | E4-02 | 可执行版本发现脚本 |
-| E4-05 | **GitHub Actions workflow 草案** — 新增手动触发 / 定时触发的 `upstream-check` workflow，执行版本发现并产生日志 | 3h | E4-04 | `.github/workflows/upstream-check.yml` 草案 |
+| E4-05 | **GitHub Actions workflow 草案** — 新增 `.github/workflows/` 目录与最小可运行的 `upstream-check.yml`，支持手动触发 / 定时触发，执行版本发现并产生日志 | 3h | E4-04 | `.github/workflows/upstream-check.yml` 最小草案 |
 | E4-06 | **PR 描述模板** — 约定上游更新 PR 需包含版本差异、测试结果、CHANGELOG 链接、知识影响模块列表 | 2h | E4-03,E4-05 | PR 模板 / 输出格式 |
 
 ### E4 Sprint 3：审查策略与收口
@@ -276,7 +276,7 @@ E4-01 → E4-02 → E4-04 → E4-05 → E4-07 → E4-09
 **E4 总工时**：约 18h
 
 **E4 完成定义（DoD）**：
-- [ ] 上游依赖追踪范围明确且可机器读取；
+- [ ] 上游依赖追踪范围明确且可机器读取（含来源位置、当前版本、上游名称）；
 - [ ] 能自动检测当前 pinned 版本与 crates.io 最新版本差异；
 - [ ] 存在可手动/定时触发的 workflow 草案；
 - [ ] 自动化只负责发现与建议信息，不自动合并依赖更新；
