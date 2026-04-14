@@ -285,6 +285,57 @@ E4-01 → E4-02 → E4-04 → E4-05 → E4-07 → E4-09
 
 ---
 
+## Phase 8 增量任务：E5 `geppetto new` 约定式项目脚手架
+
+> 基线：`b7fcacc`
+> 前提：E1（CLI 模板链路）与 E4（上游依赖追踪）已完成
+> 目标：从 `geppetto-cli init` 升级到可生成最小 Pinocchio + Geppetto 项目结构的 `geppetto new` 脚手架，但保持“显式代码、薄包装、不隐藏逻辑”的约束。
+> 状态：待启动
+
+### E5 Sprint 1：脚手架入口与模板清单
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E5-01 | **命令入口 + 模板 manifest + 快照测试** — 为 `geppetto new <project-name>` 增加 CLI 入口、项目模板清单与最小快照测试，确保生成结果结构稳定可复现 | 4h | E1-03 | `geppetto new` 最小入口 + 模板 manifest + snapshot tests |
+| E5-02 | **目标目录与非覆盖语义** — 明确目标目录不存在/已存在时的行为，拒绝危险覆盖，并补错误路径测试 | 2h | E5-01 | 安全创建语义 + 回归测试 |
+| E5-03 | **模板变量替换** — 支持项目名、crate 名、程序目录名等基础变量替换，但不引入复杂模板引擎 | 3h | E5-01 | 最小变量替换能力 |
+
+### E5 Sprint 2：最小项目骨架生成
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E5-04 | **Rust 项目骨架模板** — 生成 `Cargo.toml`、`src/lib.rs`、`processor.rs`、`state.rs`、`error.rs`、`instructions/mod.rs` 的最小可读骨架 | 4h | E5-03 | 可生成的 Rust 项目骨架 |
+| E5-05 | **测试骨架模板** — 生成最小 `tests/svm.rs` / 示例 fixture 入口，保证新项目知道测试落点 | 3h | E5-04 | 测试骨架模板 |
+| E5-06 | **Agent 入口集成** — 将已有 `AGENTS.md` / 多 agent 入口生成逻辑接入 `geppetto new`，避免与 `init` 形成两套模板源 | 2h | E5-01 | `new` 与 `init` 模板源统一 |
+
+### E5 Sprint 3：验证与收口
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E5-07 | **生成结果 smoke test** — 在临时目录运行 `geppetto new demo-program`，验证目录树、关键文件内容与 snapshot 一致 | 2h | E5-04,E5-05,E5-06 | 端到端生成测试 |
+| E5-08 | **README / docs 接线** — 在 README 与 `docs/08-evolution.md` 中说明 `geppetto new` 的定位、约束与非目标 | 2h | E5-07 | 文档接线 |
+| E5-09 | **E5 收口文档** — 将实现结果补入 `docs/06-implementation-log.md` / `docs/07-review-report.md` / `docs/08-evolution.md` | 1h | E5-08 | 文档闭环 |
+
+### E5 关键路径
+
+```
+E5-01 → E5-03 → E5-04 → E5-05 → E5-07 → E5-08 → E5-09
+     └────→ E5-02
+     └────→ E5-06 ───────────────┘
+```
+
+**E5 总工时**：约 23h
+
+**E5 完成定义（DoD）**：
+- [ ] `geppetto new <project-name>` 可生成最小约定式项目结构；
+- [ ] 模板源与 `init` 共用或明确复用，不引入第二套 canonical 入口模板；
+- [ ] 生成结果具有快照/目录树回归测试；
+- [ ] 默认不做危险覆盖；
+- [ ] README / Phase 8 文档明确 `new` 的定位、约束与非目标；
+- [ ] E5 结果在 Phase 6/7/8 文档中可追溯。
+
+---
+
 ## 关键路径
 
 ```
