@@ -1,6 +1,6 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：已交付（E1/E2/E3 已交付，后续扩展待推进）
+> 状态：进行中（E1/E2/E3 已交付；E4 追踪链路已启动）
 > 日期：2026-04-14
 > 输入：Phase 7 最终审查报告 + 已验证基线 `6982280`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
@@ -193,15 +193,27 @@
 
 ### Milestone E4：上游依赖更新追踪
 
-- 状态：**Planned**
-- 目标：在 pinocchio / mollusk / litesvm 更新时，自动触发版本审查流程。
+- 状态：**In Progress（E4-07 / E4-08 已完成，等待发布化闭环）**
+- 目标：在 pinocchio / mollusk / litesvm 更新时，自动触发版本审查流程，并输出可直接用于人工审核的 PR 草稿。
 - 最小能力：
   - 定时发现新版本；
-  - 自动创建依赖 bump PR；
-  - 附带 `cargo check/test/doc` 结果与上游 changelog 链接；
+  - 支持离线运行/可手工触发的 workflow；
+  - `upstream-check` + PR body 生成器产出机器可读报告；
+  - 附带版本差异、scope 与 required checks；
   - 列出需要人工复核的知识模块。
 - 风险：上游 minor/major 更新触发大面积知识失效。
-- 回滚策略：PR 可自动创建，但永不自动合并；知识模块必须人工签字。
+- 回滚策略：不自动合并任何依赖更新；必须由人工完成复核、签字后再合并，并确认相关知识模块无漂移风险。
+
+#### E4-07 人工审查门禁（草案）
+
+规则：
+
+- Upstream update automation may detect and prepare review artifacts, but dependency updates must never be auto-merged without manual knowledge review.
+- 审查入口要求：
+  - 先跑 `npm run upstream:check -- --json` 与 `npm run upstream:pr-body -- --from-json <result.json>`；
+  - 逐条确认 `reviewScope` 覆盖了所有受影响的知识模块与文档；
+  - 优先人工核对 `changelog / CHANGELOG` 与破坏性变更说明；
+  - 若有 `update-available`，必须确认影响范围通过后再进入更新流程。
 
 ### Milestone E5：`geppetto new` 约定式项目脚手架
 
@@ -251,7 +263,10 @@
    - 已完成；当前已具备最小 Rust fixture ↔ TypeScript 对齐链路；
 3. **然后做 E3：文档一致性检查**
    - 已完成知识头、agent 入口镜像与 feature matrix 检查；接线与收口已完成，`docs:check` 已接入 `release:check`；
-4. **最后再考虑 E5/E6**
+4. **推进 E4：上游依赖更新追踪**
+   - 已完成：manifest、版本检查、影响映射、diff 检查脚本、workflow 草案、PR 审查模板、人工审查门禁与最小验证；
+   - 下一步：补齐 E4-09 记录并转向 E5 / E6；
+5. **最后再考虑 E5/E6**
    - 脚手架和工具命令应建立在稳定模板与稳定示例之上。
 
 不建议当前阶段优先做的内容：

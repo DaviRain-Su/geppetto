@@ -116,9 +116,9 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 | Phase 5: Test Spec           | ✅ 完成                           |
 | Phase 6: Implementation      | ✅ 完成                           |
 | Phase 7: Review & Deploy     | ✅ 完成                           |
-| Phase 8: Evolution           | 已完成（E1/E2/E3 全部交付；后续优先级：E4/E5） |
+| Phase 8: Evolution           | 进行中（E1/E2/E3 全部交付；E4 执行中） |
 
-**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`，并完成跨文档收口）。
+**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`，并完成跨文档收口）；E4 已进入执行阶段（上游依赖发现 + PR 审查模板生成），当前规则为：上游更新自动化仅产出审查资料，不做自动合并。
 
 最新发布摘要见 [`docs/09-release-notes.md`](./docs/09-release-notes.md)。
 

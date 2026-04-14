@@ -9,6 +9,29 @@ const repoRoot = getUpstreamManifestRoot();
 const fullManifest = getUpstreamTrackingManifest(repoRoot);
 const fullImpactMap = getUpstreamImpactMap(repoRoot);
 
+function captureConsole() {
+  const logs = [];
+  const errors = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+
+  console.log = (...args) => {
+    logs.push(args.join(' '));
+  };
+  console.error = (...args) => {
+    errors.push(args.join(' '));
+  };
+
+  return {
+    stop: () => {
+      console.log = originalLog;
+      console.error = originalError;
+    },
+    logs,
+    errors,
+  };
+}
+
 test('resolveStatus classifies up-to-date versions', () => {
   assert.equal(resolveStatus('0.11.1', '0.11.1').status, 'up-to-date');
   assert.equal(resolveStatus('0.11.2', '0.11.1').status, 'up-to-date');
@@ -71,4 +94,41 @@ test('checkUpstreamDiff marks knowledge source dependencies without crates.io qu
   assert.equal(result.entries[0].status, 'knowledge-source');
   assert.equal(result.entries[0].latestVersion, null);
   assert.equal(result.entries[0].summary, 'litesvm tracked via docs source: src/testing/litesvm.rs');
+});
+
+test('printDiff outputs human-readable status and error summary', () => {
+  const { logs, errors, stop } = captureConsole();
+  const result = {
+    entries: [
+      {
+        status: 'update-available',
+        name: 'pinocchio',
+        currentVersion: '0.11.0',
+        latestVersion: '0.11.1',
+      },
+      {
+        status: 'up-to-date',
+        name: 'pinocchio-system',
+        currentVersion: '0.6.0',
+      },
+      {
+        status: 'knowledge-source',
+        name: 'litesvm',
+        summary: 'litesvm tracked via docs source: src/testing/litesvm.rs',
+      },
+    ],
+    errors: ['sample-check failed'],
+  };
+
+  try {
+    const { printDiff } = require('../../lib/upstream-diff-check');
+    printDiff(result);
+
+    assert.match(logs.join('\n'), /^update-available pinocchio 0.11.0 -> 0.11.1$/m);
+    assert.match(logs.join('\n'), /^up-to-date pinocchio-system 0.6.0$/m);
+    assert.match(logs.join('\n'), /^knowledge-source litesvm litesvm tracked via docs source: src\/testing\/litesvm\.rs$/m);
+    assert.equal(errors.join('\n'), 'sample-check failed');
+  } finally {
+    stop();
+  }
 });

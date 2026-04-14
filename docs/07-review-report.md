@@ -124,6 +124,21 @@
 
 本轮收口的发布摘要见 [`docs/09-release-notes.md`](./09-release-notes.md)，当前可发布基线为 `6982280`。
 
+## 7.8 E4 人工审查门禁（进行中）
+
+- E4-01 上游依赖追踪 manifest、E4-02 版本解析、E4-03 impact map、E4-04 diff check、E4-05 workflow、E4-06 PR 模板已交付。
+- 人工门禁草案（待明确为发布门禁）：
+  - `upstream` 自动化可产出审查材料，不承担自动合并职责；
+  - `npm run upstream:check -- --json` 与 `npm run upstream:pr-body -- --from-json <result.json>` 形成最小人工审查材料；
+  - 人工审查必须逐条覆盖 `reviewScope` 与 required checks；
+  - 变更必须确认 changelog / 破坏性变更说明后再执行更新决策。
+- 当前基准门禁语句：
+  - `Upstream update automation may detect and prepare review artifacts, but dependency updates must never be auto-merged without manual knowledge review.`
+- E4-07/08/09 记录已更新：
+  - E4-07：非自动合并规则已写入本报告与 `docs/08-evolution.md`；
+  - E4-08：`tests/cli/upstream-diff-check.test.js` 覆盖了版本漂移检测与可读输出；
+  - E4-09：`docs/06-implementation-log.md` 补齐了 E4 实施与验证链路，`docs/08-evolution.md` 的里程碑状态与执行顺序同步更新。
+
 ## Phase 7 验收标准
 
 - [x] 已完成的实现通过人工与机器审查并有签字记录
