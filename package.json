@@ -25,7 +25,7 @@
     ".windsurf/rules/geppetto.md"
   ],
   "scripts": {
-    "docs:check": "node ./lib/knowledge-check.js && node ./lib/agent-entry-check.js && node ./lib/feature-matrix-check.js && node ./lib/upstream-version-check.js",
+    "docs:check": "node ./lib/knowledge-check.js && node ./lib/agent-entry-check.js && node ./lib/feature-matrix-check.js && node ./lib/upstream-version-check.js && npm run e7:delivery -- --validate-only",
     "release:check": "node ./lib/release-check.js",
     "geppetto:test": "node ./bin/geppetto-cli.js test",
     "geppetto:audit": "node ./bin/geppetto-cli.js audit",

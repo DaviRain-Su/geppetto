@@ -1,6 +1,6 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：进行中（E1-E7 里程碑交付；E7 外部发送窗口 Hold；E8 发送材料标准化已完成，等待窗口执行）
+> 状态：进行中（E1-E7 里程碑交付；E7 外部发送窗口 Hold；E8 已完成执行包标准化与 schema gate 接线，等待窗口执行）
 > 日期：2026-04-14
 > 输入：Phase 7 最终审查报告 + 已验证基线 `1a1d429`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
@@ -279,11 +279,13 @@
 - 目标：将 E7 的外部建议从“文档说明”转为可重复、可消费的执行包。
 - 状态：已完成，发送执行材料可复用，外部发送仍保持 Hold。
 - 已完成：
-  - `npm run e7:delivery` 与 `tests/cli/e7-delivery-packet.test.js` 已接入，支持 `json` / `out` / `strict`；
+  - `npm run e7:delivery` 与 `tests/cli/e7-delivery-packet.test.js` 已接入，支持 `json` / `out` / `strict` / `validate-only`；
+  - `e7:delivery -- --validate-only` 可作为结构门禁单独执行；
+  - `docs:check` 已串联 `e7:delivery -- --validate-only`，在 action plan/checklist 漂移时 fail-fast；
   - E7 的 action plan / discussion draft / checklist 可统一组装为 `json` 或可读摘要；
   - `E7-01` 到 `E7-05` 的材料仍保持 Hold 约束，当前不要求立即对外发起 PR。
 - 风险：执行包依赖外部文档路径与片段结构稳定；若命名变化需更新解析规则并同步版本化。
-  - 缓解：E8 收口已补齐 `docs/04/06/07/08` 接线，执行前先核验 `npm run e7:delivery -- --json` 输出与工作树状态一致性。
+  - 缓解：E8 收口已补齐 `docs/04/06/07/08` 接线，执行前先核验 `npm run e7:delivery -- --validate-only` 与 `npm run e7:delivery -- --json` 输出。
 - 缓解：保留最小字段并优先兼容路径漂移，必要时回退为手工发送材料。
 
 ## 8.5 Phase 8 近期执行顺序（建议）

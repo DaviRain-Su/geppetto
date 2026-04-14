@@ -91,6 +91,8 @@
 - 2026-04-14：Phase 8 E7-04 内部执行决策 — 形成 `create-solana-dapp` 外部发送窗口确认清单（`docs/13-e7-04-send-window-checklist.md`），明确定义 Hold 条件、发送前必需条件、单路径沟通顺序；E7-01~E7-03 外部范围已封闭，当前以内部时机驱动执行。
 - 2026-04-14：Phase 8 E8-01/E8-02 — 新增 `e7:delivery` 执行包生成器，按 `plan / draft / checklist` 组装对外发送素材，支持 JSON 输出与脚本化复用；`tests/cli/e7-delivery-packet.test.js` 覆盖就绪门禁场景。
 - 2026-04-14：Phase 8 E8-03 — 补齐 E8 收口口径，明确 `e7:delivery` 为对外动作执行标准化中间产物；当前外部发送仍持 Hold，不发外部 PR/Discussion，仅保留可执行的提交材料。
+- 2026-04-14：Phase 8 E8-04 完成 — `e7:delivery` 增加 action plan / checklist 轻量 schema 校验，结构漂移时显式失败并输出字段级错误，避免静默生成 `unknown` 结果。
+- 2026-04-14：Phase 8 E8-05 完成 — 新增 `e7:delivery -- --validate-only`，并将其接入 `npm run docs:check`；文档结构门禁可在 CI/本地快速 fail-fast。
 - **下一步**：等待 E7 发送窗口恢复后按既定单路径执行对外动作；当前任务目标切回阶段内演化准备。
 
 ## 6.3 验收条件（进入 Phase 7）
