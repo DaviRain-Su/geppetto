@@ -289,6 +289,10 @@ pub trait AccountSchema {
     /// Default implementation checks:
     /// 1. Data length == LEN
     /// 2. Discriminator matches (if DISCRIMINATOR is Some)
+    ///
+    /// 默认实现是**严格定长**的：`AccountSchema` 表示固定大小、零拷贝布局。
+    /// 如果账户尾部允许扩展区（例如 TLV / variable-length trailer），应由具体类型
+    /// 覆盖 `validate()`，而不是依赖默认实现。
     fn validate(data: &[u8]) -> Result<(), ProgramError> {
         if data.len() != Self::LEN {
             return Err(GeppettoError::InvalidAccountLen.into());

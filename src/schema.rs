@@ -87,6 +87,11 @@ pub trait AccountSchema: Sized {
     /// Default implementation checks:
     /// 1. Data length == LEN
     /// 2. Discriminator matches (if DISCRIMINATOR is Some)
+    ///
+    /// This default is intentionally **strict**: `AccountSchema` models a fixed-size,
+    /// zero-copy account layout. If your account format includes trailing extension
+    /// bytes (for example TLV or other variable-length regions), override this
+    /// method with a custom validator instead of relying on the default.
     fn validate(data: &[u8]) -> Result<(), ProgramError> {
         if data.len() != Self::LEN {
             return Err(crate::error::GeppettoError::InvalidAccountLen.into());

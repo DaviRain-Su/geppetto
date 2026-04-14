@@ -172,13 +172,17 @@ impl AccountSchema for MockAccount {
 | Error (longer data) | data.len() == 20 | Err(InvalidAccountLen) |
 | Boundary (None discriminator) | DISCRIMINATOR = None, data[0] = 任意 | Ok()（不检查） |
 
+> 设计约定：`AccountSchema` 默认表示**固定大小的零拷贝账户布局**，因此 `validate()`
+> 对长度采用严格的 `== LEN` 语义。若具体账户允许尾部扩展区（如 TLV / trailer bytes），
+> 应在该账户类型上覆盖 `validate()` 并为扩展格式单独测试。
+
 ### 2.2 AccountSchema::try_from_account
 
 | 用例 | 输入 | 预期结果 |
 |------|------|----------|
 | Happy | owner 正确 + data 正确 | Ok(&MockAccount) |
 | Error (wrong owner) | owner != program_id | Err(InvalidAccountOwner) |
-| Error (short data) | data.len() != LEN | Err(InvalidAccountLen) |
+| Error (len mismatch) | data.len() != LEN | Err(InvalidAccountLen) |
 | Error (wrong discriminator) | data[0] != DISCRIMINATOR | Err(InvalidAccountData) |
 
 ### 2.3 from_bytes_unchecked
