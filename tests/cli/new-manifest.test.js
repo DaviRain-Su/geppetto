@@ -1,18 +1,19 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
-const { NEW_PROJECT_TEMPLATE_FILES, assertNewProjectManifest } = require('../../lib/new-manifest');
+const { NEW_PROJECT_RUST_TEMPLATE_FILES, assertNewProjectManifest, getNewProjectTemplateEntries, getTemplateRoot } = require('../../lib/new-manifest');
+const { getTemplateEntries } = require('../../lib/templates');
 
 test('new project manifest contains expected entries', () => {
-  const snapshot = NEW_PROJECT_TEMPLATE_FILES.map((entry) => entry.relativePath);
+  const templateRoot = getTemplateRoot();
+  const snapshot = getNewProjectTemplateEntries(templateRoot).map((entry) => entry.relativePath);
+  const expected = [
+    ...NEW_PROJECT_RUST_TEMPLATE_FILES.map((entry) => entry.relativePath),
+    ...getTemplateEntries(templateRoot).map((entry) => entry.relativePath),
+  ];
+
   assert.deepEqual(snapshot, [
-    'Cargo.toml',
-    'src/lib.rs',
-    'src/processor.rs',
-    'src/state.rs',
-    'src/error.rs',
-    'src/instructions/mod.rs',
-    'tests/svm.rs',
+    ...expected,
   ]);
 });
 
@@ -23,7 +24,8 @@ test('new project manifest validates manifest invariants', () => {
 });
 
 test('new project test template includes E5-05 svm test scaffold', () => {
-  const testsTemplate = NEW_PROJECT_TEMPLATE_FILES.find(
+  const templateRoot = getTemplateRoot();
+  const testsTemplate = getNewProjectTemplateEntries(templateRoot).find(
     (entry) => entry.relativePath === 'tests/svm.rs',
   );
   assert.ok(testsTemplate);

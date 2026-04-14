@@ -5,8 +5,9 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
-const { NEW_PROJECT_TEMPLATE_FILES } = require('../../lib/new-manifest');
+const { getNewProjectTemplateEntries, getTemplateRoot } = require('../../lib/new-manifest');
 const { renderTemplate } = require('../../lib/new');
+const { getTemplateEntries } = require('../../lib/templates');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const cliPath = path.join(repoRoot, 'bin', 'geppetto-cli.js');
@@ -33,7 +34,7 @@ test('new command creates expected scaffold files', () => {
   try {
     const stdout = runCli(tempDir, ['new', projectName]);
     const projectDir = path.join(tempDir, projectName);
-    const createdFiles = NEW_PROJECT_TEMPLATE_FILES.map((entry) => entry.relativePath);
+    const createdFiles = getNewProjectTemplateEntries().map((entry) => entry.relativePath);
 
     for (const relativePath of createdFiles) {
       const outputPath = path.join(projectDir, relativePath);
@@ -42,7 +43,7 @@ test('new command creates expected scaffold files', () => {
 
     const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
     assert.match(cargo, /name = "sample_program"/);
-    assert.match(stdout, /done new sample-program created=7 skipped=0/);
+    assert.match(stdout, /done new sample-program created=15 skipped=0/);
   } finally {
     removeDir(tempDir);
   }
@@ -55,6 +56,17 @@ test('new command supports template variable expansion', () => {
   try {
     runCli(tempDir, ['new', projectName]);
     const projectDir = path.join(tempDir, projectName);
+
+    const templateRoot = getTemplateRoot();
+    const canonicalEntries = getTemplateEntries(templateRoot);
+
+    for (const { relativePath } of canonicalEntries) {
+      const outputPath = path.join(projectDir, relativePath);
+      const expected = fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+      const actual = fs.readFileSync(outputPath, 'utf8');
+      assert.equal(actual, expected);
+    }
+
     const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
     const processor = fs.readFileSync(path.join(projectDir, 'src/processor.rs'), 'utf8');
 
@@ -101,7 +113,9 @@ test('generated template files contain no unreplaced placeholders', () => {
     runCli(tempDir, ['new', projectName]);
     const projectDir = path.join(tempDir, projectName);
 
-    for (const { relativePath } of NEW_PROJECT_TEMPLATE_FILES) {
+    const createdFiles = getNewProjectTemplateEntries().map((entry) => entry.relativePath);
+
+    for (const relativePath of createdFiles) {
       const content = fs.readFileSync(path.join(projectDir, relativePath), 'utf8');
       assert.equal(/\{\{[A-Z0-9_]+\}\}/.test(content), false, `${relativePath} contains unresolved placeholder`);
     }
@@ -120,7 +134,7 @@ test('new command allows creating into an existing empty directory', () => {
     const stdout = runCli(tempDir, ['new', projectName]);
 
     assert.equal(fs.existsSync(path.join(projectDir, 'Cargo.toml')), true);
-    assert.match(stdout, /done new empty-program created=7 skipped=0/);
+    assert.match(stdout, /done new empty-program created=15 skipped=0/);
   } finally {
     removeDir(tempDir);
   }
@@ -150,7 +164,7 @@ test('new command fails when directory already has generated files', () => {
   try {
     const projectDir = path.join(tempDir, projectName);
     const firstRun = runCli(tempDir, ['new', projectName]);
-    assert.match(firstRun, /done new sample-program created=7 skipped=0/);
+    assert.match(firstRun, /done new sample-program created=15 skipped=0/);
 
     assert.throws(() => {
       runCli(tempDir, ['new', projectName]);
