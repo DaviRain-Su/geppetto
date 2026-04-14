@@ -184,3 +184,16 @@ npx geppetto-cli init
 - [ ] 决策状态保持为 `Send now`
 - [ ] 本轮仅选择 `create-solana-dapp` 作为单一路径
 - [ ] 如需转 PR，优先使用 docs-only 最小改动范围
+
+---
+
+## E7-03 里程碑绑定（内部）
+
+- [x] 已完成单路径约束：当前只推进 create-solana-dapp，不并行发起 Pinocchio / agent-skill 其他外部动作。
+- [x] 已完成发送策略：先从 Discussion 起步，获得反馈后再按最小 `docs-only` PR 路径推进；本阶段不在本仓库内直接发起外部变更。
+- [x] 已完成文档链路：`docs/10-e7-01-external-alignment.md`、`docs/11-e7-02-create-solana-dapp-action-plan.md` 与本讨论草案保持同口径。
+- [ ] 外部发送执行：在时机窗口确认后，将该草案转为 discussion / PR（当前状态：待执行）。
+
+## 下一个内部动作
+
+- 暂不执行外部发布。下一步回到内部迭代，优先维护 E7 规划产物与 release/check 质量底线。

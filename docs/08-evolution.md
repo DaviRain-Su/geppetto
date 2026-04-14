@@ -1,6 +1,6 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：进行中（E1/E2/E3/E4/E5 已交付；E6 已上线；E7 进行中）
+> 状态：进行中（E1-E7 里程碑推进；E7-03 已完成，等待外部发送窗口）
 > 日期：2026-04-14
 > 输入：Phase 7 最终审查报告 + 已验证基线 `1a1d429`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
@@ -270,6 +270,7 @@
   - 已形成 create-solana-dapp 优先外部动作草案（单一路径）；
   - 外部草案详见 `docs/10-e7-01-external-alignment.md`。
   - 可执行提交计划详见 `docs/11-e7-02-create-solana-dapp-action-plan.md`。
+  - E7-03 里程碑已完成，已锁定 create-solana-dapp 为唯一外部对象；待执行内容与讨论模板见 `docs/12-e7-03-create-solana-dapp-discussion-draft.md`。
 
 ## 8.5 Phase 8 近期执行顺序（建议）
 
@@ -290,7 +291,7 @@
   - E5 已形成文档闭环，`docs/06` / `docs/07` / `docs/08` 均同步为已交付；
   - E6 已上线：`geppetto test` / `geppetto audit`，并接入 `release:check`。
 6. **进入 E7**
-  - 由 E7 讨论工具输出可复用度、生态协同与上游反馈扩展路径。
+  - 由 E7 讨论草案输出可复用度与上游反馈扩展路径；首轮暂不并行发起多个外部 PR。
 
 不建议当前阶段优先做的内容：
 
