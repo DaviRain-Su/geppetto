@@ -174,6 +174,21 @@ mod tests {
     }
 
     #[test]
+    fn test_idioms_close_account_error_overflow() {
+        let mut account_data = [1u8; 8];
+        let mut recipient_data = [];
+        let mut account = mock_account_view([0u8; 32], [0u8; 32], 1, &mut account_data);
+        let mut recipient =
+            mock_account_view([1u8; 32], [0u8; 32], u64::MAX, &mut recipient_data);
+        assert_eq!(
+            close_account(&mut account, &mut recipient),
+            Err(ProgramError::ArithmeticOverflow)
+        );
+        assert_eq!(account.lamports(), 1);
+        assert_eq!(recipient.lamports(), u64::MAX);
+    }
+
+    #[test]
     fn test_idioms_read_u64_le_happy() {
         let data = [1u8, 0, 0, 0, 0, 0, 0, 0];
         assert_eq!(read_u64_le(&data, 0).unwrap(), 1);
