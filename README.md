@@ -116,9 +116,9 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 | Phase 5: Test Spec           | ✅ 完成                           |
 | Phase 6: Implementation      | ✅ 完成                           |
 | Phase 7: Review & Deploy     | ✅ 完成                           |
-| Phase 8: Evolution           | 进行中（E1/E2 已交付；E3 待推进）               |
+| Phase 8: Evolution           | 进行中（E1/E2/E3 已交付；后续扩展待推进）           |
 
-**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 当前已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）与 E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例），下一步是 E3。
+**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 当前已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3 首轮收口（`lib/knowledge-check.js` + `tests/cli/knowledge.test.js` 守住知识版本头一致性）；后续扩展项是 agent 入口镜像与 feature matrix 检查。
 
 Hackathon delivery target: **2026-05-11**
 

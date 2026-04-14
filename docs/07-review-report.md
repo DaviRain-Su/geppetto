@@ -27,6 +27,7 @@
 | escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features` | integration 12/12 + svm 8/8 通过 |
 | CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试 8/8 + `npm pack --dry-run --json` 模板打包校验） |
 | escrow ↔ client 对齐检查 | `npm run test:escrow-client-alignment` | 通过（Rust fixture 生成 + TypeScript 反序列化 6/6 字段对齐） |
+| 知识版本头一致性检查 | `node lib/knowledge-check.js` | 通过（19 个目标文件，版本/日期格式一致） |
 
 ## 7.3 人工审查结果
 
@@ -37,7 +38,7 @@
 - `idioms::close_account` — lamports 溢出保护（`checked_add`）+ 数据清零。
 
 **知识文档**（已复核）：
-- 所有模块包含标准版本头 `geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13`。
+- 所有知识模块包含标准版本头；日期已按模块更新时间分布在 `2026-04-13` / `2026-04-14`，并通过自动检查。
 - `AGENTS.md` 包含 Mechanical Rules 和 Knowledge Freshness Rules。
 - 多 agent 入口文件齐全（CLAUDE.md, GEMINI.md, .cursor/rules, .windsurf/rules, .github/copilot-instructions.md, .amazonq/rules, .aider.conf.yml）。
 
@@ -65,6 +66,7 @@
 21. CLI 此前缺少预览语义，用户无法在写盘前确认 create / skip 结果；现已新增 `init --dry-run`、help 文案说明，以及“空目录 / 部分已有文件”两类回归测试，确保 dry-run 无文件系统副作用。
 22. README 与 Phase 8 状态此前仍把 Evolution 描述为“已完成”，且未解释 CLI 模板版本如何映射到 crate/doc 基线；现已统一为“Phase 8 进行中，E1 已交付”，并明确模板版本锁定到同一 package/repository release。
 23. escrow 的 Rust fixture 生成与 TypeScript 读取链路此前虽已存在，但缺少统一运行入口，且文档仍引用旧的 `tests/...` 路径；现已增加 `npm run test:escrow-client-alignment`，并将 `src/client.rs` / `docs/03-technical-spec.md` / `docs/05-test-spec.md` 同步到 `examples/escrow/tests/...` 的真实路径。
+24. 知识版本头此前只靠人工约定维护，且 `guard.rs` / `idioms/helpers.rs` / `testing/helpers.rs` 缺少标准头；现已补齐头信息，并新增 `lib/knowledge-check.js` + `tests/cli/knowledge.test.js` 自动校验版本、日期格式与常见 Cargo 依赖声明（inline table / string / workspace）兼容性。
 
 ## 7.4 部署前核对清单
 
@@ -94,6 +96,10 @@
 - `bin/geppetto-cli.js` — `init` 命令入口、`--dry-run` 参数解析与 usage/help 输出
 - `lib/init.js` / `lib/templates.js` / `lib/release-check.js` — canonical 模板复制逻辑、manifest 约束与发布前检查入口
 - `tests/cli/init.test.js` / `tests/cli/templates.test.js` / `tests/cli/pack.test.js` — create/skip/dry-run 行为、manifest 对齐、npm pack smoke test
+
+**文档一致性校验**：
+- `lib/knowledge-manifest.js` / `lib/knowledge-check.js` — 知识版本头目标清单与可执行检查器
+- `tests/cli/knowledge.test.js` — 知识头 happy/error/workspace 依赖写法回归测试
 
 **示例 / 对齐校验**：
 - `examples/escrow/tests/generate_fixtures.rs` — Rust fixture 生成器（导出 escrow binary + layout JSON）

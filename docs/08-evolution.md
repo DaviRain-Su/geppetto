@@ -1,6 +1,6 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：进行中（E1/E2 已交付，E3 待推进）
+> 状态：进行中（E1/E2/E3 已交付，后续扩展待推进）
 > 日期：2026-04-14
 > 输入：Phase 7 最终审查报告 + 已验证基线 `ffa5535`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
@@ -167,10 +167,19 @@
 
 ### Milestone E3：文档/规则自动一致性检查
 
-- 状态：**Planned**
+- 状态：**Delivered**
 - 目标：降低“代码已对，但知识入口漂移”的维护成本。
-- 候选能力：
-  - 校验知识模块版本头与 `Cargo.toml` 一致；
+- 当前已有：
+  - `lib/knowledge-manifest.js` 明确知识版本头检查目标清单；
+  - `lib/knowledge-check.js` 读取 `Cargo.toml` 并校验 `geppetto` / `pinocchio` 版本与日期格式；
+  - `tests/cli/knowledge.test.js` 覆盖 happy path、缺失头、版本漂移、日期格式错误，以及常见 Cargo 依赖写法（inline table / string / workspace）；
+  - `npm test` 已纳入知识头回归检查；
+  - `src/guard.rs`、`src/idioms/helpers.rs`、`src/testing/helpers.rs` 已补齐知识版本头。
+- 收口结论：
+  1. 仓库已具备首条自动文档一致性检查链路，可在知识头缺失或版本漂移时立即失败；
+  2. 检查器已兼容当前仓库与常见 Cargo 依赖声明变体；
+  3. E3 首轮目标已从“人工约定”提升为“可执行 gate”。
+- 后续扩展：
   - 校验多 agent 入口文件与 `AGENTS.md` 的同步状态；
   - 校验 `docs/03-technical-spec.md` 中的关键 feature matrix 与 `Cargo.toml` 一致。
 - 风险：检查器本身成为新的维护负担。
@@ -235,7 +244,7 @@
 2. **再做 E2：escrow ↔ client 对齐示例**
    - 已完成；当前已具备最小 Rust fixture ↔ TypeScript 对齐链路；
 3. **然后做 E3：文档一致性检查**
-   - 当前下一优先级；用自动化守住前两步成果；
+   - 已完成首轮收口；下一优先级是补强 agent 入口镜像与 feature matrix 检查；
 4. **最后再考虑 E5/E6**
    - 脚手架和工具命令应建立在稳定模板与稳定示例之上。
 

@@ -1,5 +1,8 @@
 //! # Testing Helper Functions
 //!
+//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-14
+//! > **Verified against**: Solana 2.2.x
+//!
 //! Assertion helpers for verifying account state in tests.
 
 /// Assert that account data at a given offset equals expected bytes.

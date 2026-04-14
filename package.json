@@ -26,7 +26,7 @@
   ],
   "scripts": {
     "release:check": "node ./lib/release-check.js",
-    "test": "node --test tests/cli/init.test.js tests/cli/templates.test.js tests/cli/pack.test.js",
+    "test": "node --test tests/cli/init.test.js tests/cli/templates.test.js tests/cli/pack.test.js tests/cli/knowledge.test.js",
     "test:escrow-client-alignment": "cargo test --manifest-path examples/escrow/Cargo.toml --test generate_fixtures && tsx examples/escrow/tests/client_alignment.ts"
   },
   "engines": {
