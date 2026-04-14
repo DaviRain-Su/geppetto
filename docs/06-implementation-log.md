@@ -1,7 +1,7 @@
 # Phase 6: Implementation Log — Geppetto
 
-> 状态：已完成（E4-09 收口完成）
-> 日期：2026-04-13
+> 状态：已完成（E5-09 收口完成）
+> 日期：2026-04-14
 > 输入：Phase 5 测试规格
 
 本阶段从 Phase 3/5 的契约开始实现。
@@ -82,7 +82,11 @@
 - 2026-04-14：Phase 8 E4-01/E4-02/E4-03/E4-04/E4-05/E4-06 完成 — 建立上游依赖 manifest、版本解析、影响映射、版本差异检查器、workflow 草案与 PR 审查模板，并接入 `npm test` 回归覆盖（`upstream-*` 测试链路）。
 - 2026-04-14：Phase 8 E4-07/E4-08 完成 — 明确上游更新非自动合并门禁；在 `docs/07-review-report.md` 和 `docs/08-evolution.md` 建立人工审查要求与最小验证证据；通过 `tests/cli/upstream-diff-check.test.js` + `tests/cli/upstream-pr-template.test.js` 证明漂移识别与审查模板产出可用。
 - 2026-04-14：Phase 8 E4-09 完成 — `docs/04-task-breakdown.md` 标注 E4 全量交付；`docs/07-review-report.md` 与 `docs/08-evolution.md` 的 E4 状态统一为已交付并明确发布门禁；更新 `docs/09-release-notes.md` 基线与发布摘要口径。
-- **下一步**：转入 E5 geppetto new 与 E6 geppetto test-audit（工具层扩展）规划。
+- 2026-04-14：Phase 8 E5-01/E5-02/E5-03 完成 — `geppetto new` 命令入口落地，支持 manifest 约束、非覆盖目录语义、模板变量替换，并补齐 `tests/cli/new*.test.js` 行为回归。
+- 2026-04-14：Phase 8 E5-04/E5-05/E5-06 完成 — 生成 Rust 骨架、测试骨架与 agent 入口复用，确保 `new` 与 `init` 共享 canonical 规则入口。
+- 2026-04-14：Phase 8 E5-07/E5-08 完成 — 完成生成结果 smoke test 与 README / `docs/08-evolution.md` 文档接线，明确“起点骨架、非框架”定位。
+- 2026-04-14：Phase 8 E5-09 完成 — 本阶段补入 E5 收口记录，完成 `docs/06-implementation-log.md` 与 `docs/07-review-report.md` 闭环更新，下一阶段转向 E6。
+- **下一步**：转入 E6（`geppetto test` / `geppetto audit`）工具层扩展规划。
 
 ## 6.3 验收条件（进入 Phase 7）
 
@@ -92,3 +96,4 @@
 - [x] `cargo test --doc` 覆盖所有公开 doc 示例（ignored doctest 为预期行为）。
 - [x] `cargo doc --no-deps` 0 警告，`cargo clippy --all-features` 0 警告。
 - [x] 关键任务间无阻塞，执行日志持续记录并附 1 句风险说明。
+- [x] E5（`geppetto new` 约定式项目脚手架）交付闭环完成，收口文档已更新至 `docs/06` / `docs/07` / `docs/08`。

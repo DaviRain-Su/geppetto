@@ -1,13 +1,13 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：进行中（E1/E2/E3/E4 已交付；E5 部分交付；E6 规划中）
+> 状态：进行中（E1/E2/E3/E4/E5 已交付；E6 规划中）
 > 日期：2026-04-14
-> 输入：Phase 7 最终审查报告 + 已验证基线 `b7fcacc`
+> 输入：Phase 7 最终审查报告 + 已验证基线 `1a1d429`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
 
 ## 8.1 当前基线（Phase 8 起点）
 
-截至 `b7fcacc`，Geppetto 已具备可继续演化的稳定基线：
+截至 `1a1d429`，Geppetto 已具备可继续演化的稳定基线：
 
 - **核心 crate**：`guard` / `schema` / `dispatch` / `error` / `idioms` / `anti_patterns` / `client` / `testing`
 - **示例程序**：`examples/escrow/` 已覆盖 create / exchange / close 的状态流转，并通过 integration + svm 回归测试；`npm run test:escrow-client-alignment` 已打通 Rust fixture → TypeScript 反序列化对齐链路
@@ -217,7 +217,7 @@
 
 ### Milestone E5：`geppetto new` 约定式项目脚手架
 
-- 状态：**In Progress**
+- 状态：**Delivered**
 - 前置条件：E1 完成并稳定。
 - 目标：从“init 入口文件”升级到“生成一套标准 Pinocchio + Geppetto 结构”。
 - 已完成：
@@ -227,15 +227,15 @@
   - Rust 骨架与测试骨架生成（E5-04，E5-05）
   - agent 入口模板复用（E5-06）
   - 生成结果 smoke test（E5-07）
-- 进行中：
   - README / 文档接线（E5-08）
+  - 收口文档补齐（E5-09）
 - 交付方向：
   - `src/lib.rs` / `processor.rs` / `state.rs` / `error.rs` / `instructions/`
   - `tests/svm.rs`
   - `AGENTS.md` 与多 agent 入口
 - 不做：derive macro、隐藏逻辑、重型框架封装。
 - 下一步：
-  - E5-08 完成文档接线后，直接进入 E5-09 收口闭环。
+  - 进入 E6 规划，聚焦 `geppetto test` / `geppetto audit`。
 - 风险：约定过强引发高级用户抵触。
 - 缓解：脚手架只负责生成起点，不限制用户后续重构。
 
@@ -277,10 +277,11 @@
 4. **推进 E4：上游依赖更新追踪**
    - 已完成：manifest、版本检查、影响映射、diff 检查脚本、workflow 草案、PR 审查模板、人工审查门禁与最小验证；
    - 里程碑闭环（E4-09）已完成；
-   - 下一步：转向 E5 / E6；
+   - 下一步：转向 E6；
 5. **完成 E5 收口**
-   - 已在推进：E5-08 文档接线，随后执行 E5-09 跨文档闭环；
-   - 完成后再进入 E6 工具化方向（`geppetto test` / `geppetto audit`）。
+   - E5-01 到 E5-09 已全部完成；
+   - E5 已形成文档闭环，`docs/06` / `docs/07` / `docs/08` 均同步为已交付；
+   - 下一步进入 E6 工具化方向（`geppetto test` / `geppetto audit`）。
    - E6 工具命令应建立在稳定模板与稳定示例之上。
 
 不建议当前阶段优先做的内容：

@@ -3,8 +3,8 @@
 > 状态：已完成（含后续跟进审查）
 > 日期：2026-04-14
 > 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改、文档收口、escrow 示例补丁与最终收尾修正
-> 审查基线：`b7fcacc`
-> 当前可发布基线：`b7fcacc`
+> 审查基线：`1a1d429`
+> 当前可发布基线：`1a1d429`
 
 ## 7.1 审查目标
 
@@ -70,6 +70,13 @@
 25. 多 agent 入口文件此前虽已齐全，但仍缺少自动镜像校验，无法防止 `CLAUDE.md` / `.cursor` / `.github` / `.aider` 与 `AGENTS.md` 的指向规则漂移；现已新增 `lib/agent-entry-check.js` + `tests/cli/agent-entry.test.js`，并将 `npm run docs:check` 扩展为同时检查知识头、入口镜像与 feature matrix。
 26. `npm run docs:check` 已接入 `release:check` 发布前流程。
 27. E3 收口完成：`docs/06-implementation-log.md`、`docs/07-review-report.md` 与 `docs/08-evolution.md` 已完成 E3-08 文档闭环；`release:check` / `docs:check` / CLI gate 形成统一发布链路。
+28. `geppetto new` 已完成约定式项目脚手架交付（E5-01 ~ E5-09）：
+   - `geppetto new` 命令入口、manifest 校验与快照测试；
+   - 目标目录默认非覆盖语义（非法名/冲突目录直接失败）；
+   - 模板变量替换支持 `PROJECT_NAME` / `CRATE_NAME` / `PACKAGE_NAME` / `PROGRAM_NAME`，并对未知占位符 fail-fast；
+   - 生成 Rust 骨架（`lib` / `processor` / `state` / `error` / `instructions`）与 `tests/svm.rs` 测试骨架；
+   - 与 `init` 共用 AGENTS / agent 入口模板源，避免双源漂移；
+   - E5-09 收口后 README 与 `docs/08-evolution.md` 明确标注了非重型框架、最小起点定位。
 
 ## 7.4 部署前核对清单
 
@@ -96,9 +103,10 @@
 - `CLAUDE.md` / `GEMINI.md` / `.cursor/rules/geppetto.md` / `.windsurf/rules/geppetto.md` / `.github/copilot-instructions.md` / `.amazonq/rules/geppetto.md` / `.aider.conf.yml`
 
 **CLI / 发布校验**：
-- `bin/geppetto-cli.js` — `init` 命令入口、`--dry-run` 参数解析与 usage/help 输出
+- `bin/geppetto-cli.js` — `init` / `new` 命令入口、`--dry-run` 参数解析与 usage/help 输出
 - `lib/init.js` / `lib/templates.js` / `lib/release-check.js` — canonical 模板复制逻辑、manifest 约束与发布前检查入口
-- `tests/cli/init.test.js` / `tests/cli/templates.test.js` / `tests/cli/pack.test.js` — create/skip/dry-run 行为、manifest 对齐、npm pack smoke test
+- `lib/new-manifest.js` / `lib/new.js` — `geppetto new` 模板清单、生成规则与非覆盖校验
+- `tests/cli/init.test.js` / `tests/cli/templates.test.js` / `tests/cli/pack.test.js` / `tests/cli/new-manifest.test.js` / `tests/cli/new.test.js` — init/new 创建、模板一致性、非覆盖与 smoke 生成行为
 
 **文档一致性校验**：
 - `lib/knowledge-manifest.js` / `lib/knowledge-check.js` — 知识版本头目标清单与可执行检查器
@@ -118,11 +126,12 @@
 
 - **已知风险**：PDA/ATA 单元测试依赖 `solana-address` 的 `curve25519` dev-dependency。若未来升级 `pinocchio` 导致 `solana-address` major 版本变更，需重新确认该 feature 的可用性。
 - **语义风险**：`AccountSchema::validate` 已收紧为严格定长（`== LEN`）。这能更好表达固定布局零拷贝账户，但若未来需要支持 TLV / trailer bytes，必须由具体账户类型覆盖 `validate()` 并补充专门测试，不能默认沿用当前语义。
-- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，回滚到当前可发布基线 `b7fcacc`。文档/知识层回归也从 `b7fcacc` 重新整理。
+- **E5 风险**：`geppetto new` 为最小起步模板工具，默认不覆盖既有目录；若后续引入覆盖/模板行为变更，必须补充 `tests/cli/new*.test.js` 与 `README/docs/08` 对应约束更新。
+- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，回滚到当前可发布基线 `1a1d429`。文档/知识层回归也从 `1a1d429` 重新整理。
 
 ## 7.7 发布摘要
 
-本轮收口的发布摘要见 [`docs/09-release-notes.md`](./09-release-notes.md)，当前可发布基线为 `b7fcacc`。
+本轮收口的发布摘要见 [`docs/09-release-notes.md`](./09-release-notes.md)，当前可发布基线为 `1a1d429`。
 
 ## 7.8 E4 人工审查门禁（已完成）
 
@@ -139,6 +148,21 @@
   - E4-07：非自动合并规则已写入本报告与 `docs/08-evolution.md`；
   - E4-08：`tests/cli/upstream-diff-check.test.js` 覆盖了版本漂移检测与可读输出；
   - E4-09：`docs/04-task-breakdown.md`、`docs/06-implementation-log.md`、`docs/08-evolution.md` 完成闭环同步，`docs/09-release-notes.md` 口径更新。
+
+## 7.9 E5 脚手架收口（已完成）
+
+- `geppetto new` 已完成 `E5-01` 到 `E5-08` 的实现与接线：
+  - `new` 命令 manifest、非覆盖语义、模板变量替换；
+  - Rust 与 SVM 测试骨架生成；
+  - `AGENTS.md` 与多 agent 入口复用；
+  - 生成结果 smoke 测试和模板快照回归；
+  - 约束接线文档已更新（README、`docs/08-evolution.md`）。
+- E5 的关键人工约束确认：
+  - 起点导向：最小骨架而非重型框架；
+  - 默认非覆盖：避免危险改写既有文件；
+  - 变量替换严格化：未知变量 fail-fast，不保留 `{{...}}` 占位；
+  - 模板源统一：`new` 与 `init` 共享 canonical 模板源。
+- E5 交付物已进入 `docs/06-implementation-log.md` 与 `docs/08-evolution.md`，当前状态转入 E6 计划（`geppetto test` / `geppetto audit`）。
 
 ## Phase 7 验收标准
 

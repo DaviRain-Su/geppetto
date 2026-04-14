@@ -1,8 +1,8 @@
 # Release Notes — Geppetto
 
 > 基线：`75e1e00`（功能基线）
-> 文档收口补丁：`b7fcacc`
-> 标题：Phase 8 E3/E4：文档一致性与上游更新追踪收口
+> 文档收口补丁：`1a1d429`
+> 标题：Phase 8 E3/E4/E5：文档一致性、上游更新追踪与脚手架收口
 > 日期：2026-04-14
 > 状态：可发布基线
 
@@ -78,6 +78,17 @@ npm run test:escrow-client-alignment
 npm run docs:check
 ```
 
+### 5. `geppetto new` 脚手架交付与收口
+
+`geppetto new` 命令完成从约定式项目生成的收口交付：
+
+- `init` 与 `new` 的模板清单与 manifest 校验可追溯；
+- 默认非覆盖语义，避免危险改写既有目录；
+- 模板变量替换支持 `PROJECT_NAME` / `CRATE_NAME` / `PACKAGE_NAME` / `PROGRAM_NAME`，并要求未知变量 fail-fast；
+- 生成最小 Rust 项目骨架与 `tests/svm.rs`；
+- 与 `init` 共享 canonical agent 入口模板源；
+- `README` / `docs/08-evolution.md` / `docs/06` / `docs/07` 完成跨文档闭环同步；
+
 ## Changelog
 
 ### 新增
@@ -109,6 +120,7 @@ npm run docs:check
 - `src/testing/mollusk.rs` 的搜索路径文案准确性
 - 反模式条目数与 hidden padding 文案一致性
 - escrow 顶层示例说明与当前状态机实现对齐
+- geppetto new 约定式脚手架与 E5 收口
 
 ### 更新文档
 
@@ -125,11 +137,12 @@ npm run docs:check
 - E2 已交付
 - E3 已交付到 E3-08（文档收口已完成）
 - E4 已完成到 E4-09（上游依赖追踪与审查发布门禁收口）
-- 当前 Phase 8 的后续事项主要是 E5/E6 的工具层扩展
+- E5 已完成到 E5-09（`geppetto new` 脚手架收口）
+- 当前 Phase 8 的后续事项主要是 E6 的工具层扩展
 
 ## 验证状态
 
-基于 `b7fcacc` 验证（功能基线为 `75e1e00`，文档收口补丁 `b7fcacc`）：
+基于 `1a1d429` 验证（功能基线为 `75e1e00`，文档收口补丁 `1a1d429`）：
 
 - `cargo test --all-features --locked` ✅
 - `RUSTC_WRAPPER= cargo test --doc --locked` ✅
@@ -160,3 +173,4 @@ RUSTC_WRAPPER=
 - added Rust ↔ TypeScript fixture alignment checks
 - strengthened CLI template packaging and dry-run flow
 - introduced executable docs consistency gates for knowledge headers, agent entry mirrors, and feature matrix alignment
+- added `geppetto new` minimal scaffolding and E5-09 closure
