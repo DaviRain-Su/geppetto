@@ -107,9 +107,16 @@
 //!
 //! ### Setup
 //!
+//! There are two common ways to use Codama:
+//!
+//! 1. **CLI-only workflow** — install/run the Codama CLI; no Rust dependency is
+//!    required in your on-chain program crate.
+//! 2. **Dedicated generator crate / build tool** — keep Codama in a separate
+//!    Rust crate that exists only to read program definitions and emit IDL/clients.
+//!
 //! ```toml
-//! # Add to your program's Cargo.toml:
-//! [build-dependencies]
+//! # Example: tools/idl-gen/Cargo.toml (NOT the on-chain program crate)
+//! [dependencies]
 //! codama = "0.4"          # check crates.io for latest
 //! codama-korok-plugins = "0.4"
 //! ```
@@ -139,7 +146,7 @@
 //! produces a standardized IDL, then generates typed clients from that IDL.
 //!
 //! ```rust,ignore
-//! // In your instruction definition file:
+//! // In a dedicated generator crate / build tool context:
 //! use codama::CodamaInstructions;
 //!
 //! #[derive(CodamaInstructions)]

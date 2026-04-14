@@ -28,15 +28,22 @@
 //! use mollusk_svm::Mollusk;
 //! use solana_pubkey::Pubkey;
 //!
-//! // Option A: Auto-resolve from target/deploy/
+//! // Option A: Auto-resolve by name.
+//! // This depends on Mollusk's search conventions and your current working
+//! // directory matching the expected project layout.
 //! let mollusk = Mollusk::new(&program_id, "your_program_name");
 //!
-//! // Option B: Include bytes directly
+//! // Option B: Load raw bytes explicitly (most reliable, recommended in CI).
 //! let elf = include_bytes!("../target/deploy/your_program.so");
 //! let loader_v3 = solana_pubkey::pubkey!("BPFLoaderUpgradeab1e11111111111111111111111");
 //! let mut mollusk = Mollusk::default();
 //! mollusk.add_program_with_loader_and_elf(&program_id, &loader_v3, elf);
 //! ```
+//!
+//! `Mollusk::new(&program_id, "name")` is convenient when your ELF can be found
+//! via Mollusk's normal search paths (for example `tests/fixtures/`,
+//! `BPF_OUT_DIR`, `SBF_OUT_DIR`, or the current workspace layout). When in
+//! doubt, prefer the explicit `include_bytes!` path.
 //!
 //! ## Step 4: Build and execute an instruction
 //!
@@ -103,7 +110,7 @@
 //! ## API Reference
 //!
 //! ### Constructors
-//! - `Mollusk::new(&program_id, "name")` — auto-find ELF
+//! - `Mollusk::new(&program_id, "name")` — try to auto-find ELF via Mollusk search paths
 //! - `Mollusk::default()` — builtins only
 //! - `mollusk.add_program(&pid, "name")` — add by name
 //! - `mollusk.add_program_with_loader_and_elf(&pid, &loader, elf)` — raw bytes

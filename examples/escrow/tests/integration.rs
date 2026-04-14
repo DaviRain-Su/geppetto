@@ -138,6 +138,55 @@ fn test_create_zero_amount_fails() {
 }
 
 #[test]
+fn test_create_reinitialize_fails() {
+    let maker_key = [2u8; 32];
+    let (escrow_key, _bump) = derive_escrow_pda(&maker_key, &PROGRAM_ID);
+
+    let mut escrow_data = vec![0u8; Escrow::LEN];
+    escrow_data[Escrow::DISCRIMINATOR_OFFSET] = 1;
+    escrow_data[Escrow::STATUS_OFFSET] = status::OPEN;
+    let instruction_data = 1_000_000u64.to_le_bytes();
+
+    let mut accounts = [
+        mock_account_view(maker_key, [0u8; 32], 10_000_000, &[], true, true),
+        mock_account_view(escrow_key, PROGRAM_ID, 1_000_000, &escrow_data, false, true),
+    ];
+
+    let program_id = Address::new_from_array(PROGRAM_ID);
+    let result = geppetto_escrow::instructions::create::process(
+        &program_id,
+        &mut accounts,
+        &instruction_data,
+    );
+
+    assert_eq!(result, Err(ProgramError::Custom(0x102))); // EscrowError::AlreadyInitialized
+}
+
+#[test]
+fn test_create_closed_account_cannot_reinitialize() {
+    let maker_key = [2u8; 32];
+    let (escrow_key, _bump) = derive_escrow_pda(&maker_key, &PROGRAM_ID);
+
+    let escrow_data = vec![0u8; Escrow::LEN];
+    let instruction_data = 1_000_000u64.to_le_bytes();
+
+    let mut accounts = [
+        mock_account_view(maker_key, [0u8; 32], 10_000_000, &[], true, true),
+        // program-owned + zero lamports simulates a previously closed drained account
+        mock_account_view(escrow_key, PROGRAM_ID, 0, &escrow_data, false, true),
+    ];
+
+    let program_id = Address::new_from_array(PROGRAM_ID);
+    let result = geppetto_escrow::instructions::create::process(
+        &program_id,
+        &mut accounts,
+        &instruction_data,
+    );
+
+    assert_eq!(result, Err(ProgramError::Custom(0x102))); // EscrowError::AlreadyInitialized
+}
+
+#[test]
 fn test_create_not_signer_fails() {
     let maker_key = [2u8; 32];
     let (escrow_key, _bump) = derive_escrow_pda(&maker_key, &PROGRAM_ID);

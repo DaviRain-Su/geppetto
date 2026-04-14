@@ -1,10 +1,12 @@
 use geppetto::account::AccountView;
 use geppetto::address::Address;
+use geppetto::cpi::{Seed, Signer};
+use geppetto::error::ProgramError;
 use geppetto::guard;
 use geppetto::idioms;
 use geppetto::schema::AccountSchema;
+use geppetto::system;
 use geppetto::ProgramResult;
-use geppetto::error::ProgramError;
 
 use crate::error::EscrowError;
 use crate::state::{escrow_seeds, status, Escrow};
@@ -12,8 +14,15 @@ use crate::state::{escrow_seeds, status, Escrow};
 /// Create a new escrow.
 ///
 /// Accounts:
-/// 0. `[signer, writable]` Maker — the escrow creator
+/// 0. `[signer, writable]` Maker — the escrow creator / rent payer
 /// 1. `[writable]`         Escrow PDA — derived from ["escrow", maker]
+///
+/// Behavior:
+/// - If `escrow` is an empty system-owned PDA account, this instruction creates
+///   it via `geppetto::system::create_account_with_minimum_balance_signed` and
+///   then initializes its data.
+/// - If `escrow` is already program-owned, it must be a zeroed, pre-allocated
+///   buffer (useful for unit tests and fixtures); non-zero state is rejected.
 ///
 /// Data:
 /// `[0..8]` amount (u64 LE) — the amount to escrow
@@ -31,8 +40,7 @@ pub fn process(
     guard::assert_signer(maker)?;
     guard::assert_writable(maker)?;
     guard::assert_writable(escrow)?;
-    let _bump = guard::assert_pda(escrow, &escrow_seeds(maker.address()), program_id)?;
-    guard::assert_owner(escrow, program_id)?;
+    let bump = guard::assert_pda(escrow, &escrow_seeds(maker.address()), program_id)?;
 
     // ── 3. Parse instruction data ──
     let amount = idioms::read_u64_le(data, 0)?;
@@ -40,11 +48,42 @@ pub fn process(
         return Err(EscrowError::ZeroAmount.into());
     }
 
-    // ── 4. Write escrow data ──
+    // ── 4. Ensure escrow account exists and is uninitialized ──
+    if escrow.owned_by(&guard::SYSTEM_PROGRAM_ID) {
+        if escrow.lamports() != 0 || escrow.data_len() != 0 {
+            return Err(EscrowError::AlreadyInitialized.into());
+        }
+
+        let bump_seed = [bump];
+        let signer_seeds = [
+            Seed::from(b"escrow"),
+            Seed::from(maker.address().as_ref()),
+            Seed::from(&bump_seed),
+        ];
+        let signer = Signer::from(&signer_seeds);
+
+        system::create_account_with_minimum_balance_signed(
+            escrow,
+            Escrow::LEN,
+            program_id,
+            maker,
+            None,
+            &[signer],
+        )?;
+    } else if !escrow.owned_by(program_id) {
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+
+    // ── 5. Write escrow data ──
+    let escrow_lamports = escrow.lamports();
     let mut escrow_data = escrow.try_borrow_mut()?;
 
-    if escrow_data.len() < Escrow::LEN {
-        return Err(ProgramError::AccountDataTooSmall);
+    if escrow_data.len() != Escrow::LEN {
+        return Err(EscrowError::AlreadyInitialized.into());
+    }
+
+    if escrow_lamports == 0 || escrow_data.iter().any(|&b| b != 0) {
+        return Err(EscrowError::AlreadyInitialized.into());
     }
 
     escrow_data[Escrow::DISCRIMINATOR_OFFSET] = Escrow::DISCRIMINATOR.unwrap_or(0);

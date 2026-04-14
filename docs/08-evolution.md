@@ -243,7 +243,7 @@ jobs:
     3. 输出 CU 消耗报告（从 mollusk 的 `compute_units_consumed` 提取）
     4. 如果有 CU 预算文件（`cu-budget.toml`），对比并报告超标
   - `geppetto audit`：
-    1. 静态检查：扫描源码中是否存在 `anti_patterns.rs` 列出的 6 个反模式
+    1. 静态检查：扫描源码中是否存在 `anti_patterns.rs` 列出的 7 个反模式
     2. Guard 覆盖率：检查每条指令的 handler 是否调用了 `assert_signer` / `assert_owner` 等
     3. AccountSchema 一致性：检查 `LEN` 和 `layout()` 的偏移量是否自洽
     4. 输出报告：通过 / 警告 / 错误

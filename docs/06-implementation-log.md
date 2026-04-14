@@ -64,7 +64,7 @@
 - 2026-04-13：A-13 完成 — idioms.rs 14 个单元测试全部通过。
 - 2026-04-13：全量 `cargo test` 通过（64 个单元测试），`cargo doc --no-deps` 无警告，`cargo check --features full` 通过。
 - 2026-04-13：A-14/A-15 完成 — idioms.rs 模块级知识文档扩展（P0: entrypoint/账户解构/TryFrom/CPI/self-CPI + P1: Token-2022/Batch/Codama/LiteSVM）。
-- 2026-04-13：A-16 完成 — anti_patterns.rs 6 个反模式文档（Missing signer、Unchecked owner、PDA collision、Close drain、Catch-all dispatch、Unbounded alloc）。
+- 2026-04-13：A-16 完成 — anti_patterns.rs 反模式文档，后续扩展为 7 项（Missing signer、Unchecked owner、PDA collision、Close drain、Catch-all dispatch、Unbounded alloc、Hidden padding）。
 - 2026-04-13：A-17 完成 — client.rs 4 个客户端话题（Transaction/PDA/Deserialization/Error handling）+ fixture 测试策略。
 - 2026-04-13：A-18 完成 — testing.rs 知识文档扩展（mollusk vs litesvm、CU profiling）。
 - 2026-04-13：A-19 完成 — lib.rs crate 级文档补充 Feature Flags 表格。

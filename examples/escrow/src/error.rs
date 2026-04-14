@@ -8,6 +8,8 @@ pub enum EscrowError {
     InvalidStatus = 0x100,
     /// Amount must be greater than zero.
     ZeroAmount = 0x101,
+    /// Escrow account is already initialized or otherwise not eligible for create.
+    AlreadyInitialized = 0x102,
 }
 
 impl From<EscrowError> for ProgramError {

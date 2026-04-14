@@ -37,9 +37,10 @@
 //! use geppetto::token::Transfer;
 //!
 //! Transfer {
-//!     from: source_ata,     // &AccountView
-//!     to: dest_ata,         // &AccountView
-//!     authority: owner,     // &AccountView, must be signer
+//!     from: source_ata,       // &AccountView
+//!     to: dest_ata,           // &AccountView
+//!     authority: owner,       // &AccountView, must be signer
+//!     multisig_signers: &[],
 //!     amount: 1_000_000,
 //! }.invoke()?;
 //! ```

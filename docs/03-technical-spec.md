@@ -1272,6 +1272,7 @@ geppetto::log::log!("Processing create instruction");
 | Close account drain                | 关闭账户不清零数据，可被复活 | `should_panic` |
 | Catch-all dispatch (`_ => Ok(())`) | 沉默接受无效指令       | `compile_fail` |
 | Unbounded allocation               | 堆分配导致 CU 爆炸    | 文字说明           |
+| `#[repr(C)]` hidden padding        | 布局大小与预期偏移不一致  | `compile_fail` |
 
 每个反模式格式：
 

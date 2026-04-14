@@ -55,7 +55,7 @@
 |----|------|------|------|------|
 | A-14 | **idioms.rs P0 知识** — entrypoint 选择、no_allocator/nostd、账户切片解构、TryFrom accounts 模式 | 4h | A-12 | doc comments + doctest |
 | A-15 | **idioms.rs P1 知识** — CPI 风格、self-CPI 事件、Token-2022 双支持、Batch CPI、Codama、LiteSVM | 4h | A-14 | doc comments |
-| A-16 | **anti_patterns.rs** — 6 个反模式（missing signer、unchecked owner、PDA collision、close drain、catch-all、unbounded alloc） | 3h | A-06 | doc comments + should_panic 示例 |
+| A-16 | **anti_patterns.rs** — 7 个反模式（missing signer、unchecked owner、PDA collision、close drain、catch-all、unbounded alloc、hidden padding） | 3h | A-06 | doc comments + should_panic 示例 |
 | A-17 | **client.rs** — 4 个话题（transaction、PDA、deserialization、error handling）+ TypeScript 示例 | 3h | A-04 | doc comments |
 | A-18 | **testing.rs** — 3 个导出函数 + 知识话题（litesvm/mollusk 选择、CU profiling） | 2h | A-12 | 函数 + doc + feature gate |
 | A-19 | **lib.rs crate 级文档** — 模块总览 + Quick Start + 版本头 | 2h | A-14 | `cargo doc` 完整生成 |

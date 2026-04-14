@@ -515,7 +515,7 @@ Doc comments 中还覆盖**纯知识话题**：
 | ------------------ | -------------------------------------------------- | ----------------------------- | ------------------------------- | ---------------- |
 | `idioms.rs`        | 代码 + 知识                                            | 账户关闭、数据读写 helpers（close_account、read_u64_le、write_u64_le、read_address） | CPI 风格、Batch CPI、事件、TLV         | 是                |
 | `testing.rs`       | 代码 + 知识                                            | 测试断言、mock 工具（feature-gated）   | litesvm/mollusk 选择、CU profiling | 部分               |
-| `anti_patterns.rs` | 纯文档                                                | 无                             | 6+ 常见漏洞的错误/正确对比                 | 是（should\_panic） |
+| `anti_patterns.rs` | 纯文档                                                | 无                             | 7 个常见漏洞/反模式的错误与正确对比         | 是（should\_panic） |
 | `client.rs`        | 纯文档                                                | 无                             | 交易构建、PDA、反序列化                   | 否（TypeScript）    |
 | `testing.rs`       | litesvm/mollusk-svm 环境搭建、交易构建与提交、状态断言、CU profiling | Rust 示例：部分（需要测试环境的无法 doctest） |                                 |                  |
 

@@ -4,6 +4,8 @@
 //! validating instruction behavior against the actual Solana runtime.
 //!
 //! Prerequisites: `cargo build-sbf` must be run before these tests.
+//! The test loads `target/deploy/geppetto_escrow.so` at runtime and will fail
+//! with a clear message if the artifact is missing.
 
 use geppetto::schema::AccountSchema;
 use geppetto_escrow::state::{status, Escrow};
@@ -21,13 +23,21 @@ fn program_id() -> Pubkey {
 }
 
 fn setup_mollusk() -> Mollusk {
-    // Load pre-compiled SBF binary. Requires `cargo build-sbf` first.
-    let elf = include_bytes!("../target/deploy/geppetto_escrow.so");
+    let elf_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("target")
+        .join("deploy")
+        .join("geppetto_escrow.so");
+    let elf = std::fs::read(&elf_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read SBF artifact at {}: {}. Run `cargo build-sbf --manifest-path examples/escrow/Cargo.toml` first.",
+            elf_path.display(),
+            error
+        )
+    });
     let pid = program_id();
-    // BPF Loader v3 (upgradeable loader) program ID
     let loader_v3 = solana_pubkey::pubkey!("BPFLoaderUpgradeab1e11111111111111111111111");
     let mut mollusk = Mollusk::default();
-    mollusk.add_program_with_loader_and_elf(&pid, &loader_v3, elf);
+    mollusk.add_program_with_loader_and_elf(&pid, &loader_v3, &elf);
     mollusk
 }
 
@@ -36,7 +46,7 @@ fn derive_escrow_pda(maker: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(&[b"escrow", maker.as_ref()], &program_id())
 }
 
-/// Build an empty escrow account (program-owned, with LEN bytes).
+/// Build an initialized-size escrow account (program-owned, with LEN bytes).
 fn escrow_account(lamports: u64) -> Account {
     Account {
         lamports,
@@ -66,16 +76,19 @@ fn test_svm_create_happy() {
     let ix = Instruction {
         program_id: program_id(),
         accounts: vec![
-            AccountMeta::new(maker, true),         // signer + writable
-            AccountMeta::new(escrow_pda, false),    // writable
+            AccountMeta::new(maker, true),        // signer + writable
+            AccountMeta::new(escrow_pda, false),  // writable
         ],
         data: build_ix_data(0, &amount.to_le_bytes()),
     };
 
-    let accounts = vec![
-        (maker, Account::default()),
-        (escrow_pda, escrow_account(1_000_000)),
-    ];
+    let maker_acc = Account {
+        lamports: 10_000_000,
+        ..Account::default()
+    };
+    // Use a pre-allocated program-owned buffer so this SVM test focuses on
+    // initialization semantics rather than system program CPI setup.
+    let accounts = vec![(maker, maker_acc), (escrow_pda, escrow_account(1_000_000))];
 
     let result = mollusk.process_instruction(&ix, &accounts);
 
@@ -117,10 +130,11 @@ fn test_svm_create_zero_amount() {
         data: build_ix_data(0, &0u64.to_le_bytes()),
     };
 
-    let accounts = vec![
-        (maker, Account::default()),
-        (escrow_pda, escrow_account(1_000_000)),
-    ];
+    let maker_acc = Account {
+        lamports: 10_000_000,
+        ..Account::default()
+    };
+    let accounts = vec![(maker, maker_acc), (escrow_pda, escrow_account(1_000_000))];
 
     // EscrowError::ZeroAmount = 0x101
     mollusk.process_and_validate_instruction(
@@ -145,10 +159,11 @@ fn test_svm_create_missing_signer() {
         data: build_ix_data(0, &1_000_000u64.to_le_bytes()),
     };
 
-    let accounts = vec![
-        (maker, Account::default()),
-        (escrow_pda, escrow_account(1_000_000)),
-    ];
+    let maker_acc = Account {
+        lamports: 10_000_000,
+        ..Account::default()
+    };
+    let accounts = vec![(maker, maker_acc), (escrow_pda, escrow_account(1_000_000))];
 
     mollusk.process_and_validate_instruction(
         &ix,
@@ -156,6 +171,39 @@ fn test_svm_create_missing_signer() {
         &[Check::err(
             solana_program_error::ProgramError::MissingRequiredSignature,
         )],
+    );
+}
+
+#[test]
+fn test_svm_create_reinitialize_fails() {
+    let mollusk = setup_mollusk();
+    let maker = Pubkey::new_unique();
+    let (escrow_pda, _bump) = derive_escrow_pda(&maker);
+
+    let mut escrow_acc = escrow_account(1_000_000);
+    escrow_acc.data[Escrow::DISCRIMINATOR_OFFSET] = 1;
+    escrow_acc.data[Escrow::STATUS_OFFSET] = status::OPEN;
+
+    let amount: u64 = 1_000_000;
+    let ix = Instruction {
+        program_id: program_id(),
+        accounts: vec![
+            AccountMeta::new(maker, true),
+            AccountMeta::new(escrow_pda, false),
+        ],
+        data: build_ix_data(0, &amount.to_le_bytes()),
+    };
+
+    let maker_acc = Account {
+        lamports: 10_000_000,
+        ..Account::default()
+    };
+    let accounts = vec![(maker, maker_acc), (escrow_pda, escrow_acc)];
+
+    mollusk.process_and_validate_instruction(
+        &ix,
+        &accounts,
+        &[Check::err(solana_program_error::ProgramError::Custom(0x102))],
     );
 }
 
