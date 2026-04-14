@@ -272,6 +272,7 @@
   - 可执行提交计划详见 `docs/11-e7-02-create-solana-dapp-action-plan.md`。
   - E7-03 里程碑已完成，已锁定 create-solana-dapp 为唯一外部对象；待执行内容与讨论模板见 `docs/12-e7-03-create-solana-dapp-discussion-draft.md`。
   - E7-04 外部发送窗口确认清单见 `docs/13-e7-04-send-window-checklist.md`。
+  - E7-05 发送就绪性检查已补齐：`npm run e7:readiness`（支持 `--json` / `--strict`，用于内部窗口前自检）。
 
 ## 8.5 Phase 8 近期执行顺序（建议）
 
