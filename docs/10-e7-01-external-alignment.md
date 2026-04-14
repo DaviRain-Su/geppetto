@@ -87,3 +87,17 @@
 - `docs/04-task-breakdown.md` 的 E7-01 已对应到本草案；
 - 下一步：按本草案起草 create-solana-dapp 的可执行提交清单（E7-01 收尾）；
 - 之后再进入 E7-02（对齐文档草案）进行模板化交付前的对外摘要补充。
+
+## 7. 当前待发提案（external-alignment 落库）
+
+- **状态**：`Send now`
+- **目标仓库**：`create-solana-dapp`
+- **动作类型**：docs/template 建议（低摩擦、可独立审查）
+- **提案落点**：由下列文档统一托管，避免草案分散
+  - `docs/11-e7-02-create-solana-dapp-action-plan.md`
+  - `docs/12-e7-03-create-solana-dapp-discussion-draft.md`
+- **建议发起方式**：
+  - 优先发 `discussion`，确认接受方向后再转 `docs-only` PR；
+  - PR 仅补充一条最小接入说明，不改动官方脚手架逻辑。
+- **拟定 PR 标题**：`docs: add minimal Geppetto onboarding guidance for Pinocchio bootstrap`
+- **外联边界**：单路径执行，继续与 Pinocchio 核心仓库与 agent/skill 生态并行解耦。
