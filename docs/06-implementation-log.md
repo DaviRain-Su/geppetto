@@ -1,6 +1,6 @@
 # Phase 6: Implementation Log — Geppetto
 
-> 状态：进行中（E4 迭代已进入最小验证后期）
+> 状态：已完成（E4-09 收口完成）
 > 日期：2026-04-13
 > 输入：Phase 5 测试规格
 
@@ -81,7 +81,8 @@
 - 2026-04-14：Phase 8 E3-08 完成 — `docs/06-implementation-log.md`、`docs/07-review-report.md`、`docs/08-evolution.md` 已补齐收口条款；`release:check` 与 `docs:check` 的门禁职责对齐为统一发布前置条件。
 - 2026-04-14：Phase 8 E4-01/E4-02/E4-03/E4-04/E4-05/E4-06 完成 — 建立上游依赖 manifest、版本解析、影响映射、版本差异检查器、workflow 草案与 PR 审查模板，并接入 `npm test` 回归覆盖（`upstream-*` 测试链路）。
 - 2026-04-14：Phase 8 E4-07/E4-08 完成 — 明确上游更新非自动合并门禁；在 `docs/07-review-report.md` 和 `docs/08-evolution.md` 建立人工审查要求与最小验证证据；通过 `tests/cli/upstream-diff-check.test.js` + `tests/cli/upstream-pr-template.test.js` 证明漂移识别与审查模板产出可用。
-- **下一步**：E4-09 收口文档补齐，随后再进入 E5 geppetto new / E6 geppetto test-audit 规划。
+- 2026-04-14：Phase 8 E4-09 完成 — `docs/04-task-breakdown.md` 标注 E4 全量交付；`docs/07-review-report.md` 与 `docs/08-evolution.md` 的 E4 状态统一为已交付并明确发布门禁；更新 `docs/09-release-notes.md` 基线与发布摘要口径。
+- **下一步**：转入 E5 geppetto new 与 E6 geppetto test-audit（工具层扩展）规划。
 
 ## 6.3 验收条件（进入 Phase 7）
 

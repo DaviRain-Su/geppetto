@@ -1,8 +1,8 @@
 # Release Notes — Geppetto
 
 > 基线：`75e1e00`（功能基线）
-> 文档收口补丁：`6982280`
-> 标题：Phase 8 E3: 文档一致性检查与发布/审查收口
+> 文档收口补丁：`b7fcacc`
+> 标题：Phase 8 E3/E4：文档一致性与上游更新追踪收口
 > 日期：2026-04-14
 > 状态：可发布基线
 
@@ -95,6 +95,13 @@ npm run docs:check
 - `geppetto-cli init --dry-run`
 - CLI 模板 manifest 校验
 - `npm pack` 打包 smoke check
+- 上游依赖追踪与更新审查链路
+  - `lib/upstream-manifest.js`
+  - `lib/upstream-version-check.js`
+  - `lib/upstream-impact-map.js`
+  - `lib/upstream-diff-check.js`
+  - `lib/upstream-pr-template.js`
+  - `tests/cli/upstream-*.test.js`
 - escrow 示例初始化语义与防重初始化语义
 - escrow SVM `.so` 运行时加载与缺失提示
 - `src/client.rs` 的 Codama 指南
@@ -117,11 +124,12 @@ npm run docs:check
 - E1 已交付
 - E2 已交付
 - E3 已交付到 E3-08（文档收口已完成）
-- 当前 Phase 8 的剩余事项主要是 E4/E5/E6 的扩展
+- E4 已完成到 E4-09（上游依赖追踪与审查发布门禁收口）
+- 当前 Phase 8 的后续事项主要是 E5/E6 的工具层扩展
 
 ## 验证状态
 
-基于 `6982280` 验证（功能基线为 `75e1e00`，文档收口补丁 `6982280`）：
+基于 `b7fcacc` 验证（功能基线为 `75e1e00`，文档收口补丁 `b7fcacc`）：
 
 - `cargo test --all-features --locked` ✅
 - `RUSTC_WRAPPER= cargo test --doc --locked` ✅
