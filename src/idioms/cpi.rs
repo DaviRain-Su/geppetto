@@ -78,34 +78,40 @@
 //!
 //! ### Key API difference: explicit `token_program` field
 //!
-//! `pinocchio-token` structs hardcode the SPL Token program ID internally.
-//! `pinocchio-token-2022` structs have an explicit `token_program: &Address`
-//! field, so the SAME struct can invoke either Token or Token-2022.
+//! `geppetto::token` (re-export of `pinocchio-token`) hardcodes the SPL Token
+//! program ID internally for many shared instructions.
+//! `geppetto::token_2022` (re-export of `pinocchio-token-2022`) exposes an
+//! explicit `token_program: &Address` field, so the same instruction struct can
+//! target either Token or Token-2022.
 //!
 //! ```rust,ignore
-//! // pinocchio-token (SPL Token only — token_program hardcoded):
-//! pinocchio_token::Transfer {
-//!     from, to, authority,
+//! // geppetto::token (SPL Token only — token program is implicit):
+//! geppetto::token::Transfer {
+//!     from,
+//!     to,
+//!     authority,
 //!     amount: 1_000,
 //!     multisig_signers: &[],
 //! }.invoke()?;
 //!
-//! // pinocchio-token-2022 (EITHER program — you choose):
-//! pinocchio_token_2022::Transfer {
-//!     from, to, authority,
+//! // geppetto::token_2022 (caller chooses Token OR Token-2022 explicitly):
+//! geppetto::token_2022::Transfer {
+//!     from,
+//!     to,
+//!     authority,
 //!     amount: 1_000,
-//!     token_program: token_program.address(),  // Token OR Token-2022
+//!     token_program: token_program.address(),
 //! }.invoke()?;
 //! ```
 //!
 //! ### Recommended pattern for dual support
 //!
 //! ```rust,ignore
-//! guard::assert_token_program(token_program)?;
+//! geppetto::guard::assert_token_program(token_program)?;
 //!
-//! // Use pinocchio-token-2022 structs for all token CPIs —
-//! // they work with BOTH programs via the explicit token_program field.
-//! pinocchio_token_2022::Transfer {
+//! // For shared instructions, geppetto::token_2022 can often serve as a
+//! // unified interface because the target token program is explicit.
+//! geppetto::token_2022::Transfer {
 //!     from: source_ata,
 //!     to: dest_ata,
 //!     authority: owner,
@@ -114,8 +120,9 @@
 //! }.invoke()?;
 //! ```
 //!
-//! This eliminates the if/else branch. Use `pinocchio-token-2022` structs
-//! as the universal CPI interface for token operations.
+//! This removes the Token vs Token-2022 branch for many common instructions.
+//! Keep explicit branching when you need SPL-only features (for example batch
+//! CPI) or crate-specific APIs that are not shared.
 //!
 //! ---
 //!

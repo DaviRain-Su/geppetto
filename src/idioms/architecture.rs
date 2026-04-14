@@ -90,4 +90,4 @@
 //! | Events | Self-CPI with discriminator 228 + event authority PDA |
 //! | Clients | Codama `#[derive(CodamaInstructions)]` for auto-generation |
 //! | Testing | mollusk-svm for instruction tests, litesvm for e2e |
-//! | Logging | `pinocchio-log`, gated behind `#[cfg(feature = "logging")]` |
+//! | Logging | `geppetto::log`, often additionally gated behind a project-specific cfg |

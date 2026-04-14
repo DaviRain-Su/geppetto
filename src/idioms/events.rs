@@ -53,39 +53,38 @@
 //! The event authority PDA (typically seeded with `b"event_authority"`) serves as
 //! the CPI signer, proving the event originated from this program.
 //!
-//! ## Program Logging with `pinocchio-log` (requires `features = ["log"]`)
+//! ## Program Logging with `geppetto::log` (requires `features = ["log"]`)
 //!
-//! `pinocchio-log` provides CU-efficient logging that replaces `msg!` from
-//! `solana-program`. It avoids Rust's `format!` machinery, saving 50-90% CU.
+//! `geppetto::log` re-exports `pinocchio-log`, which provides CU-efficient
+//! logging that replaces `msg!` from `solana-program`. It avoids Rust's
+//! `format!` machinery, often saving 50-90% CU.
 //!
 //! ### `log!` macro (recommended)
 //!
 //! ```rust,ignore
-//! use pinocchio_log::log;
-//!
 //! // Basic (default 200-byte stack buffer):
-//! log!("transfer amount: {}", lamports);
+//! geppetto::log::log!("transfer amount: {}", lamports);
 //!
 //! // Custom buffer size:
-//! log!(50, "amount: {}", lamports);
+//! geppetto::log::log!(50, "amount: {}", lamports);
 //!
 //! // Precision formatting (u64 → decimal with N places):
-//! log!("amount (SOL): {:.9}", lamports);  // 1000000000 → "1.000000000"
+//! geppetto::log::log!("amount (SOL): {:.9}", lamports);
 //!
 //! // Truncation:
-//! log!("{:>.10}", "pinocchio-program");  // "pinocchio-..."
+//! geppetto::log::log!("{:>.10}", "pinocchio-program");
 //! ```
 //!
 //! ### `Logger<N>` (direct API, maximum control)
 //!
 //! ```rust,ignore
-//! use pinocchio_log::logger::Logger;
+//! use geppetto::log::logger::Logger;
 //!
 //! let mut logger = Logger::<100>::default();
 //! logger.append("balance=");
 //! logger.append(1_000_000_000u64);
-//! logger.log();  // calls sol_log_ syscall
-//! logger.clear(); // reuse buffer
+//! logger.log();
+//! logger.clear();
 //! ```
 //!
 //! ### CU savings vs `msg!`
@@ -100,6 +99,9 @@
 //! ### Production pattern: gate behind feature
 //!
 //! ```rust,ignore
-//! #[cfg(feature = "logging")]
-//! pinocchio_log::log!("debug: amount={}", amount);
+//! #[cfg(feature = "log")]
+//! geppetto::log::log!("debug: amount={}", amount);
 //! ```
+//!
+//! If your program wants a separate app-level debug toggle, wrap the log call in
+//! your own feature in addition to enabling Geppetto's `log` dependency feature.

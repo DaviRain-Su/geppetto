@@ -73,7 +73,6 @@
 //! geppetto = { version = "0.1", features = ["system", "token-all"] }
 //!
 //! [dev-dependencies]
-//! pinocchio = "0.11"
 //! solana-address = { version = "2", features = ["curve25519"] }
 //! mollusk-svm = "0.12"
 //! solana-account = "3"
@@ -97,11 +96,8 @@
 //! `process_entrypoint` for the standard path.
 //!
 //! ```rust,ignore
-//! use pinocchio::entrypoint::process_entrypoint;
-//! use pinocchio::{no_allocator, default_panic_handler, MAX_TX_ACCOUNTS};
-//!
-//! no_allocator!();
-//! default_panic_handler!();
+//! geppetto::no_allocator!();
+//! geppetto::nostd_panic_handler!();
 //!
 //! #[no_mangle]
 //! pub unsafe extern "C" fn entrypoint(input: *mut u8) -> u64 {
@@ -111,13 +107,19 @@
 //!         return 0; // no-op, skip deserialization entirely
 //!     }
 //!     // Standard path: deserialize and dispatch
-//!     unsafe { process_entrypoint::<MAX_TX_ACCOUNTS>(input, process_instruction) }
+//!     unsafe {
+//!         geppetto::entrypoint::process_entrypoint::<{ geppetto::MAX_TX_ACCOUNTS }>(
+//!             input,
+//!             process_instruction,
+//!         )
+//!     }
 //! }
 //! ```
 //!
 //! **When to use**: programs with hot paths that can short-circuit without
 //! touching accounts (e.g., fee-exempt no-ops, discriminator-only queries).
-//! The `MAX_TX_ACCOUNTS` const generic controls stack array size (default 64).
+//! `geppetto::MAX_TX_ACCOUNTS` is currently `255` (the theoretical Solana max);
+//! use a smaller const generic only if your program intentionally caps accounts.
 //!
 //! ---
 //!
@@ -138,15 +140,15 @@
 //! // src/lib.rs
 //! #[cfg(feature = "bpf-entrypoint")]
 //! mod entrypoint {
-//!     use pinocchio::{entrypoint, AccountView, Address, ProgramResult};
-//!
-//!     entrypoint!(process_instruction);
+//!     geppetto::program_entrypoint!(process_instruction);
+//!     geppetto::nostd_panic_handler!();
+//!     geppetto::default_allocator!();
 //!
 //!     pub fn process_instruction(
-//!         program_id: &Address,
-//!         accounts: &mut [AccountView],
+//!         program_id: &geppetto::Address,
+//!         accounts: &mut [geppetto::AccountView],
 //!         data: &[u8],
-//!     ) -> ProgramResult {
+//!     ) -> geppetto::ProgramResult {
 //!         crate::processor::dispatch(program_id, accounts, data)
 //!     }
 //! }

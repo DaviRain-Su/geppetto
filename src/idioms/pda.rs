@@ -55,26 +55,25 @@
 //!
 //! ---
 //!
-//! ## `pinocchio-pubkey`: Compile-Time Constants (requires `features = ["pubkey"]`)
+//! ## `geppetto::pubkey`: Compile-Time Constants (requires `features = ["pubkey"]`)
 //!
-//! `pinocchio-pubkey` provides zero-cost compile-time base58 decoding for
-//! program IDs, authority addresses, and PDA constants.
+//! `geppetto::pubkey` re-exports `pinocchio-pubkey`, giving you zero-cost
+//! compile-time base58 decoding for program IDs, authority addresses, and PDA
+//! constants without adding another direct dependency.
 //!
 //! ### `pubkey!` — define any address constant
 //!
 //! ```rust,ignore
-//! use pinocchio_pubkey::pubkey;
-//!
-//! const TOKEN_PROGRAM: Address = pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-//! const MY_AUTHORITY: Address = pubkey!("MyAuth111111111111111111111111111111111111");
+//! const TOKEN_PROGRAM: Address =
+//!     geppetto::pubkey::pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+//! const MY_AUTHORITY: Address =
+//!     geppetto::pubkey::pubkey!("MyAuth111111111111111111111111111111111111");
 //! ```
 //!
-//! ### `declare_id!` — declare program ID + check_id() + id()
+//! ### `declare_id!` — declare program ID + `check_id()` + `id()`
 //!
 //! ```rust,ignore
-//! use pinocchio_pubkey::declare_id;
-//!
-//! declare_id!("MyProgram11111111111111111111111111111111");
+//! geppetto::pubkey::declare_id!("MyProgram11111111111111111111111111111111");
 //! // Expands to:
 //! //   pub const ID: Address = from_str("MyProgram...");
 //! //   pub fn check_id(id: &Address) -> bool { id == &ID }
@@ -84,22 +83,19 @@
 //! ### `from_str` — const fn base58 decode
 //!
 //! ```rust,ignore
-//! use pinocchio_pubkey::from_str;
-//!
-//! const MY_KEY: Address = from_str("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+//! const MY_KEY: Address =
+//!     geppetto::pubkey::from_str("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 //! ```
 //!
 //! ### Compile-time PDA derivation
 //!
 //! ```rust,ignore
-//! use pinocchio_pubkey::derive_address_const;
-//!
-//! const EVENT_AUTHORITY: Address = derive_address_const(
+//! const EVENT_AUTHORITY: Address = geppetto::pubkey::derive_address_const(
 //!     &[b"event_authority"],
-//!     Some(255),  // bump
+//!     Some(255),
 //!     &MY_PROGRAM_ID,
 //! );
 //! ```
 //!
 //! **Key advantage**: all of these are compile-time — zero runtime cost,
-//! unlike `solana-program`'s `declare_id!` which uses a lazy static.
+//! and Geppetto keeps the API available under a single import surface.
