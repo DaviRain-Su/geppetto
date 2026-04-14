@@ -1,0 +1,10 @@
+{
+  "total_len": 74,
+  "fields": [
+    { "name": "discriminator", "type": "u8",      "offset": 0, "size": 1,  "value": 1 },
+    { "name": "status",        "type": "u8",      "offset": 1, "size": 1,  "value": 0 },
+    { "name": "maker",         "type": "Address",  "offset": 2, "size": 32, "value": "0202020202020202020202020202020202020202020202020202020202020202" },
+    { "name": "taker",         "type": "Address",  "offset": 34, "size": 32, "value": "0000000000000000000000000000000000000000000000000000000000000000" },
+    { "name": "amount",        "type": "u64",      "offset": 66, "size": 8,  "value": 1000000 }
+  ]
+}
