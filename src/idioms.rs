@@ -263,6 +263,28 @@
 //!
 //! ---
 //!
+//! ### Program Logging (requires `features = ["log"]`)
+//!
+//! Use `pinocchio-log` for on-chain logging. Do NOT use `std::println!`.
+//!
+//! ```rust,ignore
+//! use geppetto::log::sol_log;
+//!
+//! sol_log("Processing create instruction");
+//! ```
+//!
+//! **Performance tip**: gate logging behind a feature flag in production:
+//!
+//! ```rust,ignore
+//! #[cfg(feature = "logging")]
+//! geppetto::log::sol_log("debug info");
+//! ```
+//!
+//! The `pinocchio-log` crate provides `sol_log` (raw string) and
+//! `pinocchio-log-macro` provides `msg!`-style formatting macros.
+//!
+//! ---
+//!
 //! ### Self-CPI Events
 //!
 //! Programs can emit structured events by CPI-ing to themselves. This is the

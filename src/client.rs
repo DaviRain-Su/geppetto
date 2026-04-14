@@ -95,3 +95,83 @@
 //!
 //! Submodule C (`escrow demo`) is the intended place to add the concrete fixture
 //! files and execute the end-to-end alignment check.
+//!
+//! ---
+//!
+//! ## Codama: Automated Client Generation (Recommended)
+//!
+//! Instead of hand-writing TypeScript clients, use **Codama** — the official IDL
+//! and client generation tool used by all Anza pinocchio programs (escrow, rewards, token).
+//!
+//! Repository: <https://github.com/codama-idl/codama>
+//!
+//! ### Setup
+//!
+//! ```toml
+//! # Add to your program's Cargo.toml:
+//! [build-dependencies]
+//! codama = "0.4"          # check crates.io for latest
+//! codama-korok-plugins = "0.4"
+//! ```
+//!
+//! ### Initialize
+//!
+//! ```bash
+//! # In your program directory:
+//! codama init
+//! # Creates .codama/ config directory
+//! ```
+//!
+//! ### Generate clients
+//!
+//! ```bash
+//! # Generate TypeScript client:
+//! codama run js --out ../clients/js/src/generated
+//!
+//! # Generate Rust client:
+//! codama run rust --out ../clients/rust/src/generated
+//! ```
+//!
+//! ### How it works
+//!
+//! Codama reads your Rust program's types and instruction definitions
+//! (annotated with `#[derive(CodamaInstructions)]` and `#[codama(...)]`),
+//! produces a standardized IDL, then generates typed clients from that IDL.
+//!
+//! ```rust,ignore
+//! // In your instruction definition file:
+//! use codama::CodamaInstructions;
+//!
+//! #[derive(CodamaInstructions)]
+//! pub enum MyProgramInstruction {
+//!     #[codama(discriminator = 0)]
+//!     Create {
+//!         #[codama(signer, writable)]
+//!         maker: AccountMeta,
+//!         #[codama(writable)]
+//!         escrow: AccountMeta,
+//!         amount: u64,
+//!     },
+//!     // ...
+//! }
+//! ```
+//!
+//! ### When to use Codama vs hand-written clients
+//!
+//! | Approach | When to use |
+//! |----------|-------------|
+//! | **Codama** | Production programs with multiple clients (JS + Rust + mobile). Official pipeline. |
+//! | **Hand-written** | Quick prototypes, hackathon demos, programs with <3 instructions. |
+//!
+//! For the Geppetto escrow demo, hand-written is fine. For production, use Codama.
+//!
+//! ---
+//!
+//! ## Ecosystem References
+//!
+//! - **solana-developers/program-examples** (<https://github.com/solana-developers/program-examples>):
+//!   10+ pinocchio examples (counter, PDAs, CPIs, tokens) side-by-side with Anchor/Native.
+//!   Best learning resource for pattern comparison.
+//! - **create-solana-program** (<https://github.com/solana-program/create-solana-program>):
+//!   Scaffolding CLI (`pnpm create solana-program`). No `--pinocchio` flag yet —
+//!   scaffold with `--shank` and add geppetto manually.

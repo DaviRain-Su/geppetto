@@ -51,7 +51,9 @@
 //! | `ata` | `geppetto::ata` (pinocchio-associated-token-account) |
 //! | `memo` | `geppetto::memo` (pinocchio-memo) |
 //! | `token-all` | Shorthand for `token` + `token-2022` + `ata` |
-//! | `full` | Shorthand for `system` + `token-all` + `memo` |
+//! | `log` | `geppetto::log` (pinocchio-log — program logging) |
+//! | `pubkey` | `geppetto::pubkey` (pinocchio-pubkey — pubkey utilities) |
+//! | `full` | Shorthand for `system` + `token-all` + `memo` + `log` + `pubkey` |
 //! | `test-utils` | `geppetto::testing` module |
 //!
 //! ## Upstream Dependency Map
@@ -66,8 +68,11 @@
 //! | `pinocchio-token` | 0.6.x | `idioms` (CPI examples), `guard` (TOKEN IDs) |
 //! | `pinocchio-token-2022` | 0.3.x | `idioms` (Token-2022 dual support) |
 //! | `pinocchio-associated-token-account` | 0.4.x | `guard` (ATA_PROGRAM_ID, assert_ata) |
+//! | `pinocchio-log` | 0.5.x | `idioms` (logging patterns) |
+//! | `pinocchio-pubkey` | 0.3.x | `idioms` (pubkey utilities) |
 //! | `mollusk-svm` | 0.12.x | `testing` (API reference) |
 //! | `litesvm` | 0.11.x | `testing` (API reference) |
+//! | `codama` | latest | `client` (IDL generation — build-dependency, not runtime) |
 //!
 //! ## Upgrade Protocol
 //!
@@ -115,6 +120,12 @@ pub use pinocchio_associated_token_account as ata;
 
 #[cfg(feature = "memo")]
 pub use pinocchio_memo as memo;
+
+#[cfg(feature = "log")]
+pub use pinocchio_log as log;
+
+#[cfg(feature = "pubkey")]
+pub use pinocchio_pubkey as pubkey;
 
 // ── Geppetto 自有模块 ──
 pub mod anti_patterns;
