@@ -167,21 +167,26 @@
 
 ### Milestone E3：文档/规则自动一致性检查
 
-- 状态：**Delivered**
+- 状态：**进行中（E3-07 / E3-08 待）**
 - 目标：降低“代码已对，但知识入口漂移”的维护成本。
 - 当前已有：
   - `lib/knowledge-manifest.js` 明确知识版本头检查目标清单；
   - `lib/knowledge-check.js` 读取 `Cargo.toml` 并校验 `geppetto` / `pinocchio` 版本与日期格式；
   - `tests/cli/knowledge.test.js` 覆盖 happy path、缺失头、版本漂移、日期格式错误，以及常见 Cargo 依赖写法（inline table / string / workspace）；
-  - `npm test` 已纳入知识头回归检查；
+  - `lib/agent-entry-check.js` 校验 `CLAUDE.md` / `GEMINI.md` / `.cursor` / `.windsurf` / `.github` / `.amazonq` / `.aider` 是否仍正确镜像 `AGENTS.md`；
+  - `tests/cli/agent-entry.test.js` 覆盖 Claude include、通用 redirect 与 aider config 漂移场景；
+  - `lib/feature-matrix-check.js` 检查 `Cargo.toml` / `docs/03-technical-spec.md` 的 feature matrix 一致性；
+  - `tests/cli/feature-matrix.test.js` 覆盖漂移与版本化场景；
+  - `npm run docs:check` 提供独立一致性入口，可在文档更新前快速联跑知识头、入口镜像与 feature matrix 检查；
+  - `npm test` 已纳入知识头与 feature matrix 回归检查；
   - `src/guard.rs`、`src/idioms/helpers.rs`、`src/testing/helpers.rs` 已补齐知识版本头。
 - 收口结论：
-  1. 仓库已具备首条自动文档一致性检查链路，可在知识头缺失或版本漂移时立即失败；
-  2. 检查器已兼容当前仓库与常见 Cargo 依赖声明变体；
-  3. E3 首轮目标已从“人工约定”提升为“可执行 gate”。
+  1. 仓库已具备首条自动文档一致性检查链路，可在知识头缺失、agent 入口漂移或 feature matrix 不一致时立即失败；
+  2. 多 agent 入口镜像现在也能自动检查，不再只靠人工复核；
+  3. 检查器已兼容当前仓库与常见 Cargo 依赖声明变体；
+  4. E3 首轮目标已从“人工约定”提升为“可执行 gate”。
 - 后续扩展：
-  - 校验多 agent 入口文件与 `AGENTS.md` 的同步状态；
-  - 校验 `docs/03-technical-spec.md` 中的关键 feature matrix 与 `Cargo.toml` 一致。
+  - 进入 E3-07/08：发布/审查接线、跨文档收口与运维承诺。
 - 风险：检查器本身成为新的维护负担。
 - 回滚策略：若自动化过重，退回人工 checklist，但保留脚本接口与最小 smoke checks。
 
@@ -244,7 +249,7 @@
 2. **再做 E2：escrow ↔ client 对齐示例**
    - 已完成；当前已具备最小 Rust fixture ↔ TypeScript 对齐链路；
 3. **然后做 E3：文档一致性检查**
-   - 已完成首轮收口；下一优先级是补强 agent 入口镜像与 feature matrix 检查；
+   - 已完成知识头、agent 入口镜像与 feature matrix 检查；下一优先级是 E3-07 评估接线与发布流程、E3-08 跨文档收口；
 4. **最后再考虑 E5/E6**
    - 脚手架和工具命令应建立在稳定模板与稳定示例之上。
 

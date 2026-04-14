@@ -4,7 +4,7 @@
 > 日期：2026-04-14
 > 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改、文档收口、escrow 示例补丁与最终收尾修正
 > 审查基线：Phase 7 最终已验证基线 = `85b2416`
-> 当前收口基线：`825a401`
+> 当前收口基线：`5b0e577`
 
 ## 7.1 审查目标
 
@@ -25,9 +25,9 @@
 | 编译 | `RUSTC_WRAPPER= cargo check --features full,test-utils` | 通过 |
 | escrow 示例构建 | `RUSTC_WRAPPER= cargo build-sbf --manifest-path examples/escrow/Cargo.toml` | 通过 |
 | escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features` | integration 12/12 + svm 8/8 通过 |
-| CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试 8/8 + `npm pack --dry-run --json` 模板打包校验） |
+| CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试套件通过 + `npm pack --dry-run --json` 模板打包校验） |
 | escrow ↔ client 对齐检查 | `npm run test:escrow-client-alignment` | 通过（Rust fixture 生成 + TypeScript 反序列化 6/6 字段对齐） |
-| 知识版本头一致性检查 | `node lib/knowledge-check.js` | 通过（19 个目标文件，版本/日期格式一致） |
+| 文档一致性检查 | `npm run docs:check` | 通过（19 个知识头目标 + 7 个 agent 入口镜像 + feature matrix） |
 
 ## 7.3 人工审查结果
 
@@ -67,6 +67,7 @@
 22. README 与 Phase 8 状态此前仍把 Evolution 描述为“已完成”，且未解释 CLI 模板版本如何映射到 crate/doc 基线；现已统一为“Phase 8 进行中，E1 已交付”，并明确模板版本锁定到同一 package/repository release。
 23. escrow 的 Rust fixture 生成与 TypeScript 读取链路此前虽已存在，但缺少统一运行入口，且文档仍引用旧的 `tests/...` 路径；现已增加 `npm run test:escrow-client-alignment`，并将 `src/client.rs` / `docs/03-technical-spec.md` / `docs/05-test-spec.md` 同步到 `examples/escrow/tests/...` 的真实路径。
 24. 知识版本头此前只靠人工约定维护，且 `guard.rs` / `idioms/helpers.rs` / `testing/helpers.rs` 缺少标准头；现已补齐头信息，并新增 `lib/knowledge-check.js` + `tests/cli/knowledge.test.js` 自动校验版本、日期格式与常见 Cargo 依赖声明（inline table / string / workspace）兼容性。
+25. 多 agent 入口文件此前虽已齐全，但仍缺少自动镜像校验，无法防止 `CLAUDE.md` / `.cursor` / `.github` / `.aider` 与 `AGENTS.md` 的指向规则漂移；现已新增 `lib/agent-entry-check.js` + `tests/cli/agent-entry.test.js`，并将 `npm run docs:check` 扩展为同时检查知识头、入口镜像与 feature matrix。
 
 ## 7.4 部署前核对清单
 
@@ -100,6 +101,8 @@
 **文档一致性校验**：
 - `lib/knowledge-manifest.js` / `lib/knowledge-check.js` — 知识版本头目标清单与可执行检查器
 - `tests/cli/knowledge.test.js` — 知识头 happy/error/workspace 依赖写法回归测试
+- `lib/agent-entry-check.js` / `tests/cli/agent-entry.test.js` — 多 agent 入口镜像校验与回归测试
+- `lib/feature-matrix-check.js` / `tests/cli/feature-matrix.test.js` — `Cargo.toml` 与 `docs/03-technical-spec.md` feature matrix 一致性校验
 
 **示例 / 对齐校验**：
 - `examples/escrow/tests/generate_fixtures.rs` — Rust fixture 生成器（导出 escrow binary + layout JSON）

@@ -1,7 +1,7 @@
 # Phase 3: Technical Spec — Geppetto
 
 > 状态：已验收（现行技术基线）
-> 日期：2026-04-13
+> 日期：2026-04-14
 > 输入：Phase 2 架构设计
 > 重要：代码必须与本规格 100% 一致。不一致时先改规格，再改代码。
 
@@ -28,6 +28,8 @@ pinocchio-token = { version = "0.6", optional = true }
 pinocchio-token-2022 = { version = "0.3", optional = true }
 pinocchio-associated-token-account = { version = "0.4", optional = true }
 pinocchio-memo = { version = "0.4", optional = true }
+pinocchio-log = { version = "0.5", optional = true }
+pinocchio-pubkey = { version = "0.3", optional = true }
 
 [features]
 default = []
@@ -36,6 +38,8 @@ token = ["dep:pinocchio-token"]
 token-2022 = ["dep:pinocchio-token-2022"]
 ata = ["dep:pinocchio-associated-token-account"]
 memo = ["dep:pinocchio-memo"]
+log = ["dep:pinocchio-log"]
+pubkey = ["dep:pinocchio-pubkey"]
 token-all = ["token", "token-2022", "ata"]
 full = ["system", "token-all", "memo", "log", "pubkey"]
 test-utils = []

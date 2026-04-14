@@ -75,8 +75,9 @@
 - 2026-04-14：Phase 8 E1-07/E1-08/E1-09 完成 — README 与 `docs/03-technical-spec.md` 明确模板版本映射规则；新增 `npm run release:check` 串联 CLI 测试与 pack smoke check；`docs/06` / `docs/07` / `docs/08` 与 README 已同步到 E1 delivered 状态。
 - 2026-04-14：Phase 8 E2-01/E2-02/E2-03 完成 — 将 escrow fixture 对齐链路固化为 `npm run test:escrow-client-alignment`；`examples/escrow/tests/client_alignment.ts` 改为可由 `tsx` 直接执行；`src/client.rs`、`docs/03-technical-spec.md`、`docs/05-test-spec.md` 已指向真实示例路径与运行命令。
 - 2026-04-14：Phase 8 E3-01/E3-02/E3-03 完成 — 新增 `lib/knowledge-manifest.js` 与 `lib/knowledge-check.js`，自动检查知识版本头的目标清单、`geppetto` / `pinocchio` 版本和日期格式；`tests/cli/knowledge.test.js` 已覆盖 happy path、缺失头、版本漂移、日期错误与常见 Cargo 依赖写法。
+- 2026-04-14：Phase 8 E3-04/E3-05/E3-06 完成 — 新增 `lib/agent-entry-check.js`、`lib/feature-matrix-check.js` 与对应回归测试，自动检查 `CLAUDE.md` / `GEMINI.md` / `.cursor` / `.windsurf` / `.github` / `.amazonq` / `.aider` 是否仍正确镜像 `AGENTS.md`；并校验 `Cargo.toml` 与 `docs/03-technical-spec.md` 的 feature matrix 一致性，`npm run docs:check` 现已串联知识头、入口镜像与 feature matrix 检查。
 - **风险说明**：PDA/ATA 测试依赖 `solana-address` 的 `curve25519` feature，已加入 dev-dependencies；后续若升级 pinocchio 版本需确认该依赖仍然有效。
-- **下一步**：继续推进 Phase 8 的文档一致性扩展项（agent 入口镜像 / feature matrix 检查）。
+- **下一步**：继续推进 Phase 8 的发布/审查接线（E3-07/E3-08）。
 
 ## 6.3 验收条件（进入 Phase 7）
 
@@ -86,4 +87,3 @@
 - [x] `cargo test --doc` 覆盖所有公开 doc 示例（ignored doctest 为预期行为）。
 - [x] `cargo doc --no-deps` 0 警告，`cargo clippy --all-features` 0 警告。
 - [x] 关键任务间无阻塞，执行日志持续记录并附 1 句风险说明。
-
