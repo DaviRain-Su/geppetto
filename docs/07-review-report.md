@@ -25,6 +25,8 @@
 | 编译 | `RUSTC_WRAPPER= cargo check --features full,test-utils` | 通过 |
 | escrow 示例构建 | `RUSTC_WRAPPER= cargo build-sbf --manifest-path examples/escrow/Cargo.toml` | 通过 |
 | escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features` | integration 12/12 + svm 8/8 通过 |
+| CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试 8/8 + `npm pack --dry-run --json` 模板打包校验） |
+| escrow ↔ client 对齐检查 | `npm run test:escrow-client-alignment` | 通过（Rust fixture 生成 + TypeScript 反序列化 6/6 字段对齐） |
 
 ## 7.3 人工审查结果
 
@@ -59,6 +61,10 @@
 17. `cargo fmt --check` 曾因 `src/idioms/helpers.rs` 的测试折行样式失败；现已执行 `cargo fmt`，格式检查恢复通过，避免 CI 风格噪音。
 18. `examples/escrow/src/lib.rs` 顶层文案此前仍写“deposits/reclaims tokens”，与当前仅演示 escrow 状态生命周期的实现不符；现已改为准确描述 create / exchange / close 的状态语义。
 19. `examples/escrow/src/lib.rs` 中 `geppetto::default_allocator!()` / `geppetto::nostd_panic_handler!()` 在当前工具链下会触发 `unexpected cfg value: solana` 警告；该示例 crate 已局部增加 `#![allow(unexpected_cfgs)]` 以消除非功能性噪音，不影响主库逻辑与安全语义。
+20. `geppetto-cli init` 的模板来源此前隐含在 `lib/init.js` 内部，缺少显式 manifest 与打包级校验；现已抽出 `lib/templates.js` 作为 canonical 清单，并用 `tests/cli/templates.test.js` / `tests/cli/pack.test.js` 守住仓库源文件与 npm 包内容的一致性。
+21. CLI 此前缺少预览语义，用户无法在写盘前确认 create / skip 结果；现已新增 `init --dry-run`、help 文案说明，以及“空目录 / 部分已有文件”两类回归测试，确保 dry-run 无文件系统副作用。
+22. README 与 Phase 8 状态此前仍把 Evolution 描述为“已完成”，且未解释 CLI 模板版本如何映射到 crate/doc 基线；现已统一为“Phase 8 进行中，E1 已交付”，并明确模板版本锁定到同一 package/repository release。
+23. escrow 的 Rust fixture 生成与 TypeScript 读取链路此前虽已存在，但缺少统一运行入口，且文档仍引用旧的 `tests/...` 路径；现已增加 `npm run test:escrow-client-alignment`，并将 `src/client.rs` / `docs/03-technical-spec.md` / `docs/05-test-spec.md` 同步到 `examples/escrow/tests/...` 的真实路径。
 
 ## 7.4 部署前核对清单
 
@@ -83,6 +89,16 @@
 **Agent 指引文件**（根目录）：
 - `AGENTS.md` — 完整 agent 指令
 - `CLAUDE.md` / `GEMINI.md` / `.cursor/rules/geppetto.md` / `.windsurf/rules/geppetto.md` / `.github/copilot-instructions.md` / `.amazonq/rules/geppetto.md` / `.aider.conf.yml`
+
+**CLI / 发布校验**：
+- `bin/geppetto-cli.js` — `init` 命令入口、`--dry-run` 参数解析与 usage/help 输出
+- `lib/init.js` / `lib/templates.js` / `lib/release-check.js` — canonical 模板复制逻辑、manifest 约束与发布前检查入口
+- `tests/cli/init.test.js` / `tests/cli/templates.test.js` / `tests/cli/pack.test.js` — create/skip/dry-run 行为、manifest 对齐、npm pack smoke test
+
+**示例 / 对齐校验**：
+- `examples/escrow/tests/generate_fixtures.rs` — Rust fixture 生成器（导出 escrow binary + layout JSON）
+- `examples/escrow/tests/client_alignment.ts` — TypeScript 侧字段反序列化校验
+- `npm run test:escrow-client-alignment` — 串联 fixture 生成与 TypeScript 对齐检查
 
 **文档**（`docs/`）：
 - `00-business-validation.md` / `01-prd.md` / `02-architecture.md` / `03-technical-spec.md` / `04-task-breakdown.md` / `05-test-spec.md` / `06-implementation-log.md` / `07-review-report.md` / `08-evolution.md`

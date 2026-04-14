@@ -1,6 +1,6 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：进行中（起草版）
+> 状态：进行中（E1/E2 已交付，E3 待推进）
 > 日期：2026-04-14
 > 输入：Phase 7 最终审查报告 + 已验证基线 `ffa5535`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
@@ -10,8 +10,8 @@
 截至 `ffa5535`，Geppetto 已具备可继续演化的稳定基线：
 
 - **核心 crate**：`guard` / `schema` / `dispatch` / `error` / `idioms` / `anti_patterns` / `client` / `testing`
-- **示例程序**：`examples/escrow/` 已覆盖 create / exchange / close 的状态流转，并通过 integration + svm 回归测试
-- **CLI MVP**：`geppetto-cli init` 已能生成 `AGENTS.md` 与多 agent 入口文件，且默认不覆盖已有文件
+- **示例程序**：`examples/escrow/` 已覆盖 create / exchange / close 的状态流转，并通过 integration + svm 回归测试；`npm run test:escrow-client-alignment` 已打通 Rust fixture → TypeScript 反序列化对齐链路
+- **CLI E1 已交付**：`geppetto-cli init` 已具备 canonical 模板 manifest、默认 skip 语义、`--dry-run` 预览、模板完整性测试、`npm pack` smoke test 与 `release:check` 发布前检查
 - **多 agent 入口**：`AGENTS.md` + `CLAUDE.md` / `GEMINI.md` / `.cursor` / `.windsurf` / `.github` / `.amazonq` / `.aider`
 - **文档闭环**：PRD、架构、技术规格、测试规格、实现日志、审查报告、演化文档已形成单仓库链路
 
@@ -82,9 +82,10 @@
 ### ADR-006：CLI 模板与仓库内 canonical 文件必须单源同步
 
 - 状态：Accepted
-- 决策：`geppetto-cli init` 生成的文件必须始终来自仓库内 canonical 模板，不允许 CLI 与仓库文档分叉维护。
+- 决策：`geppetto-cli init` 生成的文件必须始终来自仓库内 canonical 模板，不允许 CLI 与仓库文档分叉维护；模板版本始终绑定到同一 package/repository release，不另起独立版本线。
 - 理由：
   - 当前 CLI MVP 已验证生成与 skip 语义；
+  - E1 已补上 manifest、dry-run、pack smoke test 与 release gate，证明“单源 + 自动校验”成本可控；
   - 后续复杂度主要来自模板漂移，而不是命令本身。
 - 约束：所有入口模板修改必须同时更新仓库源文件与 CLI 测试。
 
@@ -130,29 +131,37 @@
 
 ### Milestone E1：CLI 硬化与模板同步自动校验
 
-- 状态：**Partially delivered / MVP 已有**
+- 状态：**Delivered**
 - 当前已有：
   - `geppetto-cli init`
-  - 初始化测试
+  - `lib/templates.js` canonical 模板 manifest
+  - 初始化测试 + manifest 测试 + `npm pack --dry-run --json` smoke test
   - 默认不覆盖已有文件
-- 下一步：
-  1. 增加模板完整性检查，确保 npm 包内容与仓库 canonical 文件一致；
-  2. 增加 `--dry-run` 或等价预览能力；
-  3. 明确模板版本与 crate/doc 版本的对应关系。
+  - `init --dry-run` 预览能力与 help 文案
+  - `npm run release:check`
+  - README / Tech Spec 中的模板版本映射说明
+- 收口结论：
+  1. CLI 模板来源已从“隐式实现细节”提升为“显式 manifest + 测试 + 打包校验”契约；
+  2. 用户可先预览 create / skip 结果，再决定是否写盘；
+  3. 模板版本已明确绑定到同一 package/repository release。
 - 风险：模板漂移造成 agent 入口与仓库规则不一致。
 - 回滚策略：若自动同步链路不稳定，保留当前 MVP，只做严格测试，不增加额外 CLI 表面。
 
 ### Milestone E2：escrow 示例扩展为“端到端对齐示例”
 
-- 状态：**Partially delivered**
+- 状态：**Delivered**
 - 当前已有：
   - Rust 合约
   - integration / svm 测试
   - create 初始化路径和防重初始化语义
-- 下一步：
-  1. 增加 Rust fixture → TypeScript 反序列化对齐验证；
-  2. 让 `client.rs` 中的客户端示例与 escrow fixture 建立明确映射；
-  3. 在不增加过多复杂度的前提下，提供一条最小 TS 读取路径。
+  - `examples/escrow/tests/generate_fixtures.rs` 生成 binary + layout fixtures
+  - `examples/escrow/tests/client_alignment.ts` 验证字段偏移与值
+  - `npm run test:escrow-client-alignment` 统一运行入口
+  - `src/client.rs` / `docs/03-technical-spec.md` / `docs/05-test-spec.md` 已绑定真实示例路径
+- 收口结论：
+  1. escrow 示例已具备 Rust → TypeScript 的最小对齐验证链路；
+  2. 客户端知识文档不再停留在“未来计划”，而是直接指向可运行示例；
+  3. 未引入额外前端框架或重型客户端生成流程，仍保持最小复杂度。
 - 风险：示例很容易因文档演化而失配。
 - 回滚策略：若端到端 client 层先失稳，不回滚核心 crate；冻结 demo 到最后一个已验证 tag。
 
@@ -222,11 +231,11 @@
 建议按以下顺序推进，而不是并行摊大饼：
 
 1. **先做 E1：CLI 硬化**
-   - 成本低、收益高、最容易锁定模板漂移问题；
+   - 已完成；模板漂移已被 manifest + pack smoke test 锁住；
 2. **再做 E2：escrow ↔ client 对齐示例**
-   - 直接强化 Geppetto 的“合约到客户端”价值主张；
+   - 已完成；当前已具备最小 Rust fixture ↔ TypeScript 对齐链路；
 3. **然后做 E3：文档一致性检查**
-   - 用自动化守住前两步成果；
+   - 当前下一优先级；用自动化守住前两步成果；
 4. **最后再考虑 E5/E6**
    - 脚手架和工具命令应建立在稳定模板与稳定示例之上。
 
@@ -264,8 +273,8 @@
 
 ## 8.8 Phase 8 验收标准（草案）
 
-- [ ] 至少完成 1 个工具层或模板层里程碑（优先 E1 / E2 / E3）
+- [x] 至少完成 1 个工具层或模板层里程碑（优先 E1 / E2 / E3）
 - [ ] CLI、示例、文档三者至少建立 1 条自动一致性检查链路
-- [ ] 不新增未经 ADR 记录的核心运行时公开语义
-- [ ] 保持 `ffa5535` 基线以来的测试/文档/格式检查可稳定复现
-- [ ] 所有新增演化能力都具备明确回滚策略
+- [x] 不新增未经 ADR 记录的核心运行时公开语义
+- [x] 保持 `ffa5535` 基线以来的测试/文档/格式检查可稳定复现
+- [x] 所有新增演化能力都具备明确回滚策略

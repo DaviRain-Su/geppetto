@@ -1311,38 +1311,30 @@ geppetto::log::log!("Processing create instruction");
 
 **验证策略（分层）：**
 
-1. **Fixture-based 测试**（P0）：Rust 侧用 AccountSchema 序列化已知结构，导出 raw bytes 到 fixture 文件。TypeScript 侧读取 fixture，手动反序列化，断言字段值匹配。不需要链上环境，测试快速稳定。
-2. **链上端到端测试**（P1，如果时间允许）：用 litesvm 部署程序 + ts-node 客户端交互，验证完整链路。
+1. **Fixture-based 测试**（P0）：Rust 侧用 AccountSchema 序列化已知结构，导出 raw bytes 到 fixture 文件。TypeScript 侧读取 fixture，手动反序列化，断言字段值匹配。不需要链上环境，测试快速稳定。当前 concrete example 为 `examples/escrow/tests/generate_fixtures.rs` + `examples/escrow/tests/client_alignment.ts`。
+2. **链上端到端测试**（P1，如果时间允许）：用 litesvm 部署程序 + TypeScript 客户端交互，验证完整链路。
 
 **测试文件位置：**
 
-- Rust 测试：`tests/` 目录（标准 crate 结构）
-- TypeScript fixture 测试：`tests/fixtures/` 存放 fixture 数据，`tests/client_alignment.ts` 执行验证
-- 链上 e2e 测试（如做）：`examples/escrow/tests/` 目录
+- Rust fixture 生成：`examples/escrow/tests/generate_fixtures.rs`
+- TypeScript fixture 测试：`examples/escrow/tests/fixtures/` 存放 fixture 数据，`examples/escrow/tests/client_alignment.ts` 执行验证
+- 链上 e2e 测试：`examples/escrow/tests/` 目录（integration / svm）
 
 **最小测试运行配置（示例）：**
 
 ```json
-// tests/package.json
+// package.json
 {
-  "name": "geppetto-client-alignment",
-  "version": "1.0.0",
   "scripts": {
-    "test": "npx ts-node tests/client_alignment.ts"
-  },
-  "dependencies": {
-    "@solana/kit": "^2.0.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0",
-    "ts-node": "^10.9.0"
+    "test:escrow-client-alignment": "cargo test --manifest-path examples/escrow/Cargo.toml --test generate_fixtures && tsx examples/escrow/tests/client_alignment.ts"
   }
 }
 ```
 
 运行命令：
 ```bash
-cd tests && npm install && npm test
+npm install
+npm run test:escrow-client-alignment
 ```
 
 ## 10. src/testing.rs — 测试工具（FR-7，feature-gated）
@@ -1519,6 +1511,57 @@ When in doubt, read the pinocchio source code directly.
 | 20 | `assert_ata` 传入非 token / token-2022 program       | 返回 `IncorrectProgramId`              |
 | 21 | 两个 AccountSchema 使用相同 DISCRIMINATOR                | 编译通过但运行时错误——文档中警告                    |
 
+## 15. `geppetto-cli init` — 模板契约（FR-10）
+
+### 15.1 Canonical source
+
+`geppetto-cli init` 生成的 agent 入口文件必须直接来自仓库根目录的 canonical 文件，不允许维护第二份模板副本。
+
+当前 canonical 模板集：
+
+- `AGENTS.md`
+- `CLAUDE.md`
+- `GEMINI.md`
+- `.aider.conf.yml`
+- `.amazonq/rules/geppetto.md`
+- `.cursor/rules/geppetto.md`
+- `.github/copilot-instructions.md`
+- `.windsurf/rules/geppetto.md`
+
+CLI 实现必须通过显式 manifest 枚举以上文件，并在执行前验证：
+
+- 路径为相对路径；
+- 使用 POSIX 分隔符；
+- 无重复项；
+- 所有源文件都存在。
+
+### 15.2 `init` 行为契约
+
+`npx geppetto-cli init`：
+
+- 对 manifest 中每个文件逐项决策；
+- 若目标文件不存在，则创建父目录并复制 canonical 文件；
+- 若目标文件已存在，则跳过，不覆盖用户内容；
+- 每个文件输出一行日志：`created <path>` 或 `skipped <path>`；
+- 结束时输出汇总：`done created={n} skipped={n}`。
+
+`npx geppetto-cli init --dry-run`：
+
+- 使用与正式执行相同的 create/skip 判定逻辑；
+- 对缺失文件输出 `would-create <path>`；
+- 对已存在文件继续输出 `skipped <path>`；
+- 不创建目录、不写入文件；
+- 结束时输出汇总：`done dry-run would-create={n} skipped={n}`。
+
+### 15.3 版本映射与发布检查
+
+- CLI 模板版本不单独编号；模板基线始终绑定到同一 package/repository release。
+- 例如 `geppetto-cli@0.1.0` 必须生成 `0.1.0` 发布包中自带的 canonical agent 文件，并与该发布对应的 crate/doc 基线保持一致。
+- 发布前最小检查集合：
+  1. `npm test`
+  2. `npm pack --dry-run --json`
+- 仓库应提供统一入口 `npm run release:check`，用于串联上述检查并在发布前复核模板完整性。
+
 ## Phase 3 验收标准
 
 > 注：以下验收的是**规格文档本身的完整性**（"是否定义清楚了"），不是代码实现。代码实现状态见 `docs/06-implementation-log.md`。
@@ -1534,4 +1577,5 @@ When in doubt, read the pinocchio source code directly.
 - [x] 使用正确的 Pinocchio 0.11 类型（AccountView、Address、ProgramError）
 - [x] 知识版本头格式已定义
 - [x] AGENTS.md Knowledge Freshness prompt 已强化
+- [x] FR-10 CLI 模板契约已定义（canonical source / dry-run / release gate）
 - [x] 可进入 Phase 4: Task Breakdown

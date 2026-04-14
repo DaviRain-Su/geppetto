@@ -14,7 +14,7 @@
 | 单元测试 | `#[cfg(test)]` + `cargo test` | guard, schema, dispatch, idioms helpers, error |
 | Doctest | `cargo test --doc` | 所有 doc comments 中的代码示例 |
 | 集成测试 | `tests/` 目录 | 模块间交互（schema + guard 组合使用） |
-| Fixture 测试 | `tests/fixtures/` + `tests/client_alignment.ts` | Rust ↔ TypeScript 布局对齐 |
+| Fixture 测试 | `examples/escrow/tests/fixtures/` + `examples/escrow/tests/client_alignment.ts` | Rust ↔ TypeScript 布局对齐 |
 | 示例程序测试 | `examples/escrow/tests/` + litesvm | escrow 端到端流程 |
 
 ---
@@ -373,14 +373,14 @@ fn test_feature_gated_modules() {
 ### 8.1 Rust 侧：生成 fixture
 
 ```rust
-// tests/generate_fixtures.rs
+// examples/escrow/tests/generate_fixtures.rs
 
 #[test]
 fn generate_escrow_fixture() {
     // 1. 用 MockAccount schema 构建一个已知数据的 Escrow 账户
     // 2. 序列化为 raw bytes
-    // 3. 写入 tests/fixtures/escrow_account.bin
-    // 4. 同时写 tests/fixtures/escrow_layout.json：
+    // 3. 写入 examples/escrow/tests/fixtures/escrow_account.bin
+    // 4. 同时写 examples/escrow/tests/fixtures/escrow_layout.json：
     //    { "discriminator": {"offset": 0, "size": 1, "value": 1},
     //      "status": {"offset": 1, "size": 1, "value": 0},
     //      "maker": {"offset": 2, "size": 32, "value": "base58..."},
@@ -391,17 +391,23 @@ fn generate_escrow_fixture() {
 ### 8.2 TypeScript 侧：验证对齐
 
 ```typescript
-// tests/client_alignment.ts
+// examples/escrow/tests/client_alignment.ts
 
 import { readFileSync } from 'fs';
 
-const data = readFileSync('tests/fixtures/escrow_account.bin');
-const layout = JSON.parse(readFileSync('tests/fixtures/escrow_layout.json', 'utf8'));
+const data = readFileSync('examples/escrow/tests/fixtures/escrow_account.bin');
+const layout = JSON.parse(readFileSync('examples/escrow/tests/fixtures/escrow_layout.json', 'utf8'));
 
 // 逐字段验证
 assert(data.readUInt8(layout.discriminator.offset) === layout.discriminator.value);
 assert(data.readUInt8(layout.status.offset) === layout.status.value);
 // ... Address 和 u64 字段同理
+```
+
+推荐命令：
+
+```bash
+npm run test:escrow-client-alignment
 ```
 
 ---

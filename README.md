@@ -53,7 +53,19 @@ cd my-project/program && cargo add geppetto
 npx geppetto-cli init
 ```
 
+Want to preview the generated file set first?
+
+```bash
+npx geppetto-cli init --dry-run
+```
+
 Geppetto doesn't replace the official scaffold—it adds the knowledge layer that makes agents write correct, secure Pinocchio code.
+
+### CLI template/version contract
+
+- `geppetto-cli init` copies the canonical agent entry files that live at this repository root (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor`, `.windsurf`, `.github`, `.amazonq`, `.aider.conf.yml`).
+- Template versioning is locked to the package release: `geppetto-cli@0.1.0` ships the same canonical template set and knowledge baseline as the `0.1.0` repository/package release. There is no separate template version track.
+- Maintainers can run `npm run release:check` before publishing to verify CLI tests and `npm pack --dry-run --json` package contents together.
 
 ## Core Modules
 
@@ -104,9 +116,9 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 | Phase 5: Test Spec           | ✅ 完成                           |
 | Phase 6: Implementation      | ✅ 完成                           |
 | Phase 7: Review & Deploy     | ✅ 完成                           |
-| Phase 8: Evolution           | ✅ 完成（ADR、复杂度预算、演化路径已固化）             |
+| Phase 8: Evolution           | 进行中（E1/E2 已交付；E3 待推进）               |
 
-**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。子模块 B 已补上 `npx geppetto-cli init` 初版脚手架。
+**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 当前已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）与 E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例），下一步是 E3。
 
 Hackathon delivery target: **2026-05-11**
 

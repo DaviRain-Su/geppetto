@@ -5,14 +5,30 @@
  * matches the Rust-side AccountSchema layout exactly.
  *
  * Run:
- *   cargo test --test generate_fixtures   # generate fixtures first
- *   npx tsx tests/client_alignment.ts     # then run this
+ *   cargo test --manifest-path examples/escrow/Cargo.toml --test generate_fixtures
+ *   npx tsx examples/escrow/tests/client_alignment.ts
  *
- * Prerequisites: Node.js 18+, tsx (or ts-node)
+ * Or from the repository root:
+ *   npm run test:escrow-client-alignment
+ *
+ * Prerequisites: Node.js 18+, tsx
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
+const { readFileSync } = require("node:fs");
+const { join } = require("node:path");
+
+type LayoutField = {
+  name: string;
+  type: "u8" | "u64" | "Address";
+  offset: number;
+  size: number;
+  value: number | string;
+};
+
+type Layout = {
+  total_len: number;
+  fields: LayoutField[];
+};
 
 // ── Load fixtures ──
 
@@ -20,7 +36,7 @@ const fixtureDir = join(__dirname, "fixtures");
 const accountData = readFileSync(join(fixtureDir, "escrow_account.bin"));
 const layout = JSON.parse(
   readFileSync(join(fixtureDir, "escrow_layout.json"), "utf8")
-);
+) as Layout;
 
 // ── Deserialization helpers (mirroring Rust AccountSchema offsets) ──
 
@@ -44,10 +60,10 @@ let failed = 0;
 function assert(condition: boolean, message: string) {
   if (condition) {
     passed++;
-    console.log(`  ✅ ${message}`);
+    console.log(`  ok  ${message}`);
   } else {
     failed++;
-    console.error(`  ❌ ${message}`);
+    console.error(`  fail ${message}`);
   }
 }
 
@@ -86,7 +102,7 @@ for (const field of layout.fields) {
       break;
     }
     default:
-      console.error(`  ⚠️  Unknown type: ${fieldType} for field ${name}`);
+      console.error(`  skip unknown type: ${fieldType} for field ${name}`);
   }
 }
 
@@ -94,8 +110,8 @@ for (const field of layout.fields) {
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`);
 if (failed > 0) {
-  console.error("\n💥 Layout mismatch detected! Rust and TypeScript are out of sync.");
+  console.error("\nLayout mismatch detected: Rust and TypeScript are out of sync.");
   process.exit(1);
 } else {
-  console.log("\n🎉 All fields aligned. Rust AccountSchema ↔ TypeScript offsets match.");
+  console.log("\nAll fields aligned: Rust AccountSchema and TypeScript offsets match.");
 }

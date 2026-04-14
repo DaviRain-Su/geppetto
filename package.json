@@ -25,9 +25,14 @@
     ".windsurf/rules/geppetto.md"
   ],
   "scripts": {
-    "test": "node --test tests/cli/init.test.js"
+    "release:check": "node ./lib/release-check.js",
+    "test": "node --test tests/cli/init.test.js tests/cli/templates.test.js tests/cli/pack.test.js",
+    "test:escrow-client-alignment": "cargo test --manifest-path examples/escrow/Cargo.toml --test generate_fixtures && tsx examples/escrow/tests/client_alignment.ts"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
   }
 }
