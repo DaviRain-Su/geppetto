@@ -388,7 +388,7 @@ E6-01 → E6-02 → E6-03 → E6-04
 | E7-01 | **外部协同目标和边界定义** — 明确 E7 的首发对齐对象（Pinocchio / create-solana-dapp / agent 模式社区），限定当前不做直接提交，只做建议级别内容产出 | 1h | 无 | `docs/10-e7-01-external-alignment.md` |
 | E7-02 | **提交行动清单** — 将外部建议转成 create-solana-dapp 单路径可执行提交计划（含提交文案、范围、发送决策） | 2h | E7-01 | `docs/11-e7-02-create-solana-dapp-action-plan.md` |
 | E7-03 | **最小外部动作选型与里程碑绑定** — 先选 1 个最小外部输出路径（建议先锁定 create-solana-dapp 建议项或 Pinocchio 提交流程建议），确认谁先接，谁下轮跟进 | 2h | E7-02 | E7 最小执行计划 |
-| E7-04 | **对外发送窗口确认（内部）** — 将 E7-03 选型与发送决策明确为外部沟通前置动作（discussion/PR 阶段约束、单路径复用） | 1h | E7-03 | `docs/12-e7-03-create-solana-dapp-discussion-draft.md` |
+| E7-04 | **对外发送窗口确认（内部）** — 将 E7-03 选型与发送决策明确为外部沟通前置动作（discussion/PR 阶段约束、单路径复用）；当前为 Hold，等待窗口与对接人确认 | 1h | E7-03 | `docs/13-e7-04-send-window-checklist.md` |
 
 ### E7 关键路径
 
@@ -402,7 +402,7 @@ E7-01 → E7-02 → E7-03 → E7-04
 - 外部输出对象、范围与不做事项明确；
 - 至少形成 1 个可复用的对齐建议草案；
 - E7-01 至 E7-03 已完成：外部对象、提交方式与单路径接入规则已锁定；
-- E7-04 在外部发送前待执行：对外沟通窗口确认与 discussion/PR 提交顺序约束已形成；
+- E7-04 已形成对外沟通窗口确认与 discussion/PR 提交顺序约束（当前处于 Hold）；
 - E7 当前进展在 `docs/08-evolution.md` 与 `README` 中保持一致。
 
 ---

@@ -184,6 +184,7 @@ npx geppetto-cli init
 - [ ] 决策状态保持为 `Hold（待窗口确认）`
 - [ ] 本轮仅选择 `create-solana-dapp` 作为单一路径
 - [ ] 如需转 PR，优先使用 docs-only 最小改动范围
+- [ ] 发送窗口决策归档：`docs/13-e7-04-send-window-checklist.md`
 
 ---
 

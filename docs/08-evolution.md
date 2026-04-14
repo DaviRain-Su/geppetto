@@ -258,7 +258,7 @@
 
 ### Milestone E7：生态协同与上游反馈
 
-- 状态：**进行中**
+- 状态：**进行中（E7-04 Hold）**
 - 目标：将已验证的 agent-first 规则反馈到更大的 Pinocchio / Solana 生态。
 - 候选动作：
   1. 向 Pinocchio 或相关官方仓库贡献 AGENTS / skill / getting-started 资料；
@@ -271,6 +271,7 @@
   - 外部草案详见 `docs/10-e7-01-external-alignment.md`。
   - 可执行提交计划详见 `docs/11-e7-02-create-solana-dapp-action-plan.md`。
   - E7-03 里程碑已完成，已锁定 create-solana-dapp 为唯一外部对象；待执行内容与讨论模板见 `docs/12-e7-03-create-solana-dapp-discussion-draft.md`。
+  - E7-04 外部发送窗口确认清单见 `docs/13-e7-04-send-window-checklist.md`。
 
 ## 8.5 Phase 8 近期执行顺序（建议）
 
