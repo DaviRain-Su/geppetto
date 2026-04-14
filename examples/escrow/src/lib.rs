@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(unexpected_cfgs)]
 
 //! # Geppetto Escrow — Example Program
 //!
@@ -12,9 +13,9 @@
 //!
 //! | Tag | Instruction | Description |
 //! |-----|-------------|-------------|
-//! | 0   | Create      | Maker creates escrow, deposits tokens |
-//! | 1   | Exchange    | Taker fulfills escrow, tokens swap |
-//! | 2   | Close       | Maker cancels escrow, reclaims tokens |
+//! | 0   | Create      | Maker creates and initializes escrow state |
+//! | 1   | Exchange    | Taker fulfills escrow and marks state exchanged |
+//! | 2   | Close       | Maker cancels escrow and closes the state account |
 
 use geppetto::account::AccountView;
 use geppetto::address::Address;

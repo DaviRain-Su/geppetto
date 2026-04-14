@@ -142,7 +142,9 @@ mod tests {
         close_account(&mut account, &mut recipient).unwrap();
         assert_eq!(account.lamports(), 0);
         assert_eq!(recipient.lamports(), 1500);
-        unsafe { assert!(account.borrow_unchecked().iter().all(|&b| b == 0)); }
+        unsafe {
+            assert!(account.borrow_unchecked().iter().all(|&b| b == 0));
+        }
     }
 
     #[test]
@@ -163,7 +165,9 @@ mod tests {
         let mut account = mock_account_view([0u8; 32], [0u8; 32], 100, &mut account_data);
         let mut recipient = mock_account_view([1u8; 32], [0u8; 32], 0, &mut recipient_data);
         close_account(&mut account, &mut recipient).unwrap();
-        unsafe { assert!(account.borrow_unchecked().iter().all(|&b| b == 0)); }
+        unsafe {
+            assert!(account.borrow_unchecked().iter().all(|&b| b == 0));
+        }
     }
 
     #[test]
@@ -175,15 +179,20 @@ mod tests {
     #[test]
     fn test_idioms_read_u64_le_nonzero_offset() {
         let data = [0u8; 8]
-            .iter().chain([1u8, 0, 0, 0, 0, 0, 0, 0].iter())
-            .copied().collect::<alloc::vec::Vec<u8>>();
+            .iter()
+            .chain([1u8, 0, 0, 0, 0, 0, 0, 0].iter())
+            .copied()
+            .collect::<alloc::vec::Vec<u8>>();
         assert_eq!(read_u64_le(&data, 8).unwrap(), 1);
     }
 
     #[test]
     fn test_idioms_read_u64_le_error_out_of_bounds() {
         let data = [1u8, 0, 0, 0];
-        assert_eq!(read_u64_le(&data, 0), Err(ProgramError::AccountDataTooSmall));
+        assert_eq!(
+            read_u64_le(&data, 0),
+            Err(ProgramError::AccountDataTooSmall)
+        );
     }
 
     #[test]
@@ -208,7 +217,10 @@ mod tests {
     #[test]
     fn test_idioms_write_u64_le_error_out_of_bounds() {
         let mut data = [0u8; 4];
-        assert_eq!(write_u64_le(&mut data, 0, 42), Err(ProgramError::AccountDataTooSmall));
+        assert_eq!(
+            write_u64_le(&mut data, 0, 42),
+            Err(ProgramError::AccountDataTooSmall)
+        );
     }
 
     #[test]
@@ -228,7 +240,10 @@ mod tests {
     #[test]
     fn test_idioms_read_address_error_out_of_bounds() {
         let data = [0u8; 16];
-        assert_eq!(read_address(&data, 0), Err(ProgramError::AccountDataTooSmall));
+        assert_eq!(
+            read_address(&data, 0),
+            Err(ProgramError::AccountDataTooSmall)
+        );
     }
 
     #[test]
