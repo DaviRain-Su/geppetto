@@ -1,13 +1,13 @@
 # Phase 8: Evolution — Geppetto
 
-> 状态：进行中（E1/E2/E3 已交付，后续扩展待推进）
+> 状态：已交付（E1/E2/E3 已交付，后续扩展待推进）
 > 日期：2026-04-14
-> 输入：Phase 7 最终审查报告 + 已验证基线 `75e1e00`
+> 输入：Phase 7 最终审查报告 + 已验证基线 `6982280`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
 
 ## 8.1 当前基线（Phase 8 起点）
 
-截至 `75e1e00`，Geppetto 已具备可继续演化的稳定基线：
+截至 `6982280`，Geppetto 已具备可继续演化的稳定基线：
 
 - **核心 crate**：`guard` / `schema` / `dispatch` / `error` / `idioms` / `anti_patterns` / `client` / `testing`
 - **示例程序**：`examples/escrow/` 已覆盖 create / exchange / close 的状态流转，并通过 integration + svm 回归测试；`npm run test:escrow-client-alignment` 已打通 Rust fixture → TypeScript 反序列化对齐链路
@@ -167,7 +167,7 @@
 
 ### Milestone E3：文档/规则自动一致性检查
 
-- 状态：**进行中（E3-08 待）**
+- 状态：**Delivered**
 - 目标：降低“代码已对，但知识入口漂移”的维护成本。
 - 当前已有：
   - `lib/knowledge-manifest.js` 明确知识版本头检查目标清单；
@@ -187,7 +187,7 @@
   3. 检查器已兼容当前仓库与常见 Cargo 依赖声明变体；
   4. E3 首轮目标已从“人工约定”提升为“可执行 gate”。
 - 后续扩展：
-  - 进入 E3-08：跨文档收口与运维承诺。
+  - E3-08 收口完成：`docs/06`、`docs/07`、`docs/08` 同步补齐，发布门职责明确（`docs:check` 接入 `release:check`）。
 - 风险：检查器本身成为新的维护负担。
 - 回滚策略：若自动化过重，退回人工 checklist，但保留脚本接口与最小 smoke checks。
 
@@ -250,7 +250,7 @@
 2. **再做 E2：escrow ↔ client 对齐示例**
    - 已完成；当前已具备最小 Rust fixture ↔ TypeScript 对齐链路；
 3. **然后做 E3：文档一致性检查**
-   - 已完成知识头、agent 入口镜像与 feature matrix 检查；下一优先级是 E3-07 评估接线与发布流程、E3-08 跨文档收口；
+   - 已完成知识头、agent 入口镜像与 feature matrix 检查；接线与收口已完成，`docs:check` 已接入 `release:check`；
 4. **最后再考虑 E5/E6**
    - 脚手架和工具命令应建立在稳定模板与稳定示例之上。
 
@@ -278,7 +278,7 @@
 
 ## 8.7 退化与回滚原则
 
-- 核心安全语义（`AccountSchema`、`assert_pda`、`assert_ata`、`assert_owner`、`close_account`）出现回归时，优先回滚到 `ffa5535` 这一 Phase 8 起点基线；
+- 核心安全语义（`AccountSchema`、`assert_pda`、`assert_ata`、`assert_owner`、`close_account`）出现回归时，优先回滚到当前可发布基线 `6982280`；如需对照 Phase 8 起点基线可参考 `ffa5535`。
 - 示例、CLI、自动化工具允许独立冻结，不应为了它们的问题回滚核心 crate 已验证语义；
 - 若出现文档 / agent 入口 / 示例与实现不一致：
   1. 暂停新发布；
@@ -289,7 +289,7 @@
 ## 8.8 Phase 8 验收标准（草案）
 
 - [x] 至少完成 1 个工具层或模板层里程碑（优先 E1 / E2 / E3）
-- [ ] CLI、示例、文档三者至少建立 1 条自动一致性检查链路
+- [x] CLI、示例、文档三者至少建立 1 条自动一致性检查链路
 - [x] 不新增未经 ADR 记录的核心运行时公开语义
-- [x] 保持 `ffa5535` 基线以来的测试/文档/格式检查可稳定复现
+- [x] 保持 `6982280` 基线以来的测试/文档/格式检查可稳定复现
 - [x] 所有新增演化能力都具备明确回滚策略

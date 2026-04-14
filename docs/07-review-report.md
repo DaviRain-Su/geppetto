@@ -3,8 +3,8 @@
 > 状态：已完成（含后续跟进审查）
 > 日期：2026-04-14
 > 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改、文档收口、escrow 示例补丁与最终收尾修正
-> 审查基线：Phase 7 最终已验证基线 = `85b2416`
-> 当前收口基线：`75e1e00`
+> 审查基线：`6982280`
+> 当前可发布基线：`6982280`
 
 ## 7.1 审查目标
 
@@ -17,16 +17,16 @@
 
 | 检查项 | 命令 | 结果 |
 |--------|------|------|
-| 单元测试 | `RUSTC_WRAPPER= cargo test --all-features` | 65/65 通过 |
+| 单元测试 | `RUSTC_WRAPPER= cargo test --all-features --locked` | 全部通过 |
 | Doctest | `RUSTC_WRAPPER= cargo test --doc` | 通过（ignored 为预期行为） |
 | Clippy | `RUSTC_WRAPPER= cargo clippy --all-targets --all-features -- -D warnings` | 0 警告 |
 | 文档 | `RUSTC_WRAPPER= cargo doc --no-deps` | 0 警告，无断链 |
 | 格式 | `RUSTC_WRAPPER= cargo fmt --check` | 通过 |
 | 编译 | `RUSTC_WRAPPER= cargo check --features full,test-utils` | 通过 |
 | escrow 示例构建 | `RUSTC_WRAPPER= cargo build-sbf --manifest-path examples/escrow/Cargo.toml` | 通过 |
-| escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features` | integration 12/12 + svm 8/8 通过 |
+| escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features --locked` | integration 与 svm 全部通过 |
 | CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试套件、`docs:check` 与 `npm pack --dry-run --json` 打包校验） |
-| escrow ↔ client 对齐检查 | `npm run test:escrow-client-alignment` | 通过（Rust fixture 生成 + TypeScript 反序列化 6/6 字段对齐） |
+| escrow ↔ client 对齐检查 | `npm run test:escrow-client-alignment` | 通过（Rust fixture 生成 + TypeScript 字段对齐） |
 | 文档一致性检查 | `npm run docs:check` | 通过（19 个知识头目标 + 7 个 agent 入口镜像 + feature matrix） |
 
 ## 7.3 人工审查结果
@@ -64,11 +64,12 @@
 19. `examples/escrow/src/lib.rs` 中 `geppetto::default_allocator!()` / `geppetto::nostd_panic_handler!()` 在当前工具链下会触发 `unexpected cfg value: solana` 警告；该示例 crate 已局部增加 `#![allow(unexpected_cfgs)]` 以消除非功能性噪音，不影响主库逻辑与安全语义。
 20. `geppetto-cli init` 的模板来源此前隐含在 `lib/init.js` 内部，缺少显式 manifest 与打包级校验；现已抽出 `lib/templates.js` 作为 canonical 清单，并用 `tests/cli/templates.test.js` / `tests/cli/pack.test.js` 守住仓库源文件与 npm 包内容的一致性。
 21. CLI 此前缺少预览语义，用户无法在写盘前确认 create / skip 结果；现已新增 `init --dry-run`、help 文案说明，以及“空目录 / 部分已有文件”两类回归测试，确保 dry-run 无文件系统副作用。
-22. README 与 Phase 8 状态此前仍把 Evolution 描述为“已完成”，且未解释 CLI 模板版本如何映射到 crate/doc 基线；现已统一为“Phase 8 进行中，E1 已交付”，并明确模板版本锁定到同一 package/repository release。
+22. README 与 Phase 8 状态此前仍把 Evolution 描述为“已完成”，且未解释 CLI 模板版本如何映射到 crate/doc 基线；现已统一为“Phase 8 已完成（E1/E2/E3 交付）”，并明确模板版本锁定到同一 package/repository release。
 23. escrow 的 Rust fixture 生成与 TypeScript 读取链路此前虽已存在，但缺少统一运行入口，且文档仍引用旧的 `tests/...` 路径；现已增加 `npm run test:escrow-client-alignment`，并将 `src/client.rs` / `docs/03-technical-spec.md` / `docs/05-test-spec.md` 同步到 `examples/escrow/tests/...` 的真实路径。
 24. 知识版本头此前只靠人工约定维护，且 `guard.rs` / `idioms/helpers.rs` / `testing/helpers.rs` 缺少标准头；现已补齐头信息，并新增 `lib/knowledge-check.js` + `tests/cli/knowledge.test.js` 自动校验版本、日期格式与常见 Cargo 依赖声明（inline table / string / workspace）兼容性。
 25. 多 agent 入口文件此前虽已齐全，但仍缺少自动镜像校验，无法防止 `CLAUDE.md` / `.cursor` / `.github` / `.aider` 与 `AGENTS.md` 的指向规则漂移；现已新增 `lib/agent-entry-check.js` + `tests/cli/agent-entry.test.js`，并将 `npm run docs:check` 扩展为同时检查知识头、入口镜像与 feature matrix。
-26. E3 发布/审查接线已完成：`npm run release:check` 已接入 `npm run docs:check`，发布前可一次性执行 CLI 测试、知识一致性检查和 `npm pack --dry-run --json`。
+26. `npm run docs:check` 已接入 `release:check` 发布前流程。
+27. E3 收口完成：`docs/06-implementation-log.md`、`docs/07-review-report.md` 与 `docs/08-evolution.md` 已完成 E3-08 文档闭环；`release:check` / `docs:check` / CLI gate 形成统一发布链路。
 
 ## 7.4 部署前核对清单
 
@@ -117,11 +118,11 @@
 
 - **已知风险**：PDA/ATA 单元测试依赖 `solana-address` 的 `curve25519` dev-dependency。若未来升级 `pinocchio` 导致 `solana-address` major 版本变更，需重新确认该 feature 的可用性。
 - **语义风险**：`AccountSchema::validate` 已收紧为严格定长（`== LEN`）。这能更好表达固定布局零拷贝账户，但若未来需要支持 TLV / trailer bytes，必须由具体账户类型覆盖 `validate()` 并补充专门测试，不能默认沿用当前语义。
-- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，优先回滚至 `85b2416`；若仅是本轮文档/知识层回归，可从当前可发布基线 `75e1e00` 重新整理。 
+- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，回滚到当前可发布基线 `6982280`。文档/知识层回归也从 `6982280` 重新整理。
 
 ## 7.7 发布摘要
 
-本轮收口的发布摘要见 [`docs/09-release-notes.md`](./09-release-notes.md)，当前可发布基线为 `75e1e00`。
+本轮收口的发布摘要见 [`docs/09-release-notes.md`](./09-release-notes.md)，当前可发布基线为 `6982280`。
 
 ## Phase 7 验收标准
 
