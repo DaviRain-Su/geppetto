@@ -2,9 +2,9 @@
 
 > 状态：已完成（含后续跟进审查）
 > 日期：2026-04-14
-> 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改与文档收口
+> 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改、文档收口与 escrow 示例补丁
 > 审查基线：Phase 7 最终已验证基线 = `85b2416`
-> 当前收口基线：`789e579`
+> 当前收口基线：`22a1879`
 
 ## 7.1 审查目标
 
@@ -19,10 +19,12 @@
 |--------|------|------|
 | 单元测试 | `RUSTC_WRAPPER= cargo test --all-features` | 65/65 通过 |
 | Doctest | `RUSTC_WRAPPER= cargo test --doc` | 通过（ignored 为预期行为） |
-| Clippy | `RUSTC_WRAPPER= cargo clippy --all-features` | 0 警告 |
+| Clippy | `RUSTC_WRAPPER= cargo clippy --all-targets --all-features -- -D warnings` | 0 警告 |
 | 文档 | `RUSTC_WRAPPER= cargo doc --no-deps` | 0 警告，无断链 |
 | 格式 | `RUSTC_WRAPPER= cargo fmt --check` | 通过 |
 | 编译 | `RUSTC_WRAPPER= cargo check --features full,test-utils` | 通过 |
+| escrow 示例构建 | `RUSTC_WRAPPER= cargo build-sbf --manifest-path examples/escrow/Cargo.toml` | 通过 |
+| escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features` | integration 12/12 + svm 8/8 通过 |
 
 ## 7.3 人工审查结果
 
@@ -46,10 +48,18 @@
 6. 对外 idioms / public docs 一度回退为直接示范 `pinocchio::*` / `pinocchio_*` 导入，违背 `AGENTS.md` 的 facade 规则 → 已统一回 `geppetto::*`、`geppetto::token::*`、`geppetto::log::*`、`geppetto::pubkey::*`；内部实现规格文档则明确标注为底层 `pinocchio::*` 细节。
 7. 文档矩阵一度与当前实现漂移：`full` feature 少写了 `log` + `pubkey`，README 把 `idioms` / `testing` 仍标成 Doc-only，且多处文案仍提 `bankrun` → 已统一为当前实现（`full = ["system", "token-all", "memo", "log", "pubkey"]`，测试能力描述为 `litesvm / mollusk-svm`）。
 8. `AccountSchema::validate` 已接受严格定长语义（`data.len() == LEN`），错误码为 `InvalidAccountLen`；相关架构/技术规格/测试规格已同步，且明确声明：若账户允许 TLV / trailer bytes，应覆盖 `validate()`。
+9. `examples/escrow/src/instructions/create.rs` 原实现仅接受已由本程序拥有的 escrow 账户，导致真实链上“首建 PDA + 初始化”路径不可达；现已补上 system-owned 空 PDA 的创建路径，使用 `geppetto::system::create_account_with_minimum_balance_signed(...)` 完成创建并初始化。
+10. 同一 `create` 流程此前可覆盖历史状态账户；现已增加“仅未初始化可写入”保护：对 program-owned 路径要求正确长度、非零 lamports 且数据全零，否则返回 `EscrowError::AlreadyInitialized (0x102)`；同时关闭/抽干后的旧账户也不可复用。
+11. `examples/escrow/tests/integration.rs` 与 `examples/escrow/tests/svm.rs` 已补充重初始化失败与 closed-account 不可重建等回归用例，确认 create 语义与错误码稳定。
+12. `examples/escrow/tests/svm.rs` 原先 `include_bytes!(target/deploy/...)` 对构建产物缺失过于脆弱；现改为运行时读取 `.so`，并在缺失时给出明确提示，要求先执行 `cargo build-sbf --manifest-path examples/escrow/Cargo.toml`。
+13. `src/client.rs` 中 Codama 段落已改为 CLI / 独立 generator crate 语境，不再给出与 derive 叙述不自洽的 `build-dependencies` 示例。
+14. `src/idioms/cpi.rs` 中 Token `Transfer` 公共示例已补上 `multisig_signers: &[]`，与当前 CPI 结构体字段保持一致。
+15. `src/testing/mollusk.rs` 对 `Mollusk::new(...)` 的说明已从“自动发现总能成功”改为更保守的表述，明确其依赖搜索路径与项目布局；同时建议在需要稳定 CI 行为时优先显式加载程序字节。
+16. 多份文档仍写“6 个反模式”，但当前实现已为 7 个；相关技术规格、演进文档、任务拆解与实现日志均已同步到 7 项（新增 hidden padding 风险）。
 
 ## 7.4 部署前核对清单
 
-- [x] 可复现构建：`cargo test --all-features`、`cargo doc --no-deps`
+- [x] 可复现构建：`cargo test --all-features`、`cargo doc --no-deps`、`cargo build-sbf --manifest-path examples/escrow/Cargo.toml`
 - [x] 版本号与依赖策略：`pinocchio 0.11.x` 与可选 helper 版本符合 `docs/03-technical-spec.md` 契约
 - [x] 文档入口一致：`AGENTS.md` + 多入口规则文件齐全
 - [x] 代码格式化：`cargo fmt` 通过
@@ -78,7 +88,7 @@
 
 - **已知风险**：PDA/ATA 单元测试依赖 `solana-address` 的 `curve25519` dev-dependency。若未来升级 `pinocchio` 导致 `solana-address` major 版本变更，需重新确认该 feature 的可用性。
 - **语义风险**：`AccountSchema::validate` 已收紧为严格定长（`== LEN`）。这能更好表达固定布局零拷贝账户，但若未来需要支持 TLV / trailer bytes，必须由具体账户类型覆盖 `validate()` 并补充专门测试，不能默认沿用当前语义。
-- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata` 或 `close_account` 出现逻辑回归，优先回滚至 `85b2416`；若仅是本轮文档/知识层回归，可从当前收口基线 `789e579` 重新整理。 
+- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，优先回滚至 `85b2416`；若仅是本轮文档/知识层回归，可从当前收口基线 `22a1879` 重新整理。 
 
 ## Phase 7 验收标准
 
