@@ -368,6 +368,191 @@
 //! transaction simulation or client alignment tests.
 //!
 //! ---
+//!
+//! ## Official Pinocchio Program Architecture
+//!
+//! The following patterns are shared by ALL official Anza pinocchio programs
+//! (escrow, rewards, token). Follow this architecture for production programs.
+//!
+//! ### File Structure Convention
+//!
+//! ```text
+//! program/src/
+//! ├── lib.rs                      ← entrypoint, module declarations
+//! ├── entrypoint.rs               ← process_instruction → processor::dispatch
+//! ├── errors.rs                   ← custom error enum → ProgramError::Custom
+//! ├── instructions/
+//! │   ├── definition.rs           ← instruction enum (Codama-annotated)
+//! │   ├── mod.rs                  ← pub mod per instruction
+//! │   └── create/                 ← one directory per instruction
+//! │       ├── mod.rs              ← re-exports
+//! │       ├── accounts.rs         ← TryFrom<&[AccountView]> with all guard checks
+//! │       ├── data.rs             ← TryFrom<&[u8]> for instruction payload
+//! │       └── processor.rs        ← business logic only (no validation here)
+//! ├── state/
+//! │   ├── mod.rs
+//! │   └── escrow.rs               ← account struct + AccountSchema-like layout
+//! ├── traits/                     ← reusable abstractions
+//! │   ├── account.rs              ← account validation helpers
+//! │   ├── pda.rs                  ← PdaSeeds / PdaAccount traits
+//! │   └── instruction.rs          ← InstructionAccounts / InstructionData traits
+//! └── utils/
+//!     ├── macros.rs               ← require_len!, validate_discriminator!, etc.
+//!     ├── pda_utils.rs
+//!     └── token_utils.rs
+//! ```
+//!
+//! **Key principle**: validation in `accounts.rs`, business logic in `processor.rs`.
+//! The processor never checks signers, owners, or PDAs — that's all done before
+//! it receives the parsed accounts struct.
+//!
+//! ### Instruction Data Parsing
+//!
+//! Official programs parse instruction payloads via `TryFrom<&[u8]>`:
+//!
+//! ```rust,ignore
+//! // instructions/create/data.rs
+//! pub struct CreateData {
+//!     pub amount: u64,
+//! }
+//!
+//! impl TryFrom<&[u8]> for CreateData {
+//!     type Error = ProgramError;
+//!     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
+//!         if data.len() < 8 {
+//!             return Err(ProgramError::InvalidInstructionData);
+//!         }
+//!         let amount = u64::from_le_bytes(
+//!             data[..8].try_into().map_err(|_| ProgramError::InvalidInstructionData)?
+//!         );
+//!         Ok(Self { amount })
+//!     }
+//! }
+//! ```
+//!
+//! ### PDA Validation Traits (rewards pattern)
+//!
+//! Rewards and escrow define PDA traits for typed PDA validation:
+//!
+//! ```rust,ignore
+//! /// Trait for types that define their own PDA seeds.
+//! pub trait PdaSeeds {
+//!     /// Return the seeds used to derive this account's PDA.
+//!     fn pda_seeds(&self) -> Vec<&[u8]>;
+//! }
+//!
+//! /// Trait for accounts that ARE PDAs.
+//! pub trait PdaAccount: PdaSeeds {
+//!     /// Validate that `account.address()` matches the derived PDA.
+//!     fn validate_pda(&self, account: &AccountView, program_id: &Address)
+//!         -> Result<u8, ProgramError>
+//!     {
+//!         guard::assert_pda(account, &self.pda_seeds(), program_id)
+//!     }
+//! }
+//! ```
+//!
+//! ### Event System (self-CPI pattern — escrow + rewards)
+//!
+//! Structured events are emitted via self-CPI to avoid log truncation:
+//!
+//! ```rust,ignore
+//! // 1. Define event structs
+//! pub struct EscrowCreated {
+//!     pub maker: Address,
+//!     pub amount: u64,
+//! }
+//!
+//! // 2. Serialize event to bytes
+//! impl EscrowCreated {
+//!     fn to_bytes(&self) -> Vec<u8> { /* ... */ }
+//! }
+//!
+//! // 3. Emit via CPI with discriminator 228
+//! fn emit_event(
+//!     event_authority: &AccountView,
+//!     program_id: &Address,
+//!     event_data: &[u8],
+//!     bump: u8,
+//! ) -> ProgramResult {
+//!     // Build CPI instruction with tag = SELF_CPI_EVENT_DISCRIMINATOR (228)
+//!     // Sign with event_authority PDA seeds + bump
+//!     // invoke_signed(...)
+//!     Ok(())
+//! }
+//! ```
+//!
+//! The event authority PDA (typically seeded with `b"event_authority"`) serves as
+//! the CPI signer, proving the event originated from this program.
+//!
+//! ### Utility Macros (escrow + rewards)
+//!
+//! Official programs use a few internal macros for repetitive checks:
+//!
+//! ```rust,ignore
+//! // require_len! — check account count
+//! macro_rules! require_len {
+//!     ($accounts:expr, $expected:expr) => {
+//!         if $accounts.len() < $expected {
+//!             return Err(ProgramError::NotEnoughAccountKeys);
+//!         }
+//!     };
+//! }
+//!
+//! // validate_discriminator! — check first byte
+//! macro_rules! validate_discriminator {
+//!     ($data:expr, $expected:expr) => {
+//!         if $data.is_empty() || $data[0] != $expected {
+//!             return Err(ProgramError::InvalidAccountData);
+//!         }
+//!     };
+//! }
+//! ```
+//!
+//! Geppetto provides these as functions (`guard::assert_account_count`,
+//! `guard::assert_discriminator`) instead of macros, keeping the code
+//! agent-transparent.
+//!
+//! ### Token-2022 Extension Support (escrow pattern)
+//!
+//! Programs that interact with Token-2022 need to handle extensions:
+//!
+//! ```rust,ignore
+//! // Check if a Token-2022 extension is blocked
+//! fn check_blocked_extensions(
+//!     escrow_data: &[u8],
+//!     mint: &AccountView,
+//! ) -> ProgramResult {
+//!     // Read extension type from mint account
+//!     // Compare against escrow's blocked list (stored in TLV format)
+//!     // Return error if blocked
+//!     Ok(())
+//! }
+//! ```
+//!
+//! TLV (Type-Length-Value) format for extension storage:
+//! - 1 byte: extension type discriminator
+//! - 2 bytes: data length (LE)
+//! - N bytes: extension data
+//!
+//! ### Summary: What Makes a Production Pinocchio Program
+//!
+//! | Aspect | Convention |
+//! |--------|-----------|
+//! | Entrypoint | `program_entrypoint!` + `nostd_panic_handler!` |
+//! | Dispatch | `split_first()` on instruction data, match on tag |
+//! | Accounts | `TryFrom<&[AccountView]>` in dedicated `accounts.rs` |
+//! | Data | `TryFrom<&[u8]>` in dedicated `data.rs` |
+//! | Validation | ALL in `accounts.rs`, NONE in `processor.rs` |
+//! | State | Unit struct + offset constants OR `#[repr(C)]` + explicit padding |
+//! | Errors | `#[repr(u32)]` enum → `ProgramError::Custom` |
+//! | PDAs | Seeds defined via trait, validated in accounts.rs |
+//! | Events | Self-CPI with discriminator 228 + event authority PDA |
+//! | Clients | Codama `#[derive(CodamaInstructions)]` for auto-generation |
+//! | Testing | mollusk-svm for instruction tests, litesvm for e2e |
+//! | Logging | `pinocchio-log`, gated behind `#[cfg(feature = "logging")]` |
+//!
+//! ---
 use pinocchio::ProgramResult;
 use pinocchio::account::AccountView;
 use pinocchio::address::Address;
