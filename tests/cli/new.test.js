@@ -6,6 +6,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const { NEW_PROJECT_TEMPLATE_FILES } = require('../../lib/new-manifest');
+const { renderTemplate } = require('../../lib/new');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const cliPath = path.join(repoRoot, 'bin', 'geppetto-cli.js');
@@ -40,8 +41,70 @@ test('new command creates expected scaffold files', () => {
     }
 
     const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
-    assert.match(cargo, /name = "sample-program"/);
+    assert.match(cargo, /name = "sample_program"/);
     assert.match(stdout, /done new sample-program created=4 skipped=0/);
+  } finally {
+    removeDir(tempDir);
+  }
+});
+
+test('new command supports template variable expansion', () => {
+  const tempDir = createTempDir();
+  const projectName = 'my-program';
+
+  try {
+    runCli(tempDir, ['new', projectName]);
+    const projectDir = path.join(tempDir, projectName);
+    const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
+    const processor = fs.readFileSync(path.join(projectDir, 'src/processor.rs'), 'utf8');
+
+    assert.match(cargo, /name = "my_program"/);
+    assert.match(processor, /\/\/ my_program/);
+  } finally {
+    removeDir(tempDir);
+  }
+});
+
+test('new command normalizes crate name for hyphenated input', () => {
+  const tempDir = createTempDir();
+  const projectName = 'my_program';
+
+  try {
+    runCli(tempDir, ['new', projectName]);
+    const projectDir = path.join(tempDir, projectName);
+    const cargo = fs.readFileSync(path.join(projectDir, 'Cargo.toml'), 'utf8');
+    const processor = fs.readFileSync(path.join(projectDir, 'src/processor.rs'), 'utf8');
+
+    assert.match(cargo, /name = "my_program"/);
+    assert.match(processor, /\/\/ my_program/);
+  } finally {
+    removeDir(tempDir);
+  }
+});
+
+test('new command rejects templates with unknown variables', () => {
+  assert.throws(() => {
+    renderTemplate('invalid {{UNKNOWN_VARIABLE}}', {
+      PROJECT_NAME: 'sample-program',
+      CRATE_NAME: 'sample_program',
+      PACKAGE_NAME: 'sample_program',
+      PROGRAM_NAME: 'sample-program',
+    });
+  }, /Unknown template variables in template: UNKNOWN_VARIABLE/);
+});
+
+test('generated template files contain no unreplaced placeholders', () => {
+  const tempDir = createTempDir();
+  const projectName = 'templated-program';
+
+  try {
+    runCli(tempDir, ['new', projectName]);
+    const projectDir = path.join(tempDir, projectName);
+
+    for (const { relativePath } of NEW_PROJECT_TEMPLATE_FILES) {
+      const content = fs.readFileSync(path.join(projectDir, relativePath), 'utf8');
+      assert.equal(/\{\{[A-Z0-9_]+\}\}/.test(content), false, `${relativePath} contains unresolved placeholder`);
+    }
   } finally {
     removeDir(tempDir);
   }
