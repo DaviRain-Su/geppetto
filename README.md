@@ -61,6 +61,23 @@ npx geppetto-cli init --dry-run
 
 Geppetto doesn't replace the official scaffold—it adds the knowledge layer that makes agents write correct, secure Pinocchio code.
 
+### Start a new Pinocchio + Geppetto project
+
+`geppetto-cli` also provides a minimal project generator:
+
+```bash
+npx geppetto-cli new my-program
+```
+
+`geppetto new` is a **convention starter**, not a full framework:
+
+- generates a minimal program skeleton: `Cargo.toml`, `src/lib.rs`, `src/processor.rs`, `src/state.rs`, `src/error.rs`, `src/instructions/mod.rs`, `tests/svm.rs`
+- generates current canonical agent-entry files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor`, `.windsurf`, `.github`, `.amazonq`, `.aider.conf.yml`)
+- preserves explicit, non-hidden templates using the same placeholder-based generation path as `init`
+- uses non-destructive default semantics (no overwrite by default)
+
+After generation, users are expected to customize the skeleton directly for their domain logic; the output is intentionally small and explicit.
+
 ### CLI template/version contract
 
 - `geppetto-cli init` copies the canonical agent entry files that live at this repository root (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor`, `.windsurf`, `.github`, `.amazonq`, `.aider.conf.yml`).
@@ -117,6 +134,7 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 | Phase 6: Implementation      | ✅ 完成                           |
 | Phase 7: Review & Deploy     | ✅ 完成                           |
 | Phase 8: Evolution           | 进行中（E1/E2/E3/E4 已交付；E5/E6 规划中） |
+| E5: geppetto new scaffolding  | 进行中（E5-01 到 E5-07 交付，E5-08/E5-09 待补） |
 
 **代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`，并完成跨文档收口）；E4 已完成（上游依赖追踪 + 差异检查 + 人工审查门禁），规则为：上游更新自动化仅产出审查资料，不做自动合并。下一步进入 E5/E6 规划。
 
