@@ -2,9 +2,9 @@
 
 > 状态：已完成（含后续跟进审查）
 > 日期：2026-04-14
-> 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改、文档收口与 escrow 示例补丁
+> 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改、文档收口、escrow 示例补丁与最终收尾修正
 > 审查基线：Phase 7 最终已验证基线 = `85b2416`
-> 当前收口基线：`22a1879`
+> 当前收口基线：`825a401`
 
 ## 7.1 审查目标
 
@@ -56,6 +56,9 @@
 14. `src/idioms/cpi.rs` 中 Token `Transfer` 公共示例已补上 `multisig_signers: &[]`，与当前 CPI 结构体字段保持一致。
 15. `src/testing/mollusk.rs` 对 `Mollusk::new(...)` 的说明已从“自动发现总能成功”改为更保守的表述，明确其依赖搜索路径与项目布局；同时建议在需要稳定 CI 行为时优先显式加载程序字节。
 16. 多份文档仍写“6 个反模式”，但当前实现已为 7 个；相关技术规格、演进文档、任务拆解与实现日志均已同步到 7 项（新增 hidden padding 风险）。
+17. `cargo fmt --check` 曾因 `src/idioms/helpers.rs` 的测试折行样式失败；现已执行 `cargo fmt`，格式检查恢复通过，避免 CI 风格噪音。
+18. `examples/escrow/src/lib.rs` 顶层文案此前仍写“deposits/reclaims tokens”，与当前仅演示 escrow 状态生命周期的实现不符；现已改为准确描述 create / exchange / close 的状态语义。
+19. `examples/escrow/src/lib.rs` 中 `geppetto::default_allocator!()` / `geppetto::nostd_panic_handler!()` 在当前工具链下会触发 `unexpected cfg value: solana` 警告；该示例 crate 已局部增加 `#![allow(unexpected_cfgs)]` 以消除非功能性噪音，不影响主库逻辑与安全语义。
 
 ## 7.4 部署前核对清单
 
@@ -88,7 +91,7 @@
 
 - **已知风险**：PDA/ATA 单元测试依赖 `solana-address` 的 `curve25519` dev-dependency。若未来升级 `pinocchio` 导致 `solana-address` major 版本变更，需重新确认该 feature 的可用性。
 - **语义风险**：`AccountSchema::validate` 已收紧为严格定长（`== LEN`）。这能更好表达固定布局零拷贝账户，但若未来需要支持 TLV / trailer bytes，必须由具体账户类型覆盖 `validate()` 并补充专门测试，不能默认沿用当前语义。
-- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，优先回滚至 `85b2416`；若仅是本轮文档/知识层回归，可从当前收口基线 `22a1879` 重新整理。 
+- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata`、`close_account` 或 `examples/escrow` 的 `create` 初始化路径出现逻辑回归，优先回滚至 `85b2416`；若仅是本轮文档/知识层回归，可从当前收口基线 `825a401` 重新整理。 
 
 ## Phase 7 验收标准
 
