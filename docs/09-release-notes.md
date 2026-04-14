@@ -181,6 +181,12 @@ RUSTC_WRAPPER=
 
 原因是本地 `sccache` 权限问题（如 `Operation not permitted`）。这属于环境噪音，不是当前仓库回归。
 
+## 相关文档
+
+- 当前仓库总状态归档：[`docs/13-current-status-summary.md`](./13-current-status-summary.md)
+- Phase 7 审查报告：[`docs/07-review-report.md`](./07-review-report.md)
+- Phase 8 演进说明：[`docs/08-evolution.md`](./08-evolution.md)
+
 ## 推荐发布语句
 
 **Geppetto 0.1.0 — Phase 8 stability baseline**
