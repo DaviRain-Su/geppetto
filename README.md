@@ -65,7 +65,7 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 
 - `geppetto-cli init` copies the canonical agent entry files that live at this repository root (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor`, `.windsurf`, `.github`, `.amazonq`, `.aider.conf.yml`).
 - Template versioning is locked to the package release: `geppetto-cli@0.1.0` ships the same canonical template set and knowledge baseline as the `0.1.0` repository/package release. There is no separate template version track.
-- Maintainers can run `npm run release:check` before publishing to verify CLI tests and `npm pack --dry-run --json` package contents together.
+- Maintainers can run `npm run release:check` before publishing to verify `docs:check`（知识头/入口镜像/feature matrix）、CLI tests 与 `npm pack --dry-run --json` 包内容，一次性打通发布前检查链路。
 
 ## Core Modules
 
@@ -116,9 +116,9 @@ Geppetto doesn't replace the official scaffold—it adds the knowledge layer tha
 | Phase 5: Test Spec           | ✅ 完成                           |
 | Phase 6: Implementation      | ✅ 完成                           |
 | Phase 7: Review & Deploy     | ✅ 完成                           |
-| Phase 8: Evolution           | 进行中（E1/E2/E3-01~E3-06 已交付；E3-07/E3-08 待推进） |
+| Phase 8: Evolution           | 进行中（E1/E2/E3-01~E3-07 已交付；E3-08 待推进） |
 
-**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 当前已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`npm run docs:check` 已一键串联）；E3-07 / E3-08 仍待完成。
+**代码状态**：A-02 ~ A-23 已完成闭环；核心 crate、知识模块、agent 入口文件均已交付并通过 `cargo test --all-features`、`cargo clippy --all-features`、`cargo doc --no-deps` 与 `cargo fmt --check`。Phase 8 当前已完成 E1（CLI 模板单源、`--dry-run`、`release:check`）、E2（`npm run test:escrow-client-alignment` 打通 Rust fixture ↔ TypeScript 对齐示例）与 E3（知识头 + agent 入口镜像 + feature matrix，`release:check` 已串联 `docs:check`）；E3-07 已完成，E3-08 仍待推进。
 
 最新发布摘要见 [`docs/09-release-notes.md`](./docs/09-release-notes.md)。
 

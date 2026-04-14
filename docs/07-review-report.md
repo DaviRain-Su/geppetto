@@ -25,7 +25,7 @@
 | 编译 | `RUSTC_WRAPPER= cargo check --features full,test-utils` | 通过 |
 | escrow 示例构建 | `RUSTC_WRAPPER= cargo build-sbf --manifest-path examples/escrow/Cargo.toml` | 通过 |
 | escrow 示例测试 | `RUSTC_WRAPPER= cargo test --manifest-path examples/escrow/Cargo.toml --all-features` | integration 12/12 + svm 8/8 通过 |
-| CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试套件通过 + `npm pack --dry-run --json` 模板打包校验） |
+| CLI 发布前检查 | `npm run release:check` | 通过（CLI 测试套件、`docs:check` 与 `npm pack --dry-run --json` 打包校验） |
 | escrow ↔ client 对齐检查 | `npm run test:escrow-client-alignment` | 通过（Rust fixture 生成 + TypeScript 反序列化 6/6 字段对齐） |
 | 文档一致性检查 | `npm run docs:check` | 通过（19 个知识头目标 + 7 个 agent 入口镜像 + feature matrix） |
 
@@ -68,6 +68,7 @@
 23. escrow 的 Rust fixture 生成与 TypeScript 读取链路此前虽已存在，但缺少统一运行入口，且文档仍引用旧的 `tests/...` 路径；现已增加 `npm run test:escrow-client-alignment`，并将 `src/client.rs` / `docs/03-technical-spec.md` / `docs/05-test-spec.md` 同步到 `examples/escrow/tests/...` 的真实路径。
 24. 知识版本头此前只靠人工约定维护，且 `guard.rs` / `idioms/helpers.rs` / `testing/helpers.rs` 缺少标准头；现已补齐头信息，并新增 `lib/knowledge-check.js` + `tests/cli/knowledge.test.js` 自动校验版本、日期格式与常见 Cargo 依赖声明（inline table / string / workspace）兼容性。
 25. 多 agent 入口文件此前虽已齐全，但仍缺少自动镜像校验，无法防止 `CLAUDE.md` / `.cursor` / `.github` / `.aider` 与 `AGENTS.md` 的指向规则漂移；现已新增 `lib/agent-entry-check.js` + `tests/cli/agent-entry.test.js`，并将 `npm run docs:check` 扩展为同时检查知识头、入口镜像与 feature matrix。
+26. E3 发布/审查接线已完成：`npm run release:check` 已接入 `npm run docs:check`，发布前可一次性执行 CLI 测试、知识一致性检查和 `npm pack --dry-run --json`。
 
 ## 7.4 部署前核对清单
 

@@ -2,12 +2,12 @@
 
 > 状态：进行中（E1/E2/E3 已交付，后续扩展待推进）
 > 日期：2026-04-14
-> 输入：Phase 7 最终审查报告 + 已验证基线 `ffa5535`
+> 输入：Phase 7 最终审查报告 + 已验证基线 `75e1e00`
 > 目标：以当前可发布基线为起点，明确 Geppetto 在 CLI、示例、规则自动化与上游协同上的下一阶段演化顺序，并约束新增复杂度。
 
 ## 8.1 当前基线（Phase 8 起点）
 
-截至 `ffa5535`，Geppetto 已具备可继续演化的稳定基线：
+截至 `75e1e00`，Geppetto 已具备可继续演化的稳定基线：
 
 - **核心 crate**：`guard` / `schema` / `dispatch` / `error` / `idioms` / `anti_patterns` / `client` / `testing`
 - **示例程序**：`examples/escrow/` 已覆盖 create / exchange / close 的状态流转，并通过 integration + svm 回归测试；`npm run test:escrow-client-alignment` 已打通 Rust fixture → TypeScript 反序列化对齐链路
@@ -167,7 +167,7 @@
 
 ### Milestone E3：文档/规则自动一致性检查
 
-- 状态：**进行中（E3-07 / E3-08 待）**
+- 状态：**进行中（E3-08 待）**
 - 目标：降低“代码已对，但知识入口漂移”的维护成本。
 - 当前已有：
   - `lib/knowledge-manifest.js` 明确知识版本头检查目标清单；
@@ -178,6 +178,7 @@
   - `lib/feature-matrix-check.js` 检查 `Cargo.toml` / `docs/03-technical-spec.md` 的 feature matrix 一致性；
   - `tests/cli/feature-matrix.test.js` 覆盖漂移与版本化场景；
   - `npm run docs:check` 提供独立一致性入口，可在文档更新前快速联跑知识头、入口镜像与 feature matrix 检查；
+  - `release:check` 已串联执行 `docs:check`，统一打通发布前知识/入口/feature 一致性检查；
   - `npm test` 已纳入知识头与 feature matrix 回归检查；
   - `src/guard.rs`、`src/idioms/helpers.rs`、`src/testing/helpers.rs` 已补齐知识版本头。
 - 收口结论：
@@ -186,7 +187,7 @@
   3. 检查器已兼容当前仓库与常见 Cargo 依赖声明变体；
   4. E3 首轮目标已从“人工约定”提升为“可执行 gate”。
 - 后续扩展：
-  - 进入 E3-07/08：发布/审查接线、跨文档收口与运维承诺。
+  - 进入 E3-08：跨文档收口与运维承诺。
 - 风险：检查器本身成为新的维护负担。
 - 回滚策略：若自动化过重，退回人工 checklist，但保留脚本接口与最小 smoke checks。
 
