@@ -49,29 +49,75 @@
 //! ```rust,ignore
 //! use geppetto::system::CreateAccount;
 //!
+//! // Manual lamports:
 //! CreateAccount {
-//!     from: payer,          // &AccountView, signer + writable
-//!     to: new_account,      // &AccountView, signer + writable
+//!     from: payer,
+//!     to: new_account,
 //!     lamports: rent_lamports,
 //!     space: MyAccount::LEN as u64,
-//!     owner: program_id,    // &Address
+//!     owner: program_id,
 //! }.invoke()?;
+//!
+//! // Auto-calculate rent-exempt minimum (preferred):
+//! CreateAccount::with_minimum_balance(
+//!     payer,
+//!     new_account,
+//!     MyAccount::LEN as u64,
+//!     program_id,
+//!     None,  // None = use Rent::get() sysvar cache (no account needed)
+//! )?.invoke()?;
 //! ```
+//!
+//! `with_minimum_balance` auto-computes the minimum lamports for rent exemption.
+//! Pass `None` for the rent sysvar to use the cached value (preferred).
+//! Pass `Some(rent_sysvar_account)` only if you already have the sysvar account.
+//!
+//! ---
 //!
 //! ## Token-2022 Dual Support
 //!
-//! Modern Solana programs should accept both Token and Token-2022. Use
-//! `guard::assert_token_program()` to validate the passed token program, then
-//! branch CPI calls based on the actual address.
+//! ### Key API difference: explicit `token_program` field
+//!
+//! `pinocchio-token` structs hardcode the SPL Token program ID internally.
+//! `pinocchio-token-2022` structs have an explicit `token_program: &Address`
+//! field, so the SAME struct can invoke either Token or Token-2022.
+//!
+//! ```rust,ignore
+//! // pinocchio-token (SPL Token only — token_program hardcoded):
+//! pinocchio_token::Transfer {
+//!     from, to, authority,
+//!     amount: 1_000,
+//!     multisig_signers: &[],
+//! }.invoke()?;
+//!
+//! // pinocchio-token-2022 (EITHER program — you choose):
+//! pinocchio_token_2022::Transfer {
+//!     from, to, authority,
+//!     amount: 1_000,
+//!     token_program: token_program.address(),  // Token OR Token-2022
+//! }.invoke()?;
+//! ```
+//!
+//! ### Recommended pattern for dual support
 //!
 //! ```rust,ignore
 //! guard::assert_token_program(token_program)?;
-//! if token_program.address() == &geppetto::token::ID {
-//!     // use pinocchio_token CPI
-//! } else if token_program.address() == &geppetto::token_2022::ID {
-//!     // use pinocchio_token_2022 CPI
-//! }
+//!
+//! // Use pinocchio-token-2022 structs for all token CPIs —
+//! // they work with BOTH programs via the explicit token_program field.
+//! pinocchio_token_2022::Transfer {
+//!     from: source_ata,
+//!     to: dest_ata,
+//!     authority: owner,
+//!     amount: 1_000_000,
+//!     token_program: token_program.address(),
+//! }.invoke()?;
 //! ```
+//!
+//! This eliminates the if/else branch. Use `pinocchio-token-2022` structs
+//! as the universal CPI interface for token operations.
+//!
+//! ---
 //!
 //! ## Batch CPI
 //!

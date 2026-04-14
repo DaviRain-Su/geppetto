@@ -53,19 +53,53 @@
 //! The event authority PDA (typically seeded with `b"event_authority"`) serves as
 //! the CPI signer, proving the event originated from this program.
 //!
-//! ## Program Logging (requires `features = ["log"]`)
+//! ## Program Logging with `pinocchio-log` (requires `features = ["log"]`)
 //!
-//! Use `pinocchio-log` for on-chain logging. Do NOT use `std::println!`.
+//! `pinocchio-log` provides CU-efficient logging that replaces `msg!` from
+//! `solana-program`. It avoids Rust's `format!` machinery, saving 50-90% CU.
+//!
+//! ### `log!` macro (recommended)
 //!
 //! ```rust,ignore
-//! use geppetto::log::sol_log;
+//! use pinocchio_log::log;
 //!
-//! sol_log("Processing create instruction");
+//! // Basic (default 200-byte stack buffer):
+//! log!("transfer amount: {}", lamports);
+//!
+//! // Custom buffer size:
+//! log!(50, "amount: {}", lamports);
+//!
+//! // Precision formatting (u64 → decimal with N places):
+//! log!("amount (SOL): {:.9}", lamports);  // 1000000000 → "1.000000000"
+//!
+//! // Truncation:
+//! log!("{:>.10}", "pinocchio-program");  // "pinocchio-..."
 //! ```
 //!
-//! **Performance tip**: gate logging behind a feature flag in production:
+//! ### `Logger<N>` (direct API, maximum control)
+//!
+//! ```rust,ignore
+//! use pinocchio_log::logger::Logger;
+//!
+//! let mut logger = Logger::<100>::default();
+//! logger.append("balance=");
+//! logger.append(1_000_000_000u64);
+//! logger.log();  // calls sol_log_ syscall
+//! logger.clear(); // reuse buffer
+//! ```
+//!
+//! ### CU savings vs `msg!`
+//!
+//! | Message | `log!` CU | `msg!` CU | Saving |
+//! |---------|-----------|-----------|--------|
+//! | Static string | 104 | 104 | — |
+//! | String + u64 | 286 | 625 | 55% |
+//! | Two strings | 119 | 1610 | 93% |
+//! | Decimal formatting | 438 | 2656 | 84% |
+//!
+//! ### Production pattern: gate behind feature
 //!
 //! ```rust,ignore
 //! #[cfg(feature = "logging")]
-//! geppetto::log::sol_log("debug info");
+//! pinocchio_log::log!("debug: amount={}", amount);
 //! ```

@@ -87,3 +87,80 @@
 //! # "lib" = allows cargo test to import the crate
 //! # BOTH are required.
 //! ```
+//!
+//! ---
+//!
+//! ## Custom Fast-Path Entrypoint (`process_entrypoint`)
+//!
+//! For maximum performance, write a custom `#[no_mangle] entrypoint` that
+//! inspects raw input BEFORE deserializing accounts. Then delegate to
+//! `process_entrypoint` for the standard path.
+//!
+//! ```rust,ignore
+//! use pinocchio::entrypoint::process_entrypoint;
+//! use pinocchio::{no_allocator, default_panic_handler, MAX_TX_ACCOUNTS};
+//!
+//! no_allocator!();
+//! default_panic_handler!();
+//!
+//! #[no_mangle]
+//! pub unsafe extern "C" fn entrypoint(input: *mut u8) -> u64 {
+//!     // Fast path: read num_accounts before any deserialization
+//!     let num_accounts = unsafe { *(input as *const u64) };
+//!     if num_accounts == 0 {
+//!         return 0; // no-op, skip deserialization entirely
+//!     }
+//!     // Standard path: deserialize and dispatch
+//!     unsafe { process_entrypoint::<MAX_TX_ACCOUNTS>(input, process_instruction) }
+//! }
+//! ```
+//!
+//! **When to use**: programs with hot paths that can short-circuit without
+//! touching accounts (e.g., fee-exempt no-ops, discriminator-only queries).
+//! The `MAX_TX_ACCOUNTS` const generic controls stack array size (default 64).
+//!
+//! ---
+//!
+//! ## `bpf-entrypoint` Feature Gate
+//!
+//! Gate the entrypoint behind a Cargo feature so your crate works as both
+//! a deployable SBF program AND a library dependency (for tests, CPI callers).
+//!
+//! Without this, importing your program as a library causes duplicate symbol
+//! errors (`entrypoint`, `custom_panic`, `custom_heap`).
+//!
+//! ```toml
+//! [features]
+//! bpf-entrypoint = []
+//! ```
+//!
+//! ```rust,ignore
+//! // src/lib.rs
+//! #[cfg(feature = "bpf-entrypoint")]
+//! mod entrypoint {
+//!     use pinocchio::{entrypoint, AccountView, Address, ProgramResult};
+//!
+//!     entrypoint!(process_instruction);
+//!
+//!     pub fn process_instruction(
+//!         program_id: &Address,
+//!         accounts: &mut [AccountView],
+//!         data: &[u8],
+//!     ) -> ProgramResult {
+//!         crate::processor::dispatch(program_id, accounts, data)
+//!     }
+//! }
+//!
+//! // All other modules (processor, state, instructions) are always available
+//! pub mod processor;
+//! pub mod state;
+//! pub mod instructions;
+//! ```
+//!
+//! ```bash
+//! # Deploy: compile with entrypoint
+//! cargo build-sbf --features bpf-entrypoint
+//!
+//! # Test: no entrypoint, no duplicate symbols
+//! cargo test
+//! ```
