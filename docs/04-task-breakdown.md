@@ -145,6 +145,95 @@ E1-01 → E1-02 → E1-03 → E1-08 → E1-09
 
 ---
 
+## Phase 8 增量任务：E2 escrow ↔ client 对齐
+
+> 基线：`ffa5535`
+> 前提：C-01 ~ C-03 已完成，escrow 示例与 fixture 生成链路可用
+> 目标：把 escrow 示例从“仅 Rust 侧示例”提升为“Rust fixture ↔ TypeScript 读取”端到端对齐示例。
+> 状态：已完成（E2-01 ~ E2-06 已交付并验证）
+
+### E2 Sprint 1：Rust fixture 与布局导出（已完成）
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E2-01 | **fixture 生成器** — 为 escrow 示例增加固定测试值导出，生成二进制账户数据 fixture | 2h | C-01 | `examples/escrow/tests/generate_fixtures.rs` |
+| E2-02 | **布局元数据导出** — 将 `Escrow::LEN` 与字段 offset/size/value 一并写出 JSON，供 TS 侧直接读取 | 2h | E2-01 | `escrow_layout.json` |
+| E2-03 | **Rust 侧入口统一** — 固化 fixture 生成命令与目录约定，保证本地/CI 可复现 | 1h | E2-02 | 固定 fixture 产出路径与生成方式 |
+
+### E2 Sprint 2：TypeScript 对齐验证（已完成）
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E2-04 | **TS 对齐脚本** — 按真实 offset 读取 binary fixture，逐字段校验类型、偏移与值 | 3h | E2-02 | `examples/escrow/tests/client_alignment.ts` |
+| E2-05 | **统一运行入口** — 用 npm script 串联 Rust fixture 生成与 TypeScript 校验 | 1h | E2-04 | `npm run test:escrow-client-alignment` |
+| E2-06 | **文档绑定** — 在 README、技术规格、测试规格、演化文档中将客户端说明指向真实 escrow 对齐示例 | 2h | E2-05 | 文档闭环 |
+
+### E2 关键路径
+
+```
+E2-01 → E2-02 → E2-03 → E2-04 → E2-05 → E2-06
+```
+
+**E2 总工时**：约 11h
+
+**E2 完成定义（DoD）**：
+- [x] Rust 侧可生成稳定的 escrow binary + layout fixtures；
+- [x] TypeScript 可按真实字段偏移读取并验证 fixture；
+- [x] 仓库根目录存在统一运行入口；
+- [x] 客户端知识文档已绑定到真实示例，而非停留在伪代码层；
+- [x] 端到端对齐链路已通过实际命令验证。
+
+---
+
+## Phase 8 增量任务：E3 文档/规则自动一致性检查
+
+> 基线：`b1332c1`
+> 前提：E1（CLI 模板单源）与 E2（escrow ↔ client 对齐）已完成
+> 目标：用轻量自动化守住知识版本头、agent 入口镜像与 feature matrix，降低“代码正确但文档/入口漂移”的维护成本。
+> 状态：待启动
+
+### E3 Sprint 1：知识版本头检查
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E3-01 | **检查目标清单** — 明确需要校验版本头的知识模块范围（`src/idioms/*`、`src/client.rs`、`src/testing/*`、`src/anti_patterns.rs` 等） | 1h | 无 | 检查目标 manifest |
+| E3-02 | **版本头解析与校验脚本** — 读取 `Cargo.toml`，校验文档头中的 `geppetto` / `pinocchio` 版本与日期格式 | 3h | E3-01 | 可执行检查脚本 |
+| E3-03 | **版本头回归测试** — 覆盖 happy path / 缺失头 / 版本不匹配等场景 | 2h | E3-02 | 自动化测试 |
+
+### E3 Sprint 2：入口与规格一致性检查
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E3-04 | **agent 入口镜像校验** — 检查 `CLAUDE.md` / `GEMINI.md` / `.cursor` / `.windsurf` / `.github` / `.amazonq` / `.aider` 是否与 canonical 规则一致 | 2h | E3-01 | 入口一致性检查 |
+| E3-05 | **feature matrix 校验** — 从 `Cargo.toml` 提取 `full` / `token-all` / `test-utils` 等定义，检查 `docs/03-technical-spec.md` 关键矩阵是否同步 | 3h | E3-01 | feature matrix 检查 |
+| E3-06 | **统一运行入口** — 提供 `npm run docs:check` 或等价脚本，串联 E3 检查项 | 1h | E3-03,E3-04,E3-05 | 可复用命令入口 |
+
+### E3 Sprint 3：发布/审查接线与收口
+
+| ID | 任务 | 预估 | 依赖 | 产出 |
+|----|------|------|------|------|
+| E3-07 | **发布前接线** — 评估是否将 E3 检查纳入 `release:check` 或独立 review gate，并更新 README/维护说明 | 2h | E3-06 | 发布/审查接线方案 |
+| E3-08 | **E3 收口文档** — 将实现结果补入 `docs/06-implementation-log.md` / `docs/07-review-report.md` / `docs/08-evolution.md` | 1h | E3-07 | 文档闭环 |
+
+### E3 关键路径
+
+```
+E3-01 → E3-02 → E3-03 → E3-06 → E3-07 → E3-08
+          └────→ E3-04 ───┘
+          └────→ E3-05 ───┘
+```
+
+**E3 总工时**：约 15h
+
+**E3 完成定义（DoD）**：
+- [ ] 知识模块版本头可自动检查；
+- [ ] 多 agent 入口文件可自动检查是否漂移；
+- [ ] `docs/03-technical-spec.md` 的关键 feature matrix 可与 `Cargo.toml` 自动比对；
+- [ ] 仓库提供统一的一致性检查入口命令；
+- [ ] E3 结果在 Phase 6/7/8 文档中可追溯。
+
+---
+
 ## 关键路径
 
 ```
