@@ -88,7 +88,8 @@
 - 2026-04-14：Phase 8 E5-09 完成 — 本阶段补入 E5 收口记录，完成 `docs/06-implementation-log.md` 与 `docs/07-review-report.md` 闭环更新，下一阶段转向 E6。
 - 2026-04-14：Phase 8 E6-01/E6-02 完成 — `geppetto test` / `geppetto audit` 命令落地，支持 root 示例统一测试、SBF 缺失自动构建提示、`fmt/check` 与可选 `clippy` 检查。
 - 2026-04-14：Phase 8 E6-03/E6-04 完成 — README / `docs/04/06/07/08` 接线并补齐 `release:check`（新增 `geppetto:test` + `geppetto:audit` 执行路径），形成 E6 工具门禁最小链路。
-- **下一步**：转入 E7（生态协同与上游反馈）规划。
+- 2026-04-14：Phase 8 E7-04 内部执行决策 — 形成 `create-solana-dapp` 外部发送窗口确认清单（`docs/13-e7-04-send-window-checklist.md`），明确定义 Hold 条件、发送前必需条件、单路径沟通顺序；E7-01~E7-03 外部范围已封闭，当前以内部时机驱动执行。
+- **下一步**：外部发送保持 Hold，等待窗口确认；优先补齐 E7 内部交付闭环与后续执行条件。
 
 ## 6.3 验收条件（进入 Phase 7）
 

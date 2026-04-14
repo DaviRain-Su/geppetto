@@ -186,6 +186,21 @@
   - 工具入口行为按最小命令语义保留，不自动替代业务审查；
   - 新增命令参数需同步更新 docs 与单元回归测试。
 
+## 7.11 E7 生态协同与上游反馈（Hold）
+
+- E7-01 / E7-02 / E7-03 已完成：
+  - 外部对象、执行边界与提交方式已锁定为 `create-solana-dapp` 单一路径；
+  - 已形成 `docs/10-e7-01-external-alignment.md`（对齐口径）、`docs/11-e7-02-create-solana-dapp-action-plan.md`（执行清单）；
+  - 已形成 `docs/12-e7-03-create-solana-dapp-discussion-draft.md`（对外草案）与 `docs/13-e7-04-send-window-checklist.md`（发送决策）。
+- 当前状态：
+  - E7-04 触发 **Hold**，不执行即时对外发送；
+  - 仅保留内部就绪：`docs/13...` 的发送前提条件、单路径复用约束与窗口确认 checklist 已落地；
+  - 对外沟通先决条件（窗口、联系人、`docs:check` / `release:check` 通过、工作树清洁）尚未全部满足。
+- 风险与边界：
+  - 本阶段不再引入新的外部仓库接触点；
+  - 不在本仓库内做对外提交或 PR 草案的实际投递；
+  - 任何外部动作必须等窗口恢复再统一出发。
+
 ## Phase 7 验收标准
 
 - [x] 已完成的实现通过人工与机器审查并有签字记录

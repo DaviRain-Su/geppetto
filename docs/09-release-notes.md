@@ -2,7 +2,7 @@
 
 > 基线：`75e1e00`（功能基线）
 > 文档收口补丁：`1a1d429`
-> 标题：Phase 8 E3/E4/E5/E6：文档一致性、上游更新追踪与工具层收口
+> 标题：Phase 8 E3~E7：文档一致性、上游追踪、工具层收口与外部协同（Hold）
 > 日期：2026-04-14
 > 状态：可发布基线
 
@@ -138,6 +138,10 @@ npm run docs:check
 - `docs/04-task-breakdown.md`
 - `docs/06-implementation-log.md`
 - `docs/07-review-report.md`
+- `docs/10-e7-01-external-alignment.md`
+- `docs/11-e7-02-create-solana-dapp-action-plan.md`
+- `docs/12-e7-03-create-solana-dapp-discussion-draft.md`
+- `docs/13-e7-04-send-window-checklist.md`
 - `docs/08-evolution.md`
 - `docs/09-release-notes.md`
 
@@ -148,7 +152,7 @@ npm run docs:check
 - E3 已交付到 E3-08（文档收口已完成）
 - E4 已完成到 E4-09（上游依赖追踪与审查发布门禁收口）
 - E5 已完成到 E5-09（`geppetto new` 脚手架收口）
-- 当前 Phase 8 的后续事项主要是 E7（生态协同与上游反馈）
+- E7 已完成到 E7-04：外部输出目标与路径已闭环，当前执行策略为 Hold（等待发送窗口确认）
 
 ## 验证状态
 
