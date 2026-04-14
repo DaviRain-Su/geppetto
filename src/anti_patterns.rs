@@ -1,6 +1,6 @@
 //! # Anti Patterns
 //!
-//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
+//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-14
 //! > **Verified against**: Solana 2.2.x
 //!
 //! This module is the reference map of high-impact mistakes.

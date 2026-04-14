@@ -1,6 +1,6 @@
 //! # Account Schema
 //!
-//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
+//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-14
 //! > **Verified against**: Solana 2.2.x
 //!
 //! Trait for defining account memory layouts. Inspired by:
@@ -96,10 +96,13 @@ pub trait AccountSchema: Sized {
         if data.len() != Self::LEN {
             return Err(crate::error::GeppettoError::InvalidAccountLen.into());
         }
-        if let Some(d) = Self::DISCRIMINATOR
-            && (data.is_empty() || data[0] != d)
-        {
-            return Err(ProgramError::InvalidAccountData);
+        if let Some(d) = Self::DISCRIMINATOR {
+            if data.is_empty() {
+                return Err(ProgramError::AccountDataTooSmall);
+            }
+            if data[0] != d {
+                return Err(ProgramError::InvalidAccountData);
+            }
         }
         Ok(())
     }

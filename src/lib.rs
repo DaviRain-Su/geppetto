@@ -2,7 +2,7 @@
 
 //! # Geppetto — Pinocchio Agent Harness
 //!
-//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-13
+//! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-14
 //! > **Verified against**: Solana 2.2.x
 //!
 //! Agent-aware harness for Solana/Pinocchio development.
