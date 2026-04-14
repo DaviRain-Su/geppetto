@@ -1,9 +1,10 @@
 # Phase 7: Review & Deploy — Geppetto
 
-> 状态：已完成
-> 日期：2026-04-13
-> 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）
+> 状态：已完成（含后续跟进审查）
+> 日期：2026-04-14
+> 输入：Phase 6 实现日志（A-02 ~ A-23 全部完成）+ 后续外部修改与文档收口
 > 审查基线：Phase 7 最终已验证基线 = `85b2416`
+> 当前收口基线：`789e579`
 
 ## 7.1 审查目标
 
@@ -16,12 +17,12 @@
 
 | 检查项 | 命令 | 结果 |
 |--------|------|------|
-| 单元测试 | `cargo test --all-features` | 65/65 通过 |
-| Doctest | `cargo test --doc` | 通过（ignored 为预期行为） |
-| Clippy | `cargo clippy --all-features` | 0 警告 |
-| 文档 | `cargo doc --no-deps` | 0 警告，无断链 |
-| 格式 | `cargo fmt --check` | 通过 |
-| 编译 | `cargo check --features full,test-utils` | 通过 |
+| 单元测试 | `RUSTC_WRAPPER= cargo test --all-features` | 65/65 通过 |
+| Doctest | `RUSTC_WRAPPER= cargo test --doc` | 通过（ignored 为预期行为） |
+| Clippy | `RUSTC_WRAPPER= cargo clippy --all-features` | 0 警告 |
+| 文档 | `RUSTC_WRAPPER= cargo doc --no-deps` | 0 警告，无断链 |
+| 格式 | `RUSTC_WRAPPER= cargo fmt --check` | 通过 |
+| 编译 | `RUSTC_WRAPPER= cargo check --features full,test-utils` | 通过 |
 
 ## 7.3 人工审查结果
 
@@ -41,6 +42,10 @@
 2. `client.rs` 反序列化示例曾使用 `.toBase58()`（不存在的方法）→ 修复为 `encodeBase58()`。
 3. `AGENTS.md` 中 `full` feature 被描述为 "Need everything"，但未包含 `test-utils` → 修复为明确区分 runtime CPI features 与 test utilities。
 4. `anti_patterns.rs` 标题存在未闭合反引号 → 已修复。
+5. `src/idioms.rs` / `src/testing.rs` 已重构为目录模块（`src/idioms/`、`src/testing/`），并保持原有导出面兼容；重构后重新通过全量机器审查。
+6. 对外 idioms / public docs 一度回退为直接示范 `pinocchio::*` / `pinocchio_*` 导入，违背 `AGENTS.md` 的 facade 规则 → 已统一回 `geppetto::*`、`geppetto::token::*`、`geppetto::log::*`、`geppetto::pubkey::*`；内部实现规格文档则明确标注为底层 `pinocchio::*` 细节。
+7. 文档矩阵一度与当前实现漂移：`full` feature 少写了 `log` + `pubkey`，README 把 `idioms` / `testing` 仍标成 Doc-only，且多处文案仍提 `bankrun` → 已统一为当前实现（`full = ["system", "token-all", "memo", "log", "pubkey"]`，测试能力描述为 `litesvm / mollusk-svm`）。
+8. `AccountSchema::validate` 已接受严格定长语义（`data.len() == LEN`），错误码为 `InvalidAccountLen`；相关架构/技术规格/测试规格已同步，且明确声明：若账户允许 TLV / trailer bytes，应覆盖 `validate()`。
 
 ## 7.4 部署前核对清单
 
@@ -55,12 +60,12 @@
 - `lib.rs` — crate 入口 + re-export + feature gates + crate doc
 - `error.rs` — `GeppettoError`（4 个错误码 0x4700-0x4703）
 - `schema.rs` — `AccountSchema` trait + `assert_account_size!` 宏 + 12 个单元测试
-- `guard.rs` — 12 个 guard 函数 + 4 个 well-known 常量 + 33 个单元测试
-- `dispatch.rs` — `split_tag` + 2 个 discriminator 常量 + 5 个单元测试
-- `idioms.rs` — 4 个导出函数 + P0/P1 知识文档 + 14 个单元测试
-- `anti_patterns.rs` — 6 个反模式文档
-- `client.rs` — 4 个客户端话题 + fixture 测试策略
-- `testing.rs` — 3 个测试工具函数 + 测试策略知识文档
+- `guard.rs` — 12 个 guard 函数 + well-known program ID 常量 + 单元测试
+- `dispatch.rs` — `split_tag` + 2 个 discriminator 常量 + 单元测试
+- `idioms/` — 主题化知识子模块（`accounts` / `entrypoint` / `pda` / `cpi` / `events` / `architecture`）+ `helpers.rs` 导出函数
+- `anti_patterns.rs` — 7 个反模式文档（含 padding 风险）
+- `client.rs` — 客户端构建 / 对齐策略 / Codama 指南 / ecosystem references
+- `testing/` — `helpers.rs` + `mollusk.rs` + `litesvm.rs`，提供断言工具与测试知识文档
 
 **Agent 指引文件**（根目录）：
 - `AGENTS.md` — 完整 agent 指令
@@ -72,7 +77,8 @@
 ## 7.6 风险与回滚
 
 - **已知风险**：PDA/ATA 单元测试依赖 `solana-address` 的 `curve25519` dev-dependency。若未来升级 `pinocchio` 导致 `solana-address` major 版本变更，需重新确认该 feature 的可用性。
-- **回滚条件**：若 `AccountSchema`、`assert_pda` 或 `close_account` 出现逻辑回归，优先回滚至 `85b2416`（Phase 7 最终已通过全量验证并完成审查的基线）。
+- **语义风险**：`AccountSchema::validate` 已收紧为严格定长（`== LEN`）。这能更好表达固定布局零拷贝账户，但若未来需要支持 TLV / trailer bytes，必须由具体账户类型覆盖 `validate()` 并补充专门测试，不能默认沿用当前语义。
+- **回滚条件**：若 `AccountSchema`、`assert_pda`、`assert_ata` 或 `close_account` 出现逻辑回归，优先回滚至 `85b2416`；若仅是本轮文档/知识层回归，可从当前收口基线 `789e579` 重新整理。 
 
 ## Phase 7 验收标准
 
