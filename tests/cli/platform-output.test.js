@@ -192,3 +192,166 @@ test('writeArtifacts throws EDEPLOY005 when fs.writeFileSync fails', () => {
     removeDir(tempDir)
   }
 })
+
+// --- writeBackProgramId ---
+
+function writeManifest(tempDir, programId = '') {
+  const manifest = [
+    'schema_version = "0.1"',
+    '',
+    '[app]',
+    'name = "escrow-demo"',
+    '',
+    '[solana]',
+    `program_id = "${programId}"`,
+    'cluster = "devnet"',
+    '',
+    '[offchain]',
+    'provider = "encore-cloud"',
+    '',
+  ].join('\n')
+
+  fs.writeFileSync(path.join(tempDir, 'geppetto.toml'), manifest, 'utf8')
+}
+
+function writeManifestWithoutProgramId(tempDir) {
+  const manifest = [
+    'schema_version = "0.1"',
+    '',
+    '[app]',
+    'name = "escrow-demo"',
+    '',
+    '[solana]',
+    'cluster = "devnet"',
+    '',
+    '[offchain]',
+    'provider = "encore-cloud"',
+    '',
+  ].join('\n')
+
+  fs.writeFileSync(path.join(tempDir, 'geppetto.toml'), manifest, 'utf8')
+}
+
+test('writeBackProgramId updates existing program_id', () => {
+  const tempDir = createTempDir()
+
+  try {
+    writeManifest(tempDir, 'old-id')
+    output.writeBackProgramId(path.join(tempDir, 'geppetto.toml'), 'new-id-123')
+
+    const content = fs.readFileSync(path.join(tempDir, 'geppetto.toml'), 'utf8')
+    assert.ok(content.includes('program_id = "new-id-123"'))
+    assert.ok(!content.includes('program_id = "old-id"'))
+    assert.ok(content.includes('cluster = "devnet"'))
+  } finally {
+    removeDir(tempDir)
+  }
+})
+
+test('writeBackProgramId adds program_id when missing', () => {
+  const tempDir = createTempDir()
+
+  try {
+    writeManifestWithoutProgramId(tempDir)
+    output.writeBackProgramId(path.join(tempDir, 'geppetto.toml'), 'new-id-123')
+
+    const content = fs.readFileSync(path.join(tempDir, 'geppetto.toml'), 'utf8')
+    assert.ok(content.includes('program_id = "new-id-123"'))
+    assert.ok(content.includes('cluster = "devnet"'))
+  } finally {
+    removeDir(tempDir)
+  }
+})
+
+test('writeBackProgramId is idempotent', () => {
+  const tempDir = createTempDir()
+
+  try {
+    writeManifest(tempDir, 'old-id')
+    output.writeBackProgramId(path.join(tempDir, 'geppetto.toml'), 'same-id')
+    output.writeBackProgramId(path.join(tempDir, 'geppetto.toml'), 'same-id')
+
+    const content = fs.readFileSync(path.join(tempDir, 'geppetto.toml'), 'utf8')
+    const matches = content.match(/program_id = "same-id"/g)
+    assert.equal(matches.length, 1)
+  } finally {
+    removeDir(tempDir)
+  }
+})
+
+test('writeBackProgramId skips when programId is empty', () => {
+  const tempDir = createTempDir()
+
+  try {
+    writeManifest(tempDir, 'old-id')
+    output.writeBackProgramId(path.join(tempDir, 'geppetto.toml'), '')
+
+    const content = fs.readFileSync(path.join(tempDir, 'geppetto.toml'), 'utf8')
+    assert.ok(content.includes('program_id = "old-id"'))
+  } finally {
+    removeDir(tempDir)
+  }
+})
+
+test('writeBackProgramId preserves inline comment on program_id line', () => {
+  const tempDir = createTempDir()
+
+  try {
+    const manifest = [
+      'schema_version = "0.1"',
+      '',
+      '[app]',
+      'name = "test"',
+      '',
+      '[solana]',
+      'cluster = "devnet"',
+      'program_path = "examples/escrow"',
+      'program_binary = "target/deploy/escrow.so"',
+      'keypair = "~/.config/solana/id.json"',
+      'program_id = "old-id" # linked after first deploy',
+      '',
+      '[offchain]',
+      'provider = "encore-cloud"',
+      'encore_app = "test-api"',
+      'project_path = "examples/escrow-api"',
+      '',
+      '[deploy]',
+      'mode = "hybrid"',
+    ].join('\n')
+    fs.writeFileSync(path.join(tempDir, 'geppetto.toml'), manifest, 'utf8')
+
+    output.writeBackProgramId(path.join(tempDir, 'geppetto.toml'), 'new-id-456')
+
+    const content = fs.readFileSync(path.join(tempDir, 'geppetto.toml'), 'utf8')
+    assert.ok(content.includes('program_id = "new-id-456" # linked after first deploy'),
+      'inline comment should be preserved after write-back')
+  } finally {
+    removeDir(tempDir)
+  }
+})
+
+test('writeBackProgramId does not modify adjacent lines', () => {
+  const tempDir = createTempDir()
+
+  try {
+    writeManifest(tempDir, 'old-id')
+    const before = fs.readFileSync(path.join(tempDir, 'geppetto.toml'), 'utf8')
+    const beforeLines = before.split('\n')
+
+    output.writeBackProgramId(path.join(tempDir, 'geppetto.toml'), 'new-id-789')
+
+    const after = fs.readFileSync(path.join(tempDir, 'geppetto.toml'), 'utf8')
+    const afterLines = after.split('\n')
+
+    // Same number of lines
+    assert.equal(afterLines.length, beforeLines.length, 'line count should not change')
+
+    // Only the program_id line should differ
+    for (let i = 0; i < beforeLines.length; i++) {
+      if (beforeLines[i].trim().startsWith('program_id')) continue
+      assert.equal(afterLines[i], beforeLines[i], `line ${i + 1} should not change`)
+    }
+  } finally {
+    removeDir(tempDir)
+  }
+})
