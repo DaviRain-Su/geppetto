@@ -233,9 +233,13 @@ MVP 只需要 5 个组件。
 ### 5.4 Encore Adapter
 
 职责：
-- 调 `encore deploy` 或等价官方入口
+- 调 Encore Cloud 官方的 **git-push deploy workflow**
+- 在真正 push 之前完成最小前置检查：
+  - `encore auth whoami`
+  - `encore.app` 已存在且已 link
+  - `git remote encore` 已配置
 - 提取：
-  - `deployment_id`
+  - `provider_deployment_id`（可选）
   - `service_url`
   - off-chain deploy status
 
@@ -297,7 +301,8 @@ geppetto deploy
 - `program_path`
 - `program_id`
 - `service_url`
-- `deployment_id`
+- `run_id`
+- `provider_deployment_id`
 - `status`
 - `failure_class`
 - `steps[]`
@@ -329,7 +334,7 @@ geppetto deploy
   -> build deploy plan
   -> build Solana program
   -> deploy program to devnet
-  -> deploy Encore service to Encore Cloud
+  -> auth/link preflight + git push encore
   -> aggregate outputs
   -> print / emit deployment result
 ```
@@ -341,7 +346,7 @@ MVP 中 deploy 顺序固定为：
 1. `config`
 2. `build`
 3. `solana deploy`
-4. `encore deploy`
+4. `encore auth/link preflight + git push encore`
 5. `output aggregation`
 
 原因：
@@ -356,10 +361,11 @@ MVP 中 deploy 顺序固定为：
 
 无论 table 还是 machine-readable 输出，MVP 必须产出：
 
+- `run_id`
 - `program_id`
 - `cluster`
 - `service_url`
-- `deployment_id`
+- `provider_deployment_id`（可选）
 
 ### 机器可读输出结构
 
@@ -369,10 +375,11 @@ MVP 推荐直接锁一个 JSON contract：
 {
   "app_name": "escrow-demo",
   "status": "success",
+  "run_id": "run_20260415_001",
   "program_id": "9abc...",
   "cluster": "devnet",
   "service_url": "https://example.encore.app",
-  "deployment_id": "dep_123",
+  "provider_deployment_id": "enc_abc123",
   "failure_class": null
 }
 ```
@@ -383,10 +390,11 @@ MVP 推荐直接锁一个 JSON contract：
 {
   "app_name": "escrow-demo",
   "status": "failure",
+  "run_id": "run_20260415_001",
   "program_id": null,
   "cluster": "devnet",
   "service_url": null,
-  "deployment_id": null,
+  "provider_deployment_id": null,
   "failure_class": "deploy"
 }
 ```
@@ -488,10 +496,11 @@ escrow program
 1. Solana program 成功部署到 `devnet`
 2. Encore Cloud service 可访问
 3. 输出统一的：
+   - `run_id`
    - `program_id`
    - `cluster`
    - `service_url`
-   - `deployment_id`
+   - `provider_deployment_id`（若 Encore 不暴露稳定 ID，可为 `null`）
 4. 失败时能清晰落到：
    - `build`
    - `deploy`

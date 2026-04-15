@@ -175,6 +175,21 @@ test('applyOverrides applies allowlisted values with correct precedence shape', 
   }
 })
 
+test('applyOverrides rejects invalid cluster overrides', () => {
+  const tempDir = createTempDir()
+
+  try {
+    writeManifest(tempDir)
+    const config = loadPlatformConfig({ cwd: tempDir })
+
+    assert.throws(() => {
+      applyOverrides(config, { cluster: 'localnet' })
+    }, /Invalid value for solana\.cluster/)
+  } finally {
+    removeDir(tempDir)
+  }
+})
+
 test('applyOverrides rejects invalid replicas', () => {
   const tempDir = createTempDir()
 

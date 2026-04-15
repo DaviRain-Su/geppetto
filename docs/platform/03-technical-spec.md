@@ -455,9 +455,21 @@ type StepFn = (ctx: Context, state: DeployState, config: PlatformConfig) =>
 
 行为：
 - 调 Encore adapter
+- 先做前置检查：
+  - `encore auth whoami`
+  - `encore.app` 已 link（`id` 非空）
+  - `git remote encore` 已配置
+- 再执行官方 cloud deploy workflow：
+  - `git add -A`
+  - `git commit -m "geppetto deploy <run_id>"`
+  - `git push encore`
 - 获取：
   - `provider_deployment_id?`
   - `service_url`
+
+约束：
+- MVP 不自动执行 `encore app link`
+- 若 app 未 link，直接返回可操作的 config 错误
 
 如果 `service_url` 非即时可得：
 - 进入 polling / retry
@@ -521,9 +533,20 @@ interface EncoreAdapter {
 }
 ```
 
+Encore adapter 的 MVP 内部实现假设锁定为：
+
+1. `encore auth whoami`
+2. 读取并校验 `project_path/encore.app`
+3. 校验 `git remote get-url encore`
+4. `git add -A && git commit -m "geppetto deploy <run_id>"`
+5. `git push encore`
+6. 从 push 输出和/或后续 Encore CLI 查询中提取：
+   - `service_url`
+   - `provider_deployment_id`（若没有稳定来源，可返回 `null`）
+
 ### 9.3 `service_url` polling / retry
 
-如果 `encore deploy` 不直接稳定返回 URL，则必须执行 polling。
+如果 `git push encore` 或后续 Encore CLI 查询不直接稳定返回 URL，则必须执行 polling。
 
 MVP 默认策略：
 
@@ -534,6 +557,16 @@ MVP 默认策略：
 60 秒后仍拿不到 URL：
 - 失败归类：`deploy`
 - 错误码：`EDEPLOY004`
+
+优先查询顺序：
+
+1. `git push encore` stdout/stderr 解析
+2. `encore namespace list -o json`
+3. 其他官方 CLI 查询（若后续确认稳定）
+
+MVP 不允许：
+- 依赖 dashboard 手工复制 URL
+- silent success 且 `service_url = null`
 
 ### 9.4 本阶段不实现
 
@@ -580,7 +613,7 @@ MVP 默认策略：
 - `EDEPLOY001`
   - solana deploy failed
 - `EDEPLOY002`
-  - encore deploy failed
+  - Encore git-push deploy failed
 - `EDEPLOY003`
   - missing required deploy output after successful command
 - `EDEPLOY004`
@@ -593,6 +626,14 @@ MVP 默认策略：
 - parser / validation 前失败 -> `config`
 - build command 失败 -> `build`
 - deploy command / URL retrieval / aggregation 失败 -> `deploy`
+
+Encore 侧最小映射规则：
+
+- `not logged in` -> `config`
+- `encore.app.id` 为空 / app 未 link -> `config`
+- `git remote encore` 缺失 -> `config`
+- `git push encore` 失败 -> `deploy`
+- `service_url` / `provider_deployment_id` 提取失败 -> `deploy`
 
 原始 stderr：
 - 保留在 `error` 文本里
@@ -686,10 +727,13 @@ geppetto deploy --write-back
 9. `--set` 使用未白名单 key
 10. Solana build 成功但 `program_binary` 不存在
 11. Solana deploy 成功文本中未提取到 `program_id`
-12. Encore deploy 成功但初始没有 `service_url`
+12. `encore auth whoami` 返回 `not logged in`
 13. URL polling 超时
-14. `--write-back` 时原 TOML 文件不可写
-15. `program_id` 为空时首次 deploy 成功，必须能继续输出而不依赖回填
+14. `encore.app` 存在但 `id` 为空（未 link）
+15. `git remote encore` 缺失
+16. `git push encore` 成功但初始没有 `service_url`
+17. `--write-back` 时原 TOML 文件不可写
+18. `program_id` 为空时首次 deploy 成功，必须能继续输出而不依赖回填
 
 ---
 
