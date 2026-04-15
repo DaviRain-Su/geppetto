@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const path = require('node:path');
 const { initProject } = require('../lib/init');
 const { createProject } = require('../lib/new');
 const { buildTestPlan, runGeppettoTest } = require('../lib/test');
@@ -8,7 +9,9 @@ const { loadPlatformConfig } = require('../lib/platform/config');
 const { parseSetValues, applyOverrides } = require('../lib/platform/overrides');
 const { createDeployState } = require('../lib/platform/state');
 const { runPipeline, bridgeOutputs } = require('../lib/platform/deploy');
-const { renderDeployOutput, writeArtifacts } = require('../lib/platform/output');
+const { renderDeployOutput, writeArtifacts, writeBackProgramId } = require('../lib/platform/output');
+const solanaAdapter = require('../lib/platform/adapters/solana');
+const encoreAdapter = require('../lib/platform/adapters/encore');
 
 function printUsage(stream) {
   stream.write('Usage: geppetto-cli <command> [options]\n\n');
@@ -173,9 +176,34 @@ async function runDeploy(parsedArgs, io) {
   // Create initial deploy state
   const state = createDeployState(config);
 
-  // Build step list — adapters plug in here (GP-05~08)
-  // For now, steps are empty; real adapters will be wired in GP-05/06/07/08
-  const steps = [];
+  // Build pipeline steps — Solana build/deploy + Encore deploy
+  const steps = [
+    {
+      name: 'buildProgram',
+      run: async (ctx, currentState, cfg) => {
+        await solanaAdapter.build(ctx, cfg);
+        return currentState;
+      },
+    },
+    {
+      name: 'deployProgram',
+      run: async (ctx, currentState, cfg) => {
+        const result = await solanaAdapter.deploy(ctx, cfg);
+        currentState.program_id = result.program_id;
+        currentState.cluster = result.cluster;
+        return currentState;
+      },
+    },
+    {
+      name: 'deployOffchain',
+      run: async (ctx, currentState, cfg) => {
+        const result = await encoreAdapter.deploy(ctx, cfg);
+        currentState.service_url = result.service_url;
+        currentState.provider_deployment_id = result.provider_deployment_id || null;
+        return currentState;
+      },
+    },
+  ];
 
   // Run pipeline
   let finalState;
@@ -212,6 +240,17 @@ async function runDeploy(parsedArgs, io) {
   } catch (error) {
     stderr.write(`${error.code || 'ERROR'}: ${error.message}\n`)
     return 1
+  }
+
+  // Write-back program_id if requested
+  if (parsedArgs.options.writeBack && finalState.program_id) {
+    try {
+      const manifestPath = path.join(cwd, 'geppetto.toml')
+      writeBackProgramId(manifestPath, finalState.program_id)
+    } catch (error) {
+      stderr.write(`${error.code || 'ERROR'}: ${error.message}\n`)
+      return 1
+    }
   }
 
   // Render success output

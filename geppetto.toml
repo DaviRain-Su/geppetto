@@ -1,0 +1,20 @@
+schema_version = "0.1"
+
+[app]
+name = "escrow-demo"
+
+[solana]
+cluster = "devnet"
+program_path = "examples/escrow"
+program_binary = "target/deploy/geppetto_escrow.so"
+keypair = "~/.config/solana/id.json"
+program_id = ""
+
+[offchain]
+provider = "encore-cloud"
+encore_app = "escrow-demo-api"
+project_path = "examples/escrow-api"
+
+[deploy]
+mode = "hybrid"
+output = "table"

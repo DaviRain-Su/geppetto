@@ -1,0 +1,9 @@
+{
+  "name": "escrow-demo-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Escrow demo off-chain API (Encore Cloud)",
+  "scripts": {
+    "dev": "encore run"
+  }
+}
