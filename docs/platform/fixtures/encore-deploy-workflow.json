@@ -1,0 +1,63 @@
+{
+  "_comment": "Encore CLI deploy workflow fixture. Updated with verified outputs from @davirain's real Encore account.",
+  "cli_version": "v1.56.6",
+  "deploy_command": "git push encore",
+  "workflow": [
+    {
+      "step": "encore auth whoami",
+      "expected": {
+        "logged_in": "<username>",
+        "not_logged_in": "not logged in."
+      },
+      "failure_class": "config"
+    },
+    {
+      "step": "encore app link <app-id>",
+      "prerequisite": "App must be registered on Encore Cloud",
+      "expected": {
+        "success": "Sets up encore git remote",
+        "failure_not_logged_in": "error: not logged in. Run 'encore auth login' first."
+      },
+      "failure_class": "config"
+    },
+    {
+      "step": "git add -A && git commit -m 'geppetto deploy <run_id>'",
+      "note": "Local staging before push"
+    },
+    {
+      "step": "git push encore",
+      "expected_output": "[PENDING] Needs stdout/stderr capture from real deploy",
+      "failure_class": "deploy"
+    },
+    {
+      "step": "extract provider_deployment_id",
+      "verified": "encore namespace list -o json returns namespace objects with 'id' field",
+      "verified_output": {
+        "id": "d7fqb787aaj1tbm5lckg",
+        "name": "default",
+        "active": true,
+        "created_at": "2026-04-15 22:50:05.878705 +0800 +0800",
+        "last_active_at": "2026-04-15 22:50:05.881985 +0800 +0800"
+      },
+      "mapping": "namespace.id can serve as provider_deployment_id",
+      "failure_class": "deploy"
+    },
+    {
+      "step": "extract service_url",
+      "primary": "[PENDING] Parse git push stdout",
+      "fallback_1": "encore namespace list -o json → DOES NOT contain service_url",
+      "fallback_2": "[INVESTIGATE] Check encore app info / encore config / Cloud Dashboard API",
+      "fallback_3": "Pattern inference: https://<app-name>-<env>.encore.app (unverified)",
+      "failure_class": "deploy"
+    }
+  ],
+  "observed_encore_app_unlinked": {
+    "id": "",
+    "lang": "typescript",
+    "_comments": [
+      "The app is not currently linked to the encore.dev platform.",
+      "Use \"encore app link\" to link it."
+    ]
+  },
+  "observed_encore_readme_deployment_section": "Deploy your application to a staging environment in Encore's free development cloud:\n  git add -A .\n  git commit -m 'Commit message'\n  git push encore\nThen head over to https://app.encore.dev to monitor your deployment and find your production URL."
+}
