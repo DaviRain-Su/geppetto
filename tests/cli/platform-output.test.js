@@ -168,3 +168,27 @@ test('writeArtifacts overwrites existing files', () => {
     removeDir(tempDir)
   }
 })
+
+test('writeArtifacts throws EDEPLOY005 when fs.writeFileSync fails', () => {
+  const tempDir = createTempDir()
+  const originalWriteFileSync = fs.writeFileSync
+
+  try {
+    fs.writeFileSync = () => {
+      throw new Error('read-only filesystem')
+    }
+
+    const state = makeState()
+    assert.throws(() => {
+      output.writeArtifacts(state, tempDir)
+    }, (error) => {
+      assert.equal(error.code, 'EDEPLOY005')
+      assert.equal(error.failureClass, 'deploy')
+      assert.ok(error.message.includes('read-only filesystem'))
+      return true
+    })
+  } finally {
+    fs.writeFileSync = originalWriteFileSync
+    removeDir(tempDir)
+  }
+})
