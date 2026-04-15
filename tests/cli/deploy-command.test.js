@@ -1,7 +1,8 @@
 const assert = require('node:assert/strict')
 const test = require('node:test')
 
-const { main, parseDeployArgs, renderDeployOutput } = require('../../bin/geppetto-cli')
+const { main, parseDeployArgs } = require('../../bin/geppetto-cli')
+const { renderDeployOutput } = require('../../lib/platform/output')
 
 // --- parseDeployArgs ---
 

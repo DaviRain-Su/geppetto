@@ -8,6 +8,7 @@ const { loadPlatformConfig } = require('../lib/platform/config');
 const { parseSetValues, applyOverrides } = require('../lib/platform/overrides');
 const { createDeployState } = require('../lib/platform/state');
 const { runPipeline, bridgeOutputs } = require('../lib/platform/deploy');
+const { renderDeployOutput, writeArtifacts } = require('../lib/platform/output');
 
 function printUsage(stream) {
   stream.write('Usage: geppetto-cli <command> [options]\n\n');
@@ -143,51 +144,6 @@ function parseDeployArgs(args) {
   return { options };
 }
 
-function renderDeployOutput(state, format, stream) {
-  if (format === 'json') {
-    const output = {
-      run_id: state.run_id,
-      app_name: state.app_name,
-      cluster: state.cluster,
-      program_id: state.program_id || null,
-      service_url: state.service_url || null,
-      provider_deployment_id: state.provider_deployment_id || null,
-      status: state.status,
-      failure_class: state.failure_class || null,
-      steps: state.steps,
-    };
-    stream.write(JSON.stringify(output, null, 2) + '\n');
-    return;
-  }
-
-  // Table format
-  stream.write('\n');
-  stream.write(`  Run ID:    ${state.run_id}\n`);
-  stream.write(`  App:       ${state.app_name}\n`);
-  stream.write(`  Cluster:   ${state.cluster}\n`);
-  stream.write(`  Program:   ${state.program_id || '(not assigned)'}\n`);
-  stream.write(`  Service:   ${state.service_url || '(not available)'}\n`);
-  stream.write(`  Status:    ${state.status}\n`);
-  if (state.failure_class) {
-    stream.write(`  Failure:   ${state.failure_class}\n`);
-  }
-  stream.write('\n');
-
-  // Step table
-  if (state.steps.length > 0) {
-    stream.write('  Steps:\n');
-    for (const step of state.steps) {
-      const icon = step.status === 'success' ? '✓' : '✗';
-      const elapsed = step.elapsed_ms != null ? ` (${step.elapsed_ms}ms)` : '';
-      stream.write(`    ${icon} ${step.name}${elapsed}\n`);
-      if (step.error) {
-        stream.write(`      Error: ${step.error}\n`);
-      }
-    }
-    stream.write('\n');
-  }
-}
-
 async function runDeploy(parsedArgs, io) {
   const stdout = io.stdout || process.stdout;
   const stderr = io.stderr || process.stderr;
@@ -238,14 +194,29 @@ async function runDeploy(parsedArgs, io) {
     const failedState = error.state || state;
     failedState.status = 'failure';
     failedState.failure_class = error.failureClass || 'deploy';
-    renderDeployOutput(failedState, parsedArgs.options.output, stdout);
-    stderr.write(`${error.code || 'ERROR'}: ${error.message}\n`);
-    return 1;
+    // Write artifacts even on failure (partial state is valuable)
+    try {
+      writeArtifacts(failedState, cwd)
+    } catch (_artifactError) {
+      // Suppress artifact write errors on failure path to avoid masking primary error
+    }
+
+    renderDeployOutput(failedState, parsedArgs.options.output, stdout)
+    stderr.write(`${error.code || 'ERROR'}: ${error.message}\n`)
+    return 1
+  }
+
+  // Write artifacts
+  try {
+    writeArtifacts(finalState, cwd)
+  } catch (error) {
+    stderr.write(`${error.code || 'ERROR'}: ${error.message}\n`)
+    return 1
   }
 
   // Render success output
-  renderDeployOutput(finalState, parsedArgs.options.output, stdout);
-  return 0;
+  renderDeployOutput(finalState, parsedArgs.options.output, stdout)
+  return 0
 }
 
 function parseAuditArgs(args) {
