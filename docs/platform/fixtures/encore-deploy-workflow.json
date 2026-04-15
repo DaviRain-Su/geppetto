@@ -1,63 +1,66 @@
 {
-  "_comment": "Encore CLI deploy workflow fixture. Updated with verified outputs from @davirain's real Encore account.",
+  "_comment": "Encore CLI deploy workflow fixture. Fully verified with real Encore Cloud account output.",
   "cli_version": "v1.56.6",
   "deploy_command": "git push encore",
-  "workflow": [
+  "remote_url_format": "encore://<app-id>",
+  "verified_workflow": [
     {
       "step": "encore auth whoami",
       "expected": {
-        "logged_in": "<username>",
+        "logged_in": "logged in as davirain.yin@gmail.com",
         "not_logged_in": "not logged in."
       },
       "failure_class": "config"
     },
     {
-      "step": "encore app link <app-id>",
-      "prerequisite": "App must be registered on Encore Cloud",
+      "step": "check encore.app id",
       "expected": {
-        "success": "Sets up encore git remote",
-        "failure_not_logged_in": "error: not logged in. Run 'encore auth login' first."
+        "linked": "id field is non-empty",
+        "unlinked": "id field is empty string"
       },
       "failure_class": "config"
     },
     {
-      "step": "git add -A && git commit -m 'geppetto deploy <run_id>'",
-      "note": "Local staging before push"
+      "step": "check git remote encore",
+      "expected": {
+        "exists": "git remote get-url encore returns encore://<app-id>",
+        "missing": "git remote get-url encore fails"
+      },
+      "recovery": "git remote add encore encore://<app-id>",
+      "failure_class": "config"
+    },
+    {
+      "step": "git status --porcelain",
+      "note": "If clean, skip commit; if dirty, git add -A && git commit -m 'geppetto deploy <run_id>'",
+      "failure_class": "deploy"
     },
     {
       "step": "git push encore",
-      "expected_output": "[PENDING] Needs stdout/stderr capture from real deploy",
+      "verified_stdout": "remote: main: triggered deploy https://app.encore.cloud/rest-api-starter-i472/envs/staging/deploys/1ub2qo6agipb70en00a0\nTo encore://rest-api-starter-i472\n   6507e7d..d002019  main -> main",
       "failure_class": "deploy"
     },
     {
       "step": "extract provider_deployment_id",
-      "verified": "encore namespace list -o json returns namespace objects with 'id' field",
-      "verified_output": {
-        "id": "d7fqb787aaj1tbm5lckg",
-        "name": "default",
-        "active": true,
-        "created_at": "2026-04-15 22:50:05.878705 +0800 +0800",
-        "last_active_at": "2026-04-15 22:50:05.881985 +0800 +0800"
+      "verified_rule": "Parse triggered deploy URL, take the last path segment",
+      "verified_example": {
+        "deploy_url": "https://app.encore.cloud/rest-api-starter-i472/envs/staging/deploys/1ub2qo6agipb70en00a0",
+        "provider_deployment_id": "1ub2qo6agipb70en00a0"
       },
-      "mapping": "namespace.id can serve as provider_deployment_id",
       "failure_class": "deploy"
     },
     {
       "step": "extract service_url",
-      "primary": "[PENDING] Parse git push stdout",
-      "fallback_1": "encore namespace list -o json → DOES NOT contain service_url",
-      "fallback_2": "[INVESTIGATE] Check encore app info / encore config / Cloud Dashboard API",
-      "fallback_3": "Pattern inference: https://<app-name>-<env>.encore.app (unverified)",
+      "verified_rule": "MVP uses the deploy URL from push stdout as service_url",
+      "verified_example": {
+        "service_url": "https://app.encore.cloud/rest-api-starter-i472/envs/staging/deploys/1ub2qo6agipb70en00a0"
+      },
+      "future_enhancement": "May be extended to query public API endpoint via Encore Cloud API",
       "failure_class": "deploy"
     }
   ],
-  "observed_encore_app_unlinked": {
-    "id": "",
-    "lang": "typescript",
-    "_comments": [
-      "The app is not currently linked to the encore.dev platform.",
-      "Use \"encore app link\" to link it."
-    ]
-  },
-  "observed_encore_readme_deployment_section": "Deploy your application to a staging environment in Encore's free development cloud:\n  git add -A .\n  git commit -m 'Commit message'\n  git push encore\nThen head over to https://app.encore.dev to monitor your deployment and find your production URL."
+  "known_limitations": {
+    "encore_namespace_list": "Does NOT contain service_url (verified)",
+    "encore_app_info": "Command does not exist as direct info query (verified)",
+    "encore_app_link": "Does NOT automatically inject git remote (verified)"
+  }
 }
