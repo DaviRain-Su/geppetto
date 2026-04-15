@@ -356,6 +356,46 @@ test('smoke: table output renders step names and status', async () => {
   }
 })
 
+test('smoke: pipeline ctx passes run_id to encore adapter for traceability', async () => {
+  const tmpDir = createTempProject()
+  let capturedCtx = null
+
+  try {
+    await withMockedAdapters(
+      {
+        build: async () => {},
+        deploy: async () => ({ program_id: 'CtxTestProgId1234567890123456789012345678', cluster: 'devnet' }),
+      },
+      {
+        deploy: async (ctx) => {
+          capturedCtx = ctx
+          return {
+            service_url: 'https://app.encore.cloud/test/envs/staging/deploys/ctx001',
+            provider_deployment_id: 'ctx001',
+          }
+        },
+      },
+      async () => {
+        const code = await runDeploy(
+          { options: { output: 'json', setValues: [], writeBack: false } },
+          {
+            stdout: { write: () => {} },
+            stderr: { write: () => {} },
+            cwd: tmpDir,
+          },
+        )
+
+        assert.equal(code, 0)
+        assert.ok(capturedCtx, 'ctx should be passed to encore adapter')
+        assert.ok(capturedCtx.runId, 'ctx.runId should be set')
+        assert.ok(capturedCtx.runId.startsWith('run_'), 'ctx.runId should have run_ prefix')
+      },
+    )
+  } finally {
+    removeDir(tmpDir)
+  }
+})
+
 test('smoke: missing geppetto.toml returns exit 1 with config error', async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-smoke-empty-'))
 

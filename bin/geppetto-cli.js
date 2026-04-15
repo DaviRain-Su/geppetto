@@ -209,7 +209,7 @@ async function runDeploy(parsedArgs, io) {
   let finalState;
   try {
     finalState = await runPipeline({
-      ctx: {},
+      ctx: { runId: state.run_id },
       config,
       initialState: state,
       steps,
