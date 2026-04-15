@@ -416,3 +416,125 @@ test('smoke: missing geppetto.toml returns exit 1 with config error', async () =
     removeDir(tmpDir)
   }
 })
+
+// --- GP-16 Part A: Full E2E mock integration ---
+
+test('e2e: deploy --write-back full flow: config → build → deploy → artifacts → write-back → output', async () => {
+  const tmpDir = createTempProject()
+  const MOCK_PROGRAM_ID = 'E2eProgramId1234567890123456789012345678901'
+  const MOCK_SERVICE_URL = 'https://app.encore.cloud/escrow-demo/envs/staging/deploys/e2e001'
+  const MOCK_PROVIDER_ID = 'e2e001'
+
+  try {
+    await withMockedAdapters(
+      {
+        build: async () => {},
+        deploy: async () => ({ program_id: MOCK_PROGRAM_ID, cluster: 'devnet' }),
+      },
+      {
+        deploy: async () => ({
+          service_url: MOCK_SERVICE_URL,
+          provider_deployment_id: MOCK_PROVIDER_ID,
+        }),
+      },
+      async () => {
+        let stdout = ''
+        let stderr = ''
+        const code = await runDeploy(
+          { options: { output: 'json', setValues: [], writeBack: true } },
+          {
+            stdout: { write: (s) => { stdout += s } },
+            stderr: { write: (s) => { stderr += s } },
+            cwd: tmpDir,
+          },
+        )
+
+        // 1. Exit code
+        assert.equal(code, 0, `Expected exit 0, stderr: ${stderr}`)
+
+        // 2. JSON output contract
+        const parsed = JSON.parse(stdout)
+        assert.ok(parsed.run_id.startsWith('run_'), 'run_id should have run_ prefix')
+        assert.equal(parsed.app_name, 'escrow-demo')
+        assert.equal(parsed.cluster, 'devnet')
+        assert.equal(parsed.program_id, MOCK_PROGRAM_ID)
+        assert.equal(parsed.service_url, MOCK_SERVICE_URL)
+        assert.equal(parsed.provider_deployment_id, MOCK_PROVIDER_ID)
+        assert.equal(parsed.status, 'success')
+        assert.equal(parsed.failure_class, null)
+        assert.equal(parsed.steps.length, 3)
+        assert.equal(parsed.steps[0].name, 'buildProgram')
+        assert.equal(parsed.steps[1].name, 'deployProgram')
+        assert.equal(parsed.steps[2].name, 'deployOffchain')
+        for (const step of parsed.steps) {
+          assert.equal(step.status, 'success')
+          assert.ok(typeof step.elapsed_ms === 'number')
+        }
+
+        // 3. Artifact files
+        const artifactJson = path.join(tmpDir, '.geppetto', 'deploy-output.json')
+        const artifactTxt = path.join(tmpDir, '.geppetto', 'deploy-output.txt')
+        assert.ok(fs.existsSync(artifactJson), 'deploy-output.json should exist')
+        assert.ok(fs.existsSync(artifactTxt), 'deploy-output.txt should exist')
+
+        const artifactData = JSON.parse(fs.readFileSync(artifactJson, 'utf8'))
+        assert.equal(artifactData.program_id, MOCK_PROGRAM_ID)
+        assert.equal(artifactData.service_url, MOCK_SERVICE_URL)
+        assert.equal(artifactData.status, 'success')
+
+        const artifactText = fs.readFileSync(artifactTxt, 'utf8')
+        assert.ok(artifactText.includes(MOCK_PROGRAM_ID))
+        assert.ok(artifactText.includes(MOCK_SERVICE_URL))
+        assert.ok(artifactText.includes('success'))
+
+        // 4. Write-back: geppetto.toml updated with program_id
+        const manifest = fs.readFileSync(path.join(tmpDir, 'geppetto.toml'), 'utf8')
+        assert.ok(manifest.includes(`program_id = "${MOCK_PROGRAM_ID}"`),
+          'geppetto.toml should have program_id written back')
+        // Other fields unchanged
+        assert.ok(manifest.includes('cluster = "devnet"'))
+        assert.ok(manifest.includes('name = "escrow-demo"'))
+      },
+    )
+  } finally {
+    removeDir(tmpDir)
+  }
+})
+
+test('e2e: deploy failure does NOT write-back program_id', async () => {
+  const tmpDir = createTempProject()
+
+  try {
+    await withMockedAdapters(
+      {
+        build: async () => {},
+        deploy: async () => {
+          const { createPlatformError } = require('../../lib/platform/errors')
+          throw createPlatformError('EDEPLOY001', 'Solana deploy failed')
+        },
+      },
+      {
+        deploy: async () => { throw new Error('should not reach') },
+      },
+      async () => {
+        const code = await runDeploy(
+          { options: { output: 'json', setValues: [], writeBack: true } },
+          {
+            stdout: { write: () => {} },
+            stderr: { write: () => {} },
+            cwd: tmpDir,
+          },
+        )
+
+        assert.equal(code, 1)
+
+        // geppetto.toml should NOT be modified
+        const manifest = fs.readFileSync(path.join(tmpDir, 'geppetto.toml'), 'utf8')
+        assert.ok(manifest.includes('program_id = ""'),
+          'program_id should remain empty on failure')
+      },
+    )
+  } finally {
+    removeDir(tmpDir)
+  }
+})
