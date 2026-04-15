@@ -50,7 +50,7 @@ function withMockRunner(mockExecFile, mockExec, testFn) {
     })
 }
 
-test('deploy fails with EDEPLOY002 when not logged in', async () => {
+test('deploy fails with ECFG007 when not logged in', async () => {
   const tempDir = createTempDir()
   const mockExecFile = async (file, args) => {
     assert.equal(file, 'encore')
@@ -63,14 +63,18 @@ test('deploy fails with EDEPLOY002 when not logged in', async () => {
       const config = makeConfig(tempDir)
       await assert.rejects(async () => {
         await encore.deploy({}, config)
-      }, /EDEPLOY002|Encore auth required/)
+      }, (error) => {
+        assert.equal(error.code, 'ECFG007')
+        assert.equal(error.failureClass, 'config')
+        return true
+      })
     })
   } finally {
     removeDir(tempDir)
   }
 })
 
-test('deploy fails with EDEPLOY002 when encore.app has empty id', async () => {
+test('deploy fails with ECFG008 when encore.app has empty id', async () => {
   const tempDir = createTempDir()
   const mockExecFile = async () => ({ stdout: 'logged in as test', stderr: '' })
   const mockExec = async () => ({ stdout: '', stderr: '' })
@@ -80,7 +84,11 @@ test('deploy fails with EDEPLOY002 when encore.app has empty id', async () => {
       const config = makeConfig(tempDir, { appId: '' })
       await assert.rejects(async () => {
         await encore.deploy({}, config)
-      }, /EDEPLOY002|Encore app not linked/)
+      }, (error) => {
+        assert.equal(error.code, 'ECFG008')
+        assert.equal(error.failureClass, 'config')
+        return true
+      })
     })
   } finally {
     removeDir(tempDir)
