@@ -3,3 +3,6 @@ Cargo.lock
 .gstack/
 *.tgz
 .geppetto/
+node_modules/
+dist/
+bun.lock
