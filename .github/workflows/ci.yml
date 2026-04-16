@@ -64,6 +64,9 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Build escrow SBF artifact
+        run: cargo build-sbf --manifest-path examples/escrow/Cargo.toml
+
       - name: Run escrow example tests
         run: cargo test --manifest-path examples/escrow/Cargo.toml --all-features
 
