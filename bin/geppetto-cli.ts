@@ -26,6 +26,16 @@ const encoreAdapter = require('../lib/platform/adapters/encore') as {
   deploy: (ctx: PipelineContext, config: PlatformConfig) => Promise<{ service_url: string; provider_deployment_id: string | null }>
 }
 
+export const adapters = {
+  solana: {
+    build: solanaAdapter.build,
+    deploy: solanaAdapter.deploy,
+  },
+  encore: {
+    deploy: encoreAdapter.deploy,
+  },
+}
+
 export type OutputStream = { write: (chunk: string) => void }
 
 export function printUsage(stream: OutputStream): void {
@@ -199,14 +209,14 @@ export async function runDeploy(parsedArgs: { options: DeployArgs['options'] }, 
     {
       name: 'buildProgram',
       run: async (_ctx, currentState, cfg) => {
-        await solanaAdapter.build(_ctx, cfg)
+        await adapters.solana.build(_ctx, cfg)
         return currentState
       },
     },
     {
       name: 'deployProgram',
       run: async (_ctx, currentState, cfg) => {
-        const result = await solanaAdapter.deploy(_ctx, cfg)
+        const result = await adapters.solana.deploy(_ctx, cfg)
         currentState.program_id = result.program_id
         currentState.cluster = result.cluster
         return currentState
@@ -219,7 +229,7 @@ export async function runDeploy(parsedArgs: { options: DeployArgs['options'] }, 
     steps.push({
       name: 'deployOffchain',
       run: async (_ctx, currentState, cfg) => {
-        const result = await encoreAdapter.deploy(_ctx, cfg)
+        const result = await adapters.encore.deploy(_ctx, cfg)
         currentState.service_url = result.service_url
         currentState.provider_deployment_id = result.provider_deployment_id || null
         return currentState

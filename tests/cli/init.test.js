@@ -9,6 +9,7 @@ const { TEMPLATE_FILES } = require('../../lib/templates');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const cliPath = path.join(repoRoot, 'bin', 'geppetto-cli.ts');
+const tsxPath = require.resolve('tsx');
 
 function createTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-cli-'));
@@ -19,7 +20,7 @@ function removeDir(directoryPath) {
 }
 
 function runCli(cwd, args = []) {
-  return execFileSync(process.execPath, [cliPath, ...args], {
+  return execFileSync(process.execPath, ['--import', tsxPath, cliPath, ...args], {
     cwd,
     encoding: 'utf8',
   });

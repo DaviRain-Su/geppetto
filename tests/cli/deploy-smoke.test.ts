@@ -4,9 +4,7 @@ const os = require('node:os')
 const path = require('node:path')
 const test = require('node:test')
 
-const solanaAdapter = require('../../lib/platform/adapters/solana')
-const encoreAdapter = require('../../lib/platform/adapters/encore')
-const { runDeploy } = require('../../bin/geppetto-cli')
+const { runDeploy, adapters } = require('../../bin/geppetto-cli')
 
 function createTempProject() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-smoke-'))
@@ -65,28 +63,19 @@ interface EncoreMock {
 }
 
 function withMockedAdapters(solanaMock: SolanaMock, encoreMock: EncoreMock, testFn: () => Promise<void>): Promise<void> {
-  const origSolanaBuild = solanaAdapter.build
-  const origSolanaDeploy = solanaAdapter.deploy
-  const origSolanaRunner = { ...solanaAdapter.runner }
-  const origEncoreDeploy = encoreAdapter.deploy
-  const origEncoreRunner = {
-    execFile: encoreAdapter.runner.execFile,
-    exec: encoreAdapter.runner.exec,
-  }
+  const origSolanaBuild = adapters.solana.build
+  const origSolanaDeploy = adapters.solana.deploy
+  const origEncoreDeploy = adapters.encore.deploy
 
-  if (solanaMock.build) solanaAdapter.build = solanaMock.build
-  if (solanaMock.deploy) solanaAdapter.deploy = solanaMock.deploy
-
-  if (encoreMock.deploy) encoreAdapter.deploy = encoreMock.deploy
+  if (solanaMock.build) adapters.solana.build = solanaMock.build
+  if (solanaMock.deploy) adapters.solana.deploy = solanaMock.deploy
+  if (encoreMock.deploy) adapters.encore.deploy = encoreMock.deploy
 
   return testFn()
     .finally(() => {
-      solanaAdapter.build = origSolanaBuild
-      solanaAdapter.deploy = origSolanaDeploy
-      Object.assign(solanaAdapter.runner, origSolanaRunner)
-      encoreAdapter.deploy = origEncoreDeploy
-      encoreAdapter.runner.execFile = origEncoreRunner.execFile
-      encoreAdapter.runner.exec = origEncoreRunner.exec
+      adapters.solana.build = origSolanaBuild
+      adapters.solana.deploy = origSolanaDeploy
+      adapters.encore.deploy = origEncoreDeploy
     })
 }
 
