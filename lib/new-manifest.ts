@@ -1,12 +1,28 @@
-const fs = require('node:fs');
-const path = require('node:path');
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+
+interface TemplateEntry {
+  relativePath: string
+  sourcePath: string
+}
+
 const {
   assertTemplateManifest,
   getTemplateEntries,
   getTemplateRoot: getCanonicalTemplateRoot,
-} = require('./templates');
+} = require('./templates') as {
+  assertTemplateManifest: (templateRoot?: string) => void
+  getTemplateEntries: (templateRoot?: string) => TemplateEntry[]
+  getTemplateRoot: () => string
+}
 
-const NEW_PROJECT_RUST_TEMPLATE_FILES = Object.freeze([
+export interface NewProjectTemplateEntry {
+  relativePath: string
+  content: string
+  sourcePath?: string
+}
+
+export const NEW_PROJECT_RUST_TEMPLATE_FILES = Object.freeze<NewProjectTemplateEntry[]>([
   {
     relativePath: 'Cargo.toml',
     content: '[package]\\nname = "{{PACKAGE_NAME}}"\\nversion = "0.1.0"\\nedition = "2024"\\npublish = false\\n\\n[dependencies]\\ngeppetto = "0.1"\\n\\n[lib]\\ncrate-type = ["cdylib", "lib"]\\n',
@@ -51,13 +67,13 @@ const NEW_PROJECT_RUST_TEMPLATE_FILES = Object.freeze([
       '}\\n' +
       '\n' +
       'fn setup_mollusk() -> String {\\n' +
-      '    let elf_path = Path::new(env!(\"CARGO_MANIFEST_DIR\"))\\n' +
-      '        .join(\"target\")\\n' +
-      '        .join(\"deploy\")\\n' +
-      '        .join(\"{{PACKAGE_NAME}}.so\");\\n' +
+      '    let elf_path = Path::new(env!("CARGO_MANIFEST_DIR"))\\n' +
+      '        .join("target")\\n' +
+      '        .join("deploy")\\n' +
+      '        .join("{{PACKAGE_NAME}}.so");\\n' +
       '    if !elf_path.exists() {\\n' +
       '        panic!(\\n' +
-      '            \"SBF artifact missing: {}. Run `cargo build-sbf` first.\",\\n' +
+      '            "SBF artifact missing: {}. Run `cargo build-sbf` first.",\\n' +
       '            elf_path.display(),\\n' +
       '        );\\n' +
       '    }\\n' +
@@ -65,7 +81,7 @@ const NEW_PROJECT_RUST_TEMPLATE_FILES = Object.freeze([
       '    elf_path\\n' +
       '        .to_str()\\n' +
       '        .map(|value| value.to_owned())\\n' +
-      '        .expect(\"ELF path is not valid UTF-8\")\\n' +
+      '        .expect("ELF path is not valid UTF-8")\\n' +
       '}\\n' +
       '\n' +
       'fn setup_program_id() -> [u8; 32] {\\n' +
@@ -88,7 +104,7 @@ const NEW_PROJECT_RUST_TEMPLATE_FILES = Object.freeze([
       'fn test_setup_mollusk_instructs_build_first() {\\n' +
       '    assert_eq!(\\n' +
       '        PROGRAM_ID_PLACEHOLDER,\\n' +
-      '        \"CHANGE_ME\"\\n' +
+      '        "CHANGE_ME"\\n' +
       '    );\\n' +
       '}\\n' +
       '\n' +
@@ -110,90 +126,82 @@ const NEW_PROJECT_RUST_TEMPLATE_FILES = Object.freeze([
       '    assert!(!ix.is_empty());\\n' +
       '}\\n',
   },
-]);
+])
 
-function getTemplateRoot() {
-  return getCanonicalTemplateRoot();
+export function getTemplateRoot(): string {
+  return getCanonicalTemplateRoot()
 }
 
-function getCanonicalProjectTemplateEntries(templateRoot = getTemplateRoot()) {
-  const templateEntries = getTemplateEntries(templateRoot);
-  const entries = [];
+export function getCanonicalProjectTemplateEntries(templateRoot = getTemplateRoot()): NewProjectTemplateEntry[] {
+  const templateEntries = getTemplateEntries(templateRoot)
+  const entries: NewProjectTemplateEntry[] = []
 
   for (const { relativePath, sourcePath } of templateEntries) {
     if (!fs.existsSync(sourcePath)) {
-      throw new Error(`Missing canonical template source: ${sourcePath}`);
+      throw new Error(`Missing canonical template source: ${sourcePath}`)
     }
 
-    const content = fs.readFileSync(sourcePath, 'utf8');
+    const content = fs.readFileSync(sourcePath, 'utf8')
     entries.push({
       relativePath,
       content,
       sourcePath,
-    });
+    })
   }
 
-  return entries;
+  return entries
 }
 
-function assertNewProjectManifest(templateRoot = getTemplateRoot()) {
-  const canonicalEntries = getCanonicalProjectTemplateEntries(templateRoot);
-  const seen = new Set();
+export function assertNewProjectManifest(templateRoot = getTemplateRoot()): void {
+  const canonicalEntries = getCanonicalProjectTemplateEntries(templateRoot)
+  const seen = new Set<string>()
 
-  assertTemplateManifest(templateRoot);
+  assertTemplateManifest(templateRoot)
 
   for (const { relativePath, content } of canonicalEntries) {
     if (path.isAbsolute(relativePath)) {
-      throw new Error(`Template path must be relative: ${relativePath}`);
+      throw new Error(`Template path must be relative: ${relativePath}`)
     }
 
     if (relativePath.includes('\\')) {
-      throw new Error(`Template path must use POSIX separators: ${relativePath}`);
+      throw new Error(`Template path must use POSIX separators: ${relativePath}`)
     }
 
     if (seen.has(relativePath)) {
-      throw new Error(`Duplicate template path: ${relativePath}`);
+      throw new Error(`Duplicate template path: ${relativePath}`)
     }
 
     if (typeof content !== 'string' || content.length === 0) {
-      throw new Error(`Template content missing: ${relativePath}`);
+      throw new Error(`Template content missing: ${relativePath}`)
     }
 
-    seen.add(relativePath);
+    seen.add(relativePath)
   }
 
   for (const { relativePath, content } of NEW_PROJECT_RUST_TEMPLATE_FILES) {
     if (path.isAbsolute(relativePath)) {
-      throw new Error(`Template path must be relative: ${relativePath}`);
+      throw new Error(`Template path must be relative: ${relativePath}`)
     }
 
     if (relativePath.includes('\\')) {
-      throw new Error(`Template path must use POSIX separators: ${relativePath}`);
+      throw new Error(`Template path must use POSIX separators: ${relativePath}`)
     }
 
     if (seen.has(relativePath)) {
-      throw new Error(`Duplicate template path: ${relativePath}`);
+      throw new Error(`Duplicate template path: ${relativePath}`)
     }
 
     if (typeof content !== 'string' || content.length === 0) {
-      throw new Error(`Template content missing: ${relativePath}`);
+      throw new Error(`Template content missing: ${relativePath}`)
     }
 
-    seen.add(relativePath);
+    seen.add(relativePath)
   }
 }
 
-function getNewProjectTemplateEntries(templateRoot = getTemplateRoot()) {
+export function getNewProjectTemplateEntries(templateRoot = getTemplateRoot()): NewProjectTemplateEntry[] {
   return [
     ...NEW_PROJECT_RUST_TEMPLATE_FILES,
     ...getCanonicalProjectTemplateEntries(templateRoot),
-  ];
+  ]
 }
-
-module.exports = {
-  NEW_PROJECT_RUST_TEMPLATE_FILES,
-  assertNewProjectManifest,
-  getNewProjectTemplateEntries,
-  getCanonicalProjectTemplateEntries,
-  getTemplateRoot,
-};

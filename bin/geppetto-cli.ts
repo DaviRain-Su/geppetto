@@ -2,6 +2,7 @@
 
 import * as path from 'node:path'
 
+import { createProject } from '../lib/new'
 import { loadPlatformConfig } from '../lib/platform/config'
 import { parseSetValues, applyOverrides } from '../lib/platform/overrides'
 import { createDeployState } from '../lib/platform/state'
@@ -11,7 +12,6 @@ import type { DeployArgs, CLIio, DeployState, PlatformConfig, OutputFormat, Pipe
 
 // Non-TS modules (equivalent migration — minimal local types)
 const { initProject } = require('../lib/init') as { initProject: (targetDir: string, options: { dryRun?: boolean; log?: (line: string) => void; templateRoot?: string }) => Array<{ path: string; status: string }> }
-const { createProject } = require('../lib/new') as { createProject: (cwd: string, projectName: string, options: { log?: (line: string) => void }) => Array<{ path: string; status: string }> }
 const { buildTestPlan, runGeppettoTest } = require('../lib/test') as {
   buildTestPlan: (options: { cwd: string; includeEscrowTests?: boolean; buildSbf?: boolean; skipBuildSbf?: boolean }) => { stepCount: number }
   runGeppettoTest: (options: { cwd: string; includeEscrowTests?: boolean; buildSbf?: boolean; skipBuildSbf?: boolean }) => { stepCount: number }
