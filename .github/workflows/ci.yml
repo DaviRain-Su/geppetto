@@ -13,6 +13,7 @@ jobs:
     timeout-minutes: 20
     env:
       NPM_CONFIG_CACHE: /tmp/npm-cache
+      RUSTC_WRAPPER: ""
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,6 +22,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-build-sbf
+        run: cargo install --locked cargo-build-sbf --version 4.0.0
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -63,6 +70,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-build-sbf
+        run: cargo install --locked cargo-build-sbf --version 4.0.0
 
       - name: Build escrow SBF artifact
         run: cargo build-sbf --manifest-path examples/escrow/Cargo.toml
