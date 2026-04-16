@@ -1,7 +1,14 @@
-const fs = require('node:fs');
-const path = require('node:path');
+import fs from 'node:fs'
+import path from 'node:path'
 
-const KNOWLEDGE_HEADER_TARGETS = Object.freeze([
+export interface KnowledgeTarget {
+  relativePath: string
+  ecosystem: string
+  expectedVersion?: string
+  sourcePath?: string
+}
+
+export const KNOWLEDGE_HEADER_TARGETS: ReadonlyArray<KnowledgeTarget> = Object.freeze([
   { relativePath: 'src/lib.rs', ecosystem: 'pinocchio' },
   { relativePath: 'src/error.rs', ecosystem: 'pinocchio' },
   { relativePath: 'src/schema.rs', ecosystem: 'pinocchio' },
@@ -21,45 +28,38 @@ const KNOWLEDGE_HEADER_TARGETS = Object.freeze([
   { relativePath: 'src/testing/helpers.rs', ecosystem: 'pinocchio' },
   { relativePath: 'src/testing/mollusk.rs', ecosystem: 'mollusk-svm', expectedVersion: '0.12' },
   { relativePath: 'src/testing/litesvm.rs', ecosystem: 'litesvm', expectedVersion: '0.11' },
-]);
+])
 
-function getKnowledgeManifestRoot() {
-  return path.resolve(__dirname, '..');
+export function getKnowledgeManifestRoot(): string {
+  return path.resolve(__dirname, '..')
 }
 
-function getKnowledgeHeaderTargets(root = getKnowledgeManifestRoot()) {
+export function getKnowledgeHeaderTargets(root: string = getKnowledgeManifestRoot()): Array<Required<KnowledgeTarget>> {
   return KNOWLEDGE_HEADER_TARGETS.map((target) => ({
     ...target,
     sourcePath: path.join(root, target.relativePath),
-  }));
+  })) as Array<Required<KnowledgeTarget>>
 }
 
-function assertKnowledgeHeaderManifest(
-  root = getKnowledgeManifestRoot(),
-  manifest = getKnowledgeHeaderTargets(root),
-) {
-  const seen = new Set();
+export function assertKnowledgeHeaderManifest(
+  root: string = getKnowledgeManifestRoot(),
+  manifest: Array<Required<KnowledgeTarget>> = getKnowledgeHeaderTargets(root),
+): void {
+  const seen = new Set<string>()
 
   for (const target of manifest) {
     if (path.isAbsolute(target.relativePath)) {
-      throw new Error(`Knowledge target path must be relative: ${target.relativePath}`);
+      throw new Error(`Knowledge target path must be relative: ${target.relativePath}`)
     }
     if (target.relativePath.includes('\\')) {
-      throw new Error(`Knowledge target path must use POSIX separators: ${target.relativePath}`);
+      throw new Error(`Knowledge target path must use POSIX separators: ${target.relativePath}`)
     }
     if (seen.has(target.relativePath)) {
-      throw new Error(`Duplicate knowledge target path: ${target.relativePath}`);
+      throw new Error(`Duplicate knowledge target path: ${target.relativePath}`)
     }
     if (!fs.existsSync(target.sourcePath)) {
-      throw new Error(`Missing knowledge target file: ${target.relativePath}`);
+      throw new Error(`Missing knowledge target file: ${target.relativePath}`)
     }
-    seen.add(target.relativePath);
+    seen.add(target.relativePath)
   }
 }
-
-module.exports = {
-  KNOWLEDGE_HEADER_TARGETS,
-  assertKnowledgeHeaderManifest,
-  getKnowledgeHeaderTargets,
-  getKnowledgeManifestRoot,
-};
