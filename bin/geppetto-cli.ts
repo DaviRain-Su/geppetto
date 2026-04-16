@@ -3,6 +3,8 @@
 import * as path from 'node:path'
 
 import { createProject } from '../lib/new'
+import { buildTestPlan, runGeppettoTest } from '../lib/test'
+import { runGeppettoAudit } from '../lib/audit'
 import { loadPlatformConfig } from '../lib/platform/config'
 import { parseSetValues, applyOverrides } from '../lib/platform/overrides'
 import { createDeployState } from '../lib/platform/state'
@@ -12,11 +14,6 @@ import type { DeployArgs, CLIio, DeployState, PlatformConfig, OutputFormat, Pipe
 
 // Non-TS modules (equivalent migration — minimal local types)
 const { initProject } = require('../lib/init') as { initProject: (targetDir: string, options: { dryRun?: boolean; log?: (line: string) => void; templateRoot?: string }) => Array<{ path: string; status: string }> }
-const { buildTestPlan, runGeppettoTest } = require('../lib/test') as {
-  buildTestPlan: (options: { cwd: string; includeEscrowTests?: boolean; buildSbf?: boolean; skipBuildSbf?: boolean }) => { stepCount: number }
-  runGeppettoTest: (options: { cwd: string; includeEscrowTests?: boolean; buildSbf?: boolean; skipBuildSbf?: boolean }) => { stepCount: number }
-}
-const { runGeppettoAudit } = require('../lib/audit') as { runGeppettoAudit: (options: { strict?: boolean }) => void }
 
 const solanaAdapter = require('../lib/platform/adapters/solana') as {
   build: (ctx: PipelineContext, config: PlatformConfig) => Promise<void>

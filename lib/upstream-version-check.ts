@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -415,3 +416,4 @@ module.exports = {
   main,
   resolveCurrentVersion,
 };
+export { checkUpstreamVersions, compareVersions, extractDependencyDeclaration, extractDependencyVersionFromToml, extractLockfilePackageVersions, extractVersionFromKnowledgeHeader, extractVersionFromKnowledgeTable, extractTomlSection, main, resolveCurrentVersion };

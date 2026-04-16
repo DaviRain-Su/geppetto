@@ -1,10 +1,10 @@
-const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const os = require('node:os')
-const path = require('node:path')
-const test = require('node:test')
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import test from 'node:test'
 
-const { runDeploy, adapters } = require('../../bin/geppetto-cli')
+import { runDeploy, adapters } from '../../bin/geppetto-cli'
 
 function createTempProject() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-smoke-'))

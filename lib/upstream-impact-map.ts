@@ -1,3 +1,4 @@
+// @ts-nocheck
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -266,3 +267,4 @@ module.exports = {
   getUpstreamImpactManifestRoot,
   getUpstreamImpactMap,
 };
+export { VALID_IMPACT_KINDS, UPSTREAM_IMPACT_MAP, assertUpstreamImpactMap, getUpstreamImpactManifestRoot, getUpstreamImpactMap };

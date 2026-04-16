@@ -1,119 +1,175 @@
 #!/usr/bin/env node
+// @ts-nocheck
 
-const { compareVersions, checkUpstreamVersions } = require('./upstream-version-check');
-const { getUpstreamTrackingManifest, getUpstreamManifestRoot } = require('./upstream-manifest');
-const { getUpstreamImpactMap, assertUpstreamImpactMap } = require('./upstream-impact-map');
+import {
+  checkUpstreamVersions,
+  compareVersions,
+  type UpstreamVersionCheckResult,
+} from './upstream-version-check'
+import {
+  assertUpstreamImpactMap,
+  getUpstreamImpactMap,
+  type UpstreamImpactEntry,
+} from './upstream-impact-map'
+import {
+  getUpstreamManifestRoot,
+  getUpstreamTrackingManifest,
+  type UpstreamManifestEntry,
+} from './upstream-manifest'
 
-function createCratesIoFetcher(registryBase = 'https://crates.io/api/v1') {
-  return async function fetchLatestVersion(dependencyName) {
+export type DiffStatus = 'update-available' | 'up-to-date' | 'knowledge-source' | 'unknown'
+
+export interface UpstreamDiffEntry {
+  name: string
+  source: string
+  kind: UpstreamImpactEntry['kind']
+  currentVersion: string | null
+  latestVersion: string | null
+  status: DiffStatus
+  reviewScopeCount: number
+  reviewScope: string[]
+  summary: string
+  rationale: string
+  requiredChecks: string[]
+}
+
+export interface UpstreamDiffResult {
+  checkedAt: string
+  entries: UpstreamDiffEntry[]
+  errors: string[]
+}
+
+export interface CheckUpstreamDiffOptions {
+  root?: string
+  manifest?: UpstreamManifestEntry[]
+  impactMap?: UpstreamImpactEntry[]
+  upstreamVersions?: UpstreamVersionCheckResult | null
+  fetchLatestVersion?: (dependencyName: string) => Promise<string>
+}
+
+interface StatusResolution {
+  status: DiffStatus
+  latestVersion: string | null
+}
+
+export function createCratesIoFetcher(registryBase = 'https://crates.io/api/v1') {
+  return async function fetchLatestVersion(dependencyName: string): Promise<string> {
     const response = await fetch(`${registryBase}/crates/${encodeURIComponent(dependencyName)}`, {
       method: 'GET',
-    });
+    })
 
     if (!response.ok) {
       throw new Error(
         `Failed to query crates.io for ${dependencyName}: ${response.status} ${response.statusText}`,
-      );
+      )
     }
 
-    const payload = await response.json();
-    const latest = payload?.crate?.max_version;
+    const payload = await response.json() as { crate?: { max_version?: string } }
+    const latest = payload?.crate?.max_version
 
     if (!latest || typeof latest !== 'string') {
-      throw new Error(`Crates.io response missing max_version for ${dependencyName}`);
+      throw new Error(`Crates.io response missing max_version for ${dependencyName}`)
     }
 
-    return latest;
-  };
+    return latest
+  }
 }
 
-function buildSummary(status, name, currentVersion, latestVersion, source) {
+export function buildSummary(
+  status: DiffStatus,
+  name: string,
+  currentVersion: string | null,
+  latestVersion: string | null,
+  source: string,
+): string {
   if (status === 'knowledge-source') {
-    return `${name} tracked via docs source: ${source}`;
+    return `${name} tracked via docs source: ${source}`
   }
 
   if (status === 'update-available') {
-    return `${name} ${currentVersion} -> ${latestVersion}`;
+    return `${name} ${currentVersion} -> ${latestVersion}`
   }
 
   if (status === 'up-to-date') {
-    return `${name} ${currentVersion}`;
+    return `${name} ${currentVersion}`
   }
 
-  return `${name} version status unknown (current: ${currentVersion || 'N/A'})`;
+  return `${name} version status unknown (current: ${currentVersion || 'N/A'})`
 }
 
-function resolveStatus(currentVersion, latestVersion) {
+export function resolveStatus(currentVersion: string | null, latestVersion: string | null): StatusResolution {
   if (latestVersion == null) {
     return {
       status: 'knowledge-source',
       latestVersion: null,
-    };
+    }
   }
 
   if (!currentVersion) {
     return {
       status: 'unknown',
       latestVersion,
-    };
+    }
   }
 
-  const cmp = compareVersions(currentVersion, latestVersion);
+  const cmp = compareVersions(currentVersion, latestVersion)
   if (cmp === 0) {
     return {
       status: 'up-to-date',
       latestVersion,
-    };
+    }
   }
 
   if (cmp < 0) {
     return {
       status: 'update-available',
       latestVersion,
-    };
+    }
   }
 
   return {
     status: 'up-to-date',
     latestVersion,
-  };
+  }
 }
 
-async function checkUpstreamDiff({
+export async function checkUpstreamDiff({
   root = getUpstreamManifestRoot(),
   manifest = getUpstreamTrackingManifest(root),
   impactMap = getUpstreamImpactMap(root),
   upstreamVersions = null,
   fetchLatestVersion = createCratesIoFetcher(),
-} = {}) {
-  const errors = [];
-  const entries = [];
-  const manifestByName = new Map(manifest.map((item) => [item.dependencyName, item]));
-  const impactByName = new Map(impactMap.map((item) => [item.name, item]));
+}: CheckUpstreamDiffOptions = {}): Promise<UpstreamDiffResult> {
+  const errors: string[] = []
+  const entries: UpstreamDiffEntry[] = []
+  const manifestByName = new Map<string, UpstreamManifestEntry>(
+    manifest.map((item) => [item.dependencyName, item]),
+  )
+  const impactByName = new Map<string, UpstreamImpactEntry>(
+    impactMap.map((item) => [item.name, item]),
+  )
 
   try {
-    assertUpstreamImpactMap(root, impactMap);
+    assertUpstreamImpactMap(root, impactMap)
   } catch (error) {
-    errors.push(`Impact map validation failed: ${error.message}`);
+    errors.push(`Impact map validation failed: ${(error as Error).message}`)
     return {
       checkedAt: new Date().toISOString(),
       entries: [],
       errors,
-    };
+    }
   }
 
   for (const impactEntry of impactMap) {
-    const manifestEntry = manifestByName.get(impactEntry.name);
+    const manifestEntry = manifestByName.get(impactEntry.name)
     if (!manifestEntry) {
-      errors.push(`Impact map item ${impactEntry.name} has no matching upstream manifest entry`);
-      continue;
+      errors.push(`Impact map item ${impactEntry.name} has no matching upstream manifest entry`)
     }
   }
 
   for (const manifestEntry of manifest) {
     if (!impactByName.has(manifestEntry.dependencyName)) {
-      errors.push(`Missing impact map entry for ${manifestEntry.dependencyName}`);
-      continue;
+      errors.push(`Missing impact map entry for ${manifestEntry.dependencyName}`)
     }
   }
 
@@ -122,125 +178,116 @@ async function checkUpstreamDiff({
       checkedAt: new Date().toISOString(),
       entries: [],
       errors,
-    };
+    }
   }
 
-  let versionResult = upstreamVersions;
+  let versionResult = upstreamVersions
   if (!versionResult) {
-    versionResult = checkUpstreamVersions(root, manifest);
+    versionResult = checkUpstreamVersions(root, manifest)
     if (versionResult.errors.length > 0) {
-      errors.push(...versionResult.errors);
+      errors.push(...versionResult.errors)
       return {
         checkedAt: new Date().toISOString(),
         entries,
         errors,
-      };
+      }
     }
   }
 
-  const versionsByDependency = new Map(
+  const versionsByDependency = new Map<string, string | null>(
     versionResult.entries.map((item) => [item.dependencyName, item.currentVersion]),
-  );
+  )
+
   for (const dependencyName of versionResult.checkedDependencies) {
-    const impact = impactByName.get(dependencyName);
-    const currentVersion = versionsByDependency.get(dependencyName);
+    const impact = impactByName.get(dependencyName)
+    const currentVersion = versionsByDependency.get(dependencyName) || null
 
     if (!impact) {
-      errors.push(`Missing impact map entry for ${dependencyName}`);
-      continue;
+      errors.push(`Missing impact map entry for ${dependencyName}`)
+      continue
     }
 
-    let status = 'unknown';
-    let latestVersion = null;
+    let status: DiffStatus = 'unknown'
+    let latestVersion: string | null = null
 
     if (impact.kind === 'knowledge-source') {
-      status = 'knowledge-source';
-      latestVersion = null;
+      status = 'knowledge-source'
+      latestVersion = null
     } else {
       try {
-        latestVersion = await Promise.resolve(fetchLatestVersion(dependencyName));
-        const resolved = resolveStatus(currentVersion, latestVersion);
-        status = resolved.status;
-        latestVersion = resolved.latestVersion;
+        latestVersion = await Promise.resolve(fetchLatestVersion(dependencyName))
+        const resolved = resolveStatus(currentVersion, latestVersion)
+        status = resolved.status
+        latestVersion = resolved.latestVersion
       } catch (error) {
-        errors.push(`${dependencyName}: ${error.message}`);
-        status = 'unknown';
-        latestVersion = null;
+        errors.push(`${dependencyName}: ${(error as Error).message}`)
+        status = 'unknown'
+        latestVersion = null
       }
     }
-
-    const summary = buildSummary(status, dependencyName, currentVersion, latestVersion, impact.source);
 
     entries.push({
       name: dependencyName,
       source: impact.source,
       kind: impact.kind,
-      currentVersion: currentVersion || null,
+      currentVersion,
       latestVersion,
       status,
       reviewScopeCount: impact.reviewScope.length,
       reviewScope: [...impact.reviewScope],
-      summary,
+      summary: buildSummary(status, dependencyName, currentVersion, latestVersion, impact.source),
       rationale: impact.rationale,
       requiredChecks: [...impact.requiredChecks],
-    });
+    })
   }
 
   return {
     checkedAt: new Date().toISOString(),
     entries,
     errors,
-  };
+  }
 }
 
-function printDiff(result) {
+export function printDiff(result: UpstreamDiffResult): void {
   for (const entry of result.entries) {
     if (entry.status === 'update-available') {
-      console.log(`update-available ${entry.name} ${entry.currentVersion} -> ${entry.latestVersion}`);
+      console.log(`update-available ${entry.name} ${entry.currentVersion} -> ${entry.latestVersion}`)
     } else if (entry.status === 'up-to-date') {
-      console.log(`up-to-date ${entry.name} ${entry.currentVersion}`);
+      console.log(`up-to-date ${entry.name} ${entry.currentVersion}`)
     } else {
-      console.log(`${entry.status} ${entry.name} ${entry.summary || ''}`.trim());
+      console.log(`${entry.status} ${entry.name} ${entry.summary || ''}`.trim())
     }
   }
 
   if (result.errors.length > 0) {
     for (const error of result.errors) {
-      console.error(error);
+      console.error(error)
     }
   }
 }
 
-async function main() {
-  const args = new Set(process.argv.slice(2));
-  const strict = args.has('--strict');
-  const printMachineReadable = args.has('--json');
+export async function main(): Promise<number> {
+  const args = new Set(process.argv.slice(2))
+  const strict = args.has('--strict')
+  const printMachineReadable = args.has('--json')
 
-  const result = await checkUpstreamDiff();
+  const result = await checkUpstreamDiff()
   if (printMachineReadable) {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    return 0;
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
+    return 0
   }
 
-  printDiff(result);
+  printDiff(result)
 
   if (strict && result.errors.length > 0) {
-    return 1;
+    return 1
   }
 
-  return 0;
+  return 0
 }
 
 if (require.main === module) {
   main().then((code) => {
-    process.exitCode = code;
-  });
+    process.exitCode = code
+  })
 }
-
-module.exports = {
-  checkUpstreamDiff,
-  createCratesIoFetcher,
-  printDiff,
-  resolveStatus,
-  buildSummary,
-};

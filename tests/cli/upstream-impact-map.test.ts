@@ -1,26 +1,30 @@
-const assert = require('node:assert/strict');
-const test = require('node:test');
+import assert from 'node:assert/strict'
+import test from 'node:test'
 
 const {
   UPSTREAM_IMPACT_MAP,
   assertUpstreamImpactMap,
   getUpstreamImpactMap,
-} = require('../../lib/upstream-impact-map');
+} = require('../../lib/upstream-impact-map')
 const {
-  getUpstreamTrackingManifest,
   getUpstreamManifestRoot,
-} = require('../../lib/upstream-manifest');
+  getUpstreamTrackingManifest,
+} = require('../../lib/upstream-manifest')
 
-const repoRoot = getUpstreamManifestRoot();
+const repoRoot = getUpstreamManifestRoot()
 
 test('impact map has a complete and valid record for every tracked upstream dependency', () => {
-  assert.doesNotThrow(() => assertUpstreamImpactMap(repoRoot, getUpstreamImpactMap(repoRoot)));
+  assert.doesNotThrow(() => assertUpstreamImpactMap(repoRoot, getUpstreamImpactMap(repoRoot)))
 
-  const impactNames = new Set(UPSTREAM_IMPACT_MAP.map((entry) => entry.name));
-  const manifestNames = new Set(getUpstreamTrackingManifest(repoRoot).map((entry) => entry.dependencyName));
+  const impactNames = new Set(
+    UPSTREAM_IMPACT_MAP.map((entry: { name: string }) => entry.name),
+  )
+  const manifestNames = new Set(
+    getUpstreamTrackingManifest(repoRoot).map((entry: { dependencyName: string }) => entry.dependencyName),
+  )
 
-  assert.equal(impactNames.size, manifestNames.size, 'all upstream dependencies should have impact records');
+  assert.equal(impactNames.size, manifestNames.size, 'all upstream dependencies should have impact records')
   for (const name of manifestNames) {
-    assert.equal(impactNames.has(name), true, `missing impact map for ${name}`);
+    assert.equal(impactNames.has(name), true, `missing impact map for ${name}`)
   }
-});
+})

@@ -199,7 +199,7 @@ test('validateChecklistSchema reports missing sections and items', () => {
 `
 
   const parsed = {
-    decision: 'hold',
+    decision: 'hold' as const,
     conditions: [],
   }
   const errors = validateChecklistSchema(content, parsed)

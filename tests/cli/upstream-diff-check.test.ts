@@ -1,41 +1,41 @@
-const assert = require('node:assert/strict');
-const test = require('node:test');
+import assert from 'node:assert/strict'
+import test from 'node:test'
 
-const { checkUpstreamDiff, resolveStatus } = require('../../lib/upstream-diff-check');
-const { getUpstreamTrackingManifest, getUpstreamManifestRoot } = require('../../lib/upstream-manifest');
-const { getUpstreamImpactMap } = require('../../lib/upstream-impact-map');
+const { checkUpstreamDiff, printDiff, resolveStatus } = require('../../lib/upstream-diff-check')
+const { getUpstreamManifestRoot, getUpstreamTrackingManifest } = require('../../lib/upstream-manifest')
+const { getUpstreamImpactMap } = require('../../lib/upstream-impact-map')
 
-const repoRoot = getUpstreamManifestRoot();
-const fullManifest = getUpstreamTrackingManifest(repoRoot);
-const fullImpactMap = getUpstreamImpactMap(repoRoot);
+const repoRoot = getUpstreamManifestRoot()
+const fullManifest = getUpstreamTrackingManifest(repoRoot)
+const fullImpactMap = getUpstreamImpactMap(repoRoot)
 
 function captureConsole() {
-  const logs = [];
-  const errors = [];
-  const originalLog = console.log;
-  const originalError = console.error;
+  const logs: string[] = []
+  const errors: string[] = []
+  const originalLog = console.log
+  const originalError = console.error
 
-  console.log = (...args) => {
-    logs.push(args.join(' '));
-  };
-  console.error = (...args) => {
-    errors.push(args.join(' '));
-  };
+  console.log = (...args: unknown[]) => {
+    logs.push(args.map((arg) => String(arg)).join(' '))
+  }
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map((arg) => String(arg)).join(' '))
+  }
 
   return {
     stop: () => {
-      console.log = originalLog;
-      console.error = originalError;
+      console.log = originalLog
+      console.error = originalError
     },
     logs,
     errors,
-  };
+  }
 }
 
 test('resolveStatus classifies up-to-date versions', () => {
-  assert.equal(resolveStatus('0.11.1', '0.11.1').status, 'up-to-date');
-  assert.equal(resolveStatus('0.11.2', '0.11.1').status, 'up-to-date');
-});
+  assert.equal(resolveStatus('0.11.1', '0.11.1').status, 'up-to-date')
+  assert.equal(resolveStatus('0.11.2', '0.11.1').status, 'up-to-date')
+})
 
 test('checkUpstreamDiff returns up-to-date summary when current matches latest', async () => {
   const result = await checkUpstreamDiff({
@@ -43,18 +43,19 @@ test('checkUpstreamDiff returns up-to-date summary when current matches latest',
     impactMap: fullImpactMap,
     upstreamVersions: {
       checkedDependencies: ['pinocchio'],
-      entries: [{ dependencyName: 'pinocchio', currentVersion: '0.11.1' }],
+      entries: [{ dependencyName: 'pinocchio', upstreamName: 'pinocchio', currentVersion: '0.11.1', sourceVersions: [] }],
+      errors: [],
     },
     fetchLatestVersion: async () => '0.11.1',
-  });
+  })
 
-  assert.deepEqual(result.errors, []);
-  assert.equal(result.entries.length, 1);
-  assert.equal(result.entries[0].status, 'up-to-date');
-  assert.equal(result.entries[0].currentVersion, '0.11.1');
-  assert.equal(result.entries[0].latestVersion, '0.11.1');
-  assert.equal(result.entries[0].summary, 'pinocchio 0.11.1');
-});
+  assert.deepEqual(result.errors, [])
+  assert.equal(result.entries.length, 1)
+  assert.equal(result.entries[0].status, 'up-to-date')
+  assert.equal(result.entries[0].currentVersion, '0.11.1')
+  assert.equal(result.entries[0].latestVersion, '0.11.1')
+  assert.equal(result.entries[0].summary, 'pinocchio 0.11.1')
+})
 
 test('checkUpstreamDiff reports update-available when newer crates.io version exists', async () => {
   const result = await checkUpstreamDiff({
@@ -62,73 +63,98 @@ test('checkUpstreamDiff reports update-available when newer crates.io version ex
     impactMap: fullImpactMap,
     upstreamVersions: {
       checkedDependencies: ['pinocchio'],
-      entries: [{ dependencyName: 'pinocchio', currentVersion: '0.11.0' }],
+      entries: [{ dependencyName: 'pinocchio', upstreamName: 'pinocchio', currentVersion: '0.11.0', sourceVersions: [] }],
+      errors: [],
     },
     fetchLatestVersion: async () => '0.11.1',
-  });
+  })
 
-  assert.deepEqual(result.errors, []);
-  assert.equal(result.entries[0].status, 'update-available');
-  assert.equal(result.entries[0].summary, 'pinocchio 0.11.0 -> 0.11.1');
-  assert.equal(result.entries[0].latestVersion, '0.11.1');
-});
+  assert.deepEqual(result.errors, [])
+  assert.equal(result.entries[0].status, 'update-available')
+  assert.equal(result.entries[0].summary, 'pinocchio 0.11.0 -> 0.11.1')
+  assert.equal(result.entries[0].latestVersion, '0.11.1')
+})
 
 test('checkUpstreamDiff marks knowledge source dependencies without crates.io query', async () => {
-  let called = 0;
+  let called = 0
 
   const result = await checkUpstreamDiff({
     manifest: fullManifest,
     impactMap: fullImpactMap,
     upstreamVersions: {
       checkedDependencies: ['litesvm'],
-      entries: [{ dependencyName: 'litesvm', currentVersion: '0.11' }],
+      entries: [{ dependencyName: 'litesvm', upstreamName: 'litesvm', currentVersion: '0.11', sourceVersions: [] }],
+      errors: [],
     },
-    fetchLatestVersion: () => {
-      called += 1;
-      return Promise.reject(new Error('unexpected crate lookup'));
+    fetchLatestVersion: async () => {
+      called += 1
+      throw new Error('unexpected crate lookup')
     },
-  });
+  })
 
-  assert.deepEqual(result.errors, []);
-  assert.equal(called, 0);
-  assert.equal(result.entries[0].status, 'knowledge-source');
-  assert.equal(result.entries[0].latestVersion, null);
-  assert.equal(result.entries[0].summary, 'litesvm tracked via docs source: src/testing/litesvm.rs');
-});
+  assert.deepEqual(result.errors, [])
+  assert.equal(called, 0)
+  assert.equal(result.entries[0].status, 'knowledge-source')
+  assert.equal(result.entries[0].latestVersion, null)
+  assert.equal(result.entries[0].summary, 'litesvm tracked via docs source: src/testing/litesvm.rs')
+})
 
 test('printDiff outputs human-readable status and error summary', () => {
-  const { logs, errors, stop } = captureConsole();
+  const { logs, errors, stop } = captureConsole()
   const result = {
+    checkedAt: new Date().toISOString(),
     entries: [
       {
         status: 'update-available',
         name: 'pinocchio',
+        source: 'Cargo.toml',
+        kind: 'runtime-sdk',
         currentVersion: '0.11.0',
         latestVersion: '0.11.1',
+        reviewScopeCount: 0,
+        reviewScope: [],
+        summary: 'pinocchio 0.11.0 -> 0.11.1',
+        rationale: '',
+        requiredChecks: [],
       },
       {
         status: 'up-to-date',
         name: 'pinocchio-system',
+        source: 'Cargo.toml',
+        kind: 'runtime-helper',
         currentVersion: '0.6.0',
+        latestVersion: '0.6.0',
+        reviewScopeCount: 0,
+        reviewScope: [],
+        summary: 'pinocchio-system 0.6.0',
+        rationale: '',
+        requiredChecks: [],
       },
       {
         status: 'knowledge-source',
         name: 'litesvm',
+        source: 'src/testing/litesvm.rs',
+        kind: 'knowledge-source',
+        currentVersion: '0.11',
+        latestVersion: null,
+        reviewScopeCount: 0,
+        reviewScope: [],
         summary: 'litesvm tracked via docs source: src/testing/litesvm.rs',
+        rationale: '',
+        requiredChecks: [],
       },
     ],
     errors: ['sample-check failed'],
-  };
+  } as const
 
   try {
-    const { printDiff } = require('../../lib/upstream-diff-check');
-    printDiff(result);
+    printDiff(result)
 
-    assert.match(logs.join('\n'), /^update-available pinocchio 0.11.0 -> 0.11.1$/m);
-    assert.match(logs.join('\n'), /^up-to-date pinocchio-system 0.6.0$/m);
-    assert.match(logs.join('\n'), /^knowledge-source litesvm litesvm tracked via docs source: src\/testing\/litesvm\.rs$/m);
-    assert.equal(errors.join('\n'), 'sample-check failed');
+    assert.match(logs.join('\n'), /^update-available pinocchio 0.11.0 -> 0.11.1$/m)
+    assert.match(logs.join('\n'), /^up-to-date pinocchio-system 0.6.0$/m)
+    assert.match(logs.join('\n'), /^knowledge-source litesvm litesvm tracked via docs source: src\/testing\/litesvm\.rs$/m)
+    assert.equal(errors.join('\n'), 'sample-check failed')
   } finally {
-    stop();
+    stop()
   }
-});
+})
