@@ -10,7 +10,7 @@ const { renderTemplate } = require('../../lib/new');
 const { getTemplateEntries } = require('../../lib/templates');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-const cliPath = path.join(repoRoot, 'bin', 'geppetto-cli.js');
+const cliPath = path.join(repoRoot, 'bin', 'geppetto-cli.ts');
 
 function createTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-new-'));

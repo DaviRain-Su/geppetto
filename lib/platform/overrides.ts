@@ -1,15 +1,16 @@
-const { createPlatformError } = require('./errors')
-const { ALLOWED_CLUSTERS } = require('./config')
+import { createPlatformError } from './errors'
+import { ALLOWED_CLUSTERS } from './config'
+import type { PlatformConfig } from './types'
 
-const ALLOWED_OVERRIDE_KEYS = new Set([
+export const ALLOWED_OVERRIDE_KEYS = new Set([
   'cluster',
   'program_id',
   'service_name',
   'replicas',
 ])
 
-function parseSetValues(rawValues = []) {
-  const overrides = {}
+export function parseSetValues(rawValues: string[] = []): Record<string, string> {
+  const overrides: Record<string, string> = {}
 
   for (const rawValue of rawValues) {
     const separatorIndex = rawValue.indexOf('=')
@@ -31,16 +32,16 @@ function parseSetValues(rawValues = []) {
   return overrides
 }
 
-function applyOverrides(config, overrides = {}) {
+export function applyOverrides(config: PlatformConfig | null | undefined, overrides: Record<string, string> = {}): PlatformConfig | null {
   if (!config) {
     return null
   }
 
-  const nextConfig = {
+  const nextConfig: PlatformConfig = {
     ...config,
     app: { ...config.app },
     solana: { ...config.solana },
-    offchain: { ...config.offchain },
+    offchain: { ...(config.offchain || ({} as object)) } as PlatformConfig['offchain'],
     deploy: { ...config.deploy },
     paths: { ...config.paths },
   }
@@ -56,7 +57,7 @@ function applyOverrides(config, overrides = {}) {
           details: { fieldName: 'solana.cluster', value, allowedValues: Array.from(ALLOWED_CLUSTERS) },
         })
       }
-      nextConfig.solana.cluster = value
+      nextConfig.solana.cluster = value as PlatformConfig['solana']['cluster']
       continue
     }
 
@@ -66,7 +67,7 @@ function applyOverrides(config, overrides = {}) {
     }
 
     if (key === 'service_name') {
-      nextConfig.offchain.encoreApp = value
+      ;(nextConfig.offchain as NonNullable<PlatformConfig['offchain']>).encoreApp = value
       continue
     }
 
@@ -77,15 +78,9 @@ function applyOverrides(config, overrides = {}) {
         throw createPlatformError('ECFG006', `Invalid replicas override: ${value}`)
       }
 
-      nextConfig.deploy.replicas = parsed
+      ;(nextConfig.deploy as PlatformConfig['deploy'] & { replicas?: number }).replicas = parsed
     }
   }
 
   return nextConfig
-}
-
-module.exports = {
-  ALLOWED_OVERRIDE_KEYS,
-  parseSetValues,
-  applyOverrides,
 }

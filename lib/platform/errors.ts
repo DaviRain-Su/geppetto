@@ -1,4 +1,12 @@
-const ERROR_DEFINITIONS = {
+import type {
+  ErrorDefinition,
+  PlatformError,
+  FailureClass,
+  CreatePlatformErrorOptions,
+  DeployState,
+} from './types'
+
+export const ERROR_DEFINITIONS = {
   ECFG001: { failureClass: 'config', defaultMessage: 'Missing geppetto.toml' },
   ECFG002: { failureClass: 'config', defaultMessage: 'Invalid geppetto.toml syntax' },
   ECFG003: { failureClass: 'config', defaultMessage: 'Unsupported schema_version' },
@@ -13,16 +21,20 @@ const ERROR_DEFINITIONS = {
   EDEPLOY003: { failureClass: 'deploy', defaultMessage: 'Missing required deploy output' },
   EDEPLOY004: { failureClass: 'deploy', defaultMessage: 'Service URL polling timeout' },
   EDEPLOY005: { failureClass: 'deploy', defaultMessage: 'Artifact write failed' },
-}
+} as const satisfies Record<string, ErrorDefinition>
 
-function createPlatformError(code, message, options = {}) {
-  const definition = ERROR_DEFINITIONS[code]
+export function createPlatformError(
+  code: string,
+  message?: string,
+  options: CreatePlatformErrorOptions & { state?: DeployState } = {},
+): PlatformError {
+  const definition = ERROR_DEFINITIONS[code as keyof typeof ERROR_DEFINITIONS]
 
   if (!definition) {
     throw new Error(`Unknown platform error code: ${code}`)
   }
 
-  const error = new Error(message || definition.defaultMessage)
+  const error = new Error(message || definition.defaultMessage) as PlatformError
   error.name = 'PlatformError'
   error.code = code
   error.failureClass = definition.failureClass
@@ -39,38 +51,44 @@ function createPlatformError(code, message, options = {}) {
     error.cause = options.cause
   }
 
+  if (options.state) {
+    error.state = options.state
+  }
+
   return error
 }
 
-function classifyError(error) {
-  if (!error) {
+export function classifyError(error: unknown): FailureClass {
+  if (!error || typeof error !== 'object') {
     return 'deploy'
   }
 
-  if (error.failureClass) {
-    return error.failureClass
+  const err = error as { failureClass?: unknown; code?: unknown; step?: unknown }
+
+  if (err.failureClass && typeof err.failureClass === 'string') {
+    return err.failureClass as FailureClass
   }
 
-  if (typeof error.code === 'string') {
-    if (error.code.startsWith('ECFG')) {
+  if (typeof err.code === 'string') {
+    if (err.code.startsWith('ECFG')) {
       return 'config'
     }
 
-    if (error.code.startsWith('EBUILD')) {
+    if (err.code.startsWith('EBUILD')) {
       return 'build'
     }
 
-    if (error.code.startsWith('EDEPLOY')) {
+    if (err.code.startsWith('EDEPLOY')) {
       return 'deploy'
     }
   }
 
-  if (typeof error.step === 'string') {
-    if (error.step === 'loadManifest' || error.step === 'validateConfig') {
+  if (typeof err.step === 'string') {
+    if (err.step === 'loadManifest' || err.step === 'validateConfig') {
       return 'config'
     }
 
-    if (error.step === 'buildProgram') {
+    if (err.step === 'buildProgram') {
       return 'build'
     }
   }
@@ -78,24 +96,18 @@ function classifyError(error) {
   return 'deploy'
 }
 
-function wrapStepError(step, error) {
+export function wrapStepError(step: string, error: unknown): PlatformError {
   const wrapped = error instanceof Error ? error : new Error(String(error))
+  const w = wrapped as PlatformError
 
-  if (!wrapped.step) {
-    wrapped.step = step
+  if (!w.step) {
+    w.step = step
   }
 
-  if (!wrapped.failureClass) {
-    wrapped.failureClass = classifyError(wrapped)
+  if (!w.failureClass) {
+    w.failureClass = classifyError(wrapped) as 'config' | 'build' | 'deploy'
   }
 
-  wrapped.message = `step ${step}: ${wrapped.message}`
-  return wrapped
-}
-
-module.exports = {
-  ERROR_DEFINITIONS,
-  createPlatformError,
-  classifyError,
-  wrapStepError,
+  w.message = `step ${step}: ${wrapped.message}`
+  return w
 }

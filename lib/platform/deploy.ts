@@ -1,13 +1,18 @@
-const {
-  createPlatformError,
-  wrapStepError,
-} = require('./errors')
-const {
-  recordStepSuccess,
-  recordStepFailure,
-} = require('./state')
+import { createPlatformError, wrapStepError } from './errors'
+import { recordStepSuccess, recordStepFailure } from './state'
+import type { PipelineContext, PipelineStep, DeployState, PlatformConfig, BridgeOutputsOptions } from './types'
 
-async function runPipeline({ ctx = {}, config, initialState, steps }) {
+export async function runPipeline({
+  ctx = {},
+  config,
+  initialState,
+  steps,
+}: {
+  ctx?: PipelineContext
+  config: PlatformConfig
+  initialState: DeployState
+  steps: PipelineStep[]
+}): Promise<DeployState> {
   let state = initialState
 
   for (const step of steps) {
@@ -28,8 +33,8 @@ async function runPipeline({ ctx = {}, config, initialState, steps }) {
   return state
 }
 
-function bridgeOutputs(state, options = {}) {
-  const requiredFields = [
+export function bridgeOutputs(state: DeployState, options: BridgeOutputsOptions = {}): DeployState {
+  const requiredFields: Array<[string, string | null]> = [
     ['run_id', state.run_id],
     ['cluster', state.cluster],
     ['program_id', state.program_id],
@@ -55,9 +60,4 @@ function bridgeOutputs(state, options = {}) {
     status: 'success',
     failure_class: null,
   }
-}
-
-module.exports = {
-  runPipeline,
-  bridgeOutputs,
 }

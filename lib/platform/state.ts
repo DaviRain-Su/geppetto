@@ -1,12 +1,17 @@
-function pad(value) {
+import type { DeployState, StepLog, PlatformConfig } from './types'
+
+function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
 
-function createRunId(date = new Date()) {
+export function createRunId(date: Date = new Date()): string {
   return `run_${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}_${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}${pad(date.getUTCSeconds())}`
 }
 
-function createDeployState(config, options = {}) {
+export function createDeployState(
+  config: PlatformConfig,
+  options: { runId?: string; now?: Date } = {},
+): DeployState {
   const runId = options.runId || createRunId(options.now)
 
   return {
@@ -24,12 +29,12 @@ function createDeployState(config, options = {}) {
   }
 }
 
-function appendStepLog(state, stepLog) {
+export function appendStepLog(state: DeployState, stepLog: StepLog): DeployState {
   state.steps.push(stepLog)
   return state
 }
 
-function recordStepSuccess(state, name, elapsedMs) {
+export function recordStepSuccess(state: DeployState, name: string, elapsedMs: number): DeployState {
   return appendStepLog(state, {
     name,
     status: 'success',
@@ -37,9 +42,14 @@ function recordStepSuccess(state, name, elapsedMs) {
   })
 }
 
-function recordStepFailure(state, name, error, elapsedMs) {
+export function recordStepFailure(
+  state: DeployState,
+  name: string,
+  error: Error & { failureClass?: string },
+  elapsedMs: number,
+): DeployState {
   state.status = 'failure'
-  state.failure_class = error.failureClass || state.failure_class || 'deploy'
+  state.failure_class = (error.failureClass || state.failure_class || 'deploy') as DeployState['failure_class']
 
   return appendStepLog(state, {
     name,
@@ -47,12 +57,4 @@ function recordStepFailure(state, name, error, elapsedMs) {
     error: error.message,
     elapsed_ms: elapsedMs,
   })
-}
-
-module.exports = {
-  createRunId,
-  createDeployState,
-  appendStepLog,
-  recordStepSuccess,
-  recordStepFailure,
 }

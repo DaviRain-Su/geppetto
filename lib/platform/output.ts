@@ -1,8 +1,11 @@
-const fs = require('node:fs')
-const path = require('node:path')
-const { createPlatformError } = require('./errors')
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import { createPlatformError } from './errors'
+import type { DeployState, OutputFormat, JsonOutput } from './types'
 
-function renderDeployOutput(state, format, stream) {
+export type OutputStream = { write: (chunk: string) => void }
+
+export function renderDeployOutput(state: DeployState, format: OutputFormat, stream: OutputStream): void {
   if (format === 'json') {
     stream.write(JSON.stringify(buildJsonOutput(state), null, 2) + '\n')
     return
@@ -36,7 +39,7 @@ function renderDeployOutput(state, format, stream) {
   }
 }
 
-function buildJsonOutput(state) {
+export function buildJsonOutput(state: DeployState): JsonOutput {
   return {
     run_id: state.run_id,
     app_name: state.app_name,
@@ -50,8 +53,8 @@ function buildJsonOutput(state) {
   }
 }
 
-function buildTextOutput(state) {
-  const lines = []
+export function buildTextOutput(state: DeployState): string {
+  const lines: string[] = []
   lines.push(`Run ID:    ${state.run_id}`)
   lines.push(`App:       ${state.app_name}`)
   lines.push(`Cluster:   ${state.cluster}`)
@@ -77,19 +80,19 @@ function buildTextOutput(state) {
   return lines.join('\n')
 }
 
-function writeBackProgramId(manifestPath, programId) {
+export function writeBackProgramId(manifestPath: string, programId: string): void {
   if (!programId) {
     return
   }
 
-  let content
+  let content: string
   try {
     content = fs.readFileSync(manifestPath, 'utf8')
   } catch (error) {
     throw createPlatformError(
       'ECFG002',
-      `Failed to read manifest for write-back: ${error.message}`,
-      { cause: error },
+      `Failed to read manifest for write-back: ${(error as Error).message}`,
+      { cause: error as Error },
     )
   }
 
@@ -97,7 +100,7 @@ function writeBackProgramId(manifestPath, programId) {
   const hasProgramId = solanaSectionRegex.test(content)
 
   if (hasProgramId) {
-    content = content.replace(solanaSectionRegex, (_match, section, _programLine, trailingComment) => {
+    content = content.replace(solanaSectionRegex, (_match: string, section: string, _programLine: string, trailingComment?: string) => {
       const suffix = trailingComment || ''
       return section + `program_id = "${programId}"` + suffix
     })
@@ -110,13 +113,13 @@ function writeBackProgramId(manifestPath, programId) {
   } catch (error) {
     throw createPlatformError(
       'EDEPLOY005',
-      `Failed to write manifest: ${error.message}`,
-      { cause: error },
+      `Failed to write manifest: ${(error as Error).message}`,
+      { cause: error as Error },
     )
   }
 }
 
-function writeArtifacts(state, repoRoot) {
+export function writeArtifacts(state: DeployState, repoRoot: string): void {
   const dotGeppetto = path.join(repoRoot, '.geppetto')
 
   try {
@@ -124,8 +127,8 @@ function writeArtifacts(state, repoRoot) {
   } catch (error) {
     throw createPlatformError(
       'EDEPLOY005',
-      `Failed to create .geppetto directory: ${error.message}`,
-      { cause: error },
+      `Failed to create .geppetto directory: ${(error as Error).message}`,
+      { cause: error as Error },
     )
   }
 
@@ -137,8 +140,8 @@ function writeArtifacts(state, repoRoot) {
   } catch (error) {
     throw createPlatformError(
       'EDEPLOY005',
-      `Failed to write deploy-output.json: ${error.message}`,
-      { cause: error },
+      `Failed to write deploy-output.json: ${(error as Error).message}`,
+      { cause: error as Error },
     )
   }
 
@@ -150,16 +153,8 @@ function writeArtifacts(state, repoRoot) {
   } catch (error) {
     throw createPlatformError(
       'EDEPLOY005',
-      `Failed to write deploy-output.txt: ${error.message}`,
-      { cause: error },
+      `Failed to write deploy-output.txt: ${(error as Error).message}`,
+      { cause: error as Error },
     )
   }
-}
-
-module.exports = {
-  renderDeployOutput,
-  buildJsonOutput,
-  buildTextOutput,
-  writeBackProgramId,
-  writeArtifacts,
 }

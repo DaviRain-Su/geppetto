@@ -1,13 +1,12 @@
-// @ts-nocheck
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const test = require('node:test')
 
-const solanaAdapter = require('../../lib/platform/adapters/solana.js')
-const encoreAdapter = require('../../lib/platform/adapters/encore.js')
-const { runDeploy } = require('../../bin/geppetto-cli.js')
+const solanaAdapter = require('../../lib/platform/adapters/solana')
+const encoreAdapter = require('../../lib/platform/adapters/encore')
+const { runDeploy } = require('../../bin/geppetto-cli')
 
 function createTempProject() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-smoke-'))
@@ -52,11 +51,20 @@ function createTempProject() {
   return tmpDir
 }
 
-function removeDir(dir) {
+function removeDir(dir: string): void {
   fs.rmSync(dir, { recursive: true, force: true })
 }
 
-function withMockedAdapters(solanaMock, encoreMock, testFn) {
+interface SolanaMock {
+  build?: () => Promise<void>
+  deploy?: (ctx: unknown, config: any) => Promise<{ program_id: string; cluster: string }>
+}
+
+interface EncoreMock {
+  deploy?: (ctx: { runId?: string }) => Promise<{ service_url: string; provider_deployment_id: string | null }>
+}
+
+function withMockedAdapters(solanaMock: SolanaMock, encoreMock: EncoreMock, testFn: () => Promise<void>): Promise<void> {
   const origSolanaBuild = solanaAdapter.build
   const origSolanaDeploy = solanaAdapter.deploy
   const origSolanaRunner = { ...solanaAdapter.runner }
@@ -86,7 +94,7 @@ function withMockedAdapters(solanaMock, encoreMock, testFn) {
 
 test('smoke: full pipeline success with mocked adapters', async () => {
   const tmpDir = createTempProject()
-  const stepOrder = []
+  const stepOrder: string[] = []
 
   try {
     await withMockedAdapters(
@@ -112,8 +120,8 @@ test('smoke: full pipeline success with mocked adapters', async () => {
         const code = await runDeploy(
           { options: { output: 'json', setValues: [], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -167,8 +175,8 @@ test('smoke: pipeline fails at build step with correct failure_class', async () 
         const code = await runDeploy(
           { options: { output: 'json', setValues: [], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -210,8 +218,8 @@ test('smoke: pipeline fails at solana deploy with correct failure_class', async 
         const code = await runDeploy(
           { options: { output: 'json', setValues: [], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -254,8 +262,8 @@ test('smoke: pipeline fails at encore deploy with correct failure_class', async 
         const code = await runDeploy(
           { options: { output: 'json', setValues: [], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -301,8 +309,8 @@ test('smoke: --set overrides are applied to pipeline', async () => {
         const code = await runDeploy(
           { options: { output: 'json', setValues: ['cluster=testnet'], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -338,7 +346,7 @@ test('smoke: table output renders step names and status', async () => {
         const code = await runDeploy(
           { options: { output: 'table', setValues: [], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
+            stdout: { write: (s: string) => { stdout += s } },
             stderr: { write: () => {} },
             cwd: tmpDir,
           },
@@ -359,7 +367,7 @@ test('smoke: table output renders step names and status', async () => {
 
 test('smoke: pipeline ctx passes run_id to encore adapter for traceability', async () => {
   const tmpDir = createTempProject()
-  let capturedCtx = null
+  let capturedCtx: { runId?: string } | null = null
 
   try {
     await withMockedAdapters(
@@ -368,7 +376,7 @@ test('smoke: pipeline ctx passes run_id to encore adapter for traceability', asy
         deploy: async () => ({ program_id: 'CtxTestProgId1234567890123456789012345678', cluster: 'devnet' }),
       },
       {
-        deploy: async (ctx) => {
+        deploy: async (ctx: { runId?: string }) => {
           capturedCtx = ctx
           return {
             service_url: 'https://app.encore.cloud/test/envs/staging/deploys/ctx001',
@@ -388,8 +396,8 @@ test('smoke: pipeline ctx passes run_id to encore adapter for traceability', asy
 
         assert.equal(code, 0)
         assert.ok(capturedCtx, 'ctx should be passed to encore adapter')
-        assert.ok(capturedCtx.runId, 'ctx.runId should be set')
-        assert.ok(capturedCtx.runId.startsWith('run_'), 'ctx.runId should have run_ prefix')
+        assert.ok(capturedCtx!.runId, 'ctx.runId should be set')
+        assert.ok(capturedCtx!.runId!.startsWith('run_'), 'ctx.runId should have run_ prefix')
       },
     )
   } finally {
@@ -406,7 +414,7 @@ test('smoke: missing geppetto.toml returns exit 1 with config error', async () =
       { options: { output: 'json', setValues: [], writeBack: false } },
       {
         stdout: { write: () => {} },
-        stderr: { write: (s) => { stderr += s } },
+        stderr: { write: (s: string) => { stderr += s } },
         cwd: tmpDir,
       },
     )
@@ -444,8 +452,8 @@ test('e2e: deploy --write-back full flow: config → build → deploy → artifa
         const code = await runDeploy(
           { options: { output: 'json', setValues: [], writeBack: true } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -574,7 +582,7 @@ function createSolanaOnlyProject() {
 
 test('solana-only: pipeline runs build + deploy without offchain step', async () => {
   const tmpDir = createSolanaOnlyProject()
-  const stepOrder = []
+  const stepOrder: string[] = []
 
   try {
     await withMockedAdapters(
@@ -594,8 +602,8 @@ test('solana-only: pipeline runs build + deploy without offchain step', async ()
         const code = await runDeploy(
           { options: { output: 'json', setValues: [], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -662,8 +670,8 @@ test('solana-only: deploy mode inferred when [offchain] absent and mode omitted'
         const code = await runDeploy(
           { options: { output: 'json', setValues: [], writeBack: false } },
           {
-            stdout: { write: (s) => { stdout += s } },
-            stderr: { write: (s) => { stderr += s } },
+            stdout: { write: (s: string) => { stdout += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
@@ -698,7 +706,7 @@ test('solana-only: --write-back works without offchain', async () => {
           { options: { output: 'json', setValues: [], writeBack: true } },
           {
             stdout: { write: () => {} },
-            stderr: { write: (s) => { stderr += s } },
+            stderr: { write: (s: string) => { stderr += s } },
             cwd: tmpDir,
           },
         )
