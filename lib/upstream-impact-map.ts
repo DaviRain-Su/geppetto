@@ -1,17 +1,28 @@
-// @ts-nocheck
-const path = require('node:path');
-const fs = require('node:fs');
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
-const { getUpstreamTrackingManifest } = require('./upstream-manifest');
+import { getUpstreamTrackingManifest } from './upstream-manifest'
 
-const VALID_IMPACT_KINDS = Object.freeze([
+export type ImpactKind = 'runtime-sdk' | 'runtime-helper' | 'test-runtime' | 'knowledge-source'
+
+export interface UpstreamImpactEntry {
+  name: string
+  kind: ImpactKind
+  source: string
+  reviewScope: string[]
+  rationale: string
+  requiredChecks: string[]
+  sourcePath?: string
+}
+
+export const VALID_IMPACT_KINDS: readonly ImpactKind[] = Object.freeze([
   'runtime-sdk',
   'runtime-helper',
   'test-runtime',
   'knowledge-source',
-]);
+])
 
-const UPSTREAM_IMPACT_MAP = Object.freeze([
+export const UPSTREAM_IMPACT_MAP: readonly UpstreamImpactEntry[] = Object.freeze([
   {
     name: 'pinocchio',
     kind: 'runtime-sdk',
@@ -194,77 +205,75 @@ const UPSTREAM_IMPACT_MAP = Object.freeze([
       'npm run docs:check',
     ],
   },
-]);
+])
 
-function getUpstreamImpactManifestRoot() {
-  return path.resolve(__dirname, '..');
+export function getUpstreamImpactManifestRoot(): string {
+  return path.resolve(__dirname, '..')
 }
 
-function getUpstreamImpactMap(root = getUpstreamImpactManifestRoot()) {
+export function getUpstreamImpactMap(root = getUpstreamImpactManifestRoot()): UpstreamImpactEntry[] {
   return UPSTREAM_IMPACT_MAP.map((entry) => ({
     ...entry,
     reviewScope: [...entry.reviewScope],
     requiredChecks: [...entry.requiredChecks],
     sourcePath: path.join(root, entry.source),
-  }));
+  }))
 }
 
-function assertUpstreamImpactMap(root = getUpstreamImpactManifestRoot(), impactMap = getUpstreamImpactMap(root)) {
-  const names = new Set();
+export function assertUpstreamImpactMap(
+  root = getUpstreamImpactManifestRoot(),
+  impactMap = getUpstreamImpactMap(root),
+): void {
+  const names = new Set<string>()
   const existingDependencies = new Set(
     getUpstreamTrackingManifest(root).map((entry) => entry.dependencyName),
-  );
+  )
 
   for (const entry of impactMap) {
     if (!entry.name) {
-      throw new Error('Impact map entry missing name');
+      throw new Error('Impact map entry missing name')
     }
     if (names.has(entry.name)) {
-      throw new Error(`Duplicate impact map entry: ${entry.name}`);
+      throw new Error(`Duplicate impact map entry: ${entry.name}`)
     }
     if (!VALID_IMPACT_KINDS.includes(entry.kind)) {
-      throw new Error(`Unsupported impact kind for ${entry.name}: ${entry.kind}`);
+      throw new Error(`Unsupported impact kind for ${entry.name}: ${entry.kind}`)
     }
     if (!entry.source) {
-      throw new Error(`Impact map entry missing source for ${entry.name}`);
+      throw new Error(`Impact map entry missing source for ${entry.name}`)
     }
     if (!Array.isArray(entry.reviewScope) || entry.reviewScope.length === 0) {
-      throw new Error(`Impact scope must be non-empty for ${entry.name}`);
+      throw new Error(`Impact scope must be non-empty for ${entry.name}`)
     }
     if (!Array.isArray(entry.requiredChecks) || entry.requiredChecks.length === 0) {
-      throw new Error(`Required checks must be non-empty for ${entry.name}`);
+      throw new Error(`Required checks must be non-empty for ${entry.name}`)
     }
+
     for (const item of entry.reviewScope) {
       if (typeof item !== 'string' || !item.trim()) {
-        throw new Error(`Invalid reviewScope entry in ${entry.name}`);
+        throw new Error(`Invalid reviewScope entry in ${entry.name}`)
       }
       if (!fs.existsSync(path.join(root, item))) {
-        throw new Error(`Review scope target missing: ${item} (${entry.name})`);
+        throw new Error(`Review scope target missing: ${item} (${entry.name})`)
       }
     }
+
     for (const check of entry.requiredChecks) {
       if (typeof check !== 'string' || !check.trim()) {
-        throw new Error(`Invalid required check for ${entry.name}`);
+        throw new Error(`Invalid required check for ${entry.name}`)
       }
     }
+
     if (!existingDependencies.has(entry.name)) {
-      throw new Error(`Unknown upstream dependency in impact map: ${entry.name}`);
+      throw new Error(`Unknown upstream dependency in impact map: ${entry.name}`)
     }
-    names.add(entry.name);
+
+    names.add(entry.name)
   }
 
   for (const dependency of existingDependencies) {
     if (!names.has(dependency)) {
-      throw new Error(`Missing impact map coverage for upstream dependency: ${dependency}`);
+      throw new Error(`Missing impact map coverage for upstream dependency: ${dependency}`)
     }
   }
 }
-
-module.exports = {
-  VALID_IMPACT_KINDS,
-  UPSTREAM_IMPACT_MAP,
-  assertUpstreamImpactMap,
-  getUpstreamImpactManifestRoot,
-  getUpstreamImpactMap,
-};
-export { VALID_IMPACT_KINDS, UPSTREAM_IMPACT_MAP, assertUpstreamImpactMap, getUpstreamImpactManifestRoot, getUpstreamImpactMap };
