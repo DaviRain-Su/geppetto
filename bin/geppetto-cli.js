@@ -176,7 +176,7 @@ async function runDeploy(parsedArgs, io) {
   // Create initial deploy state
   const state = createDeployState(config);
 
-  // Build pipeline steps — Solana build/deploy + Encore deploy
+  // Build pipeline steps — Solana build/deploy + optional Encore deploy
   const steps = [
     {
       name: 'buildProgram',
@@ -194,7 +194,11 @@ async function runDeploy(parsedArgs, io) {
         return currentState;
       },
     },
-    {
+  ];
+
+  // Add offchain step only when [offchain] is configured (hybrid mode)
+  if (config.offchain) {
+    steps.push({
       name: 'deployOffchain',
       run: async (ctx, currentState, cfg) => {
         const result = await encoreAdapter.deploy(ctx, cfg);
@@ -202,8 +206,8 @@ async function runDeploy(parsedArgs, io) {
         currentState.provider_deployment_id = result.provider_deployment_id || null;
         return currentState;
       },
-    },
-  ];
+    });
+  }
 
   // Run pipeline
   let finalState;
@@ -216,7 +220,7 @@ async function runDeploy(parsedArgs, io) {
     });
 
     // Bridge outputs validates required fields
-    finalState = bridgeOutputs(finalState);
+    finalState = bridgeOutputs(finalState, { mode: config.deploy.mode });
   } catch (error) {
     // Render partial state on failure
     const failedState = error.state || state;

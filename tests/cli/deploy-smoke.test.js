@@ -538,3 +538,178 @@ test('e2e: deploy failure does NOT write-back program_id', async () => {
     removeDir(tmpDir)
   }
 })
+
+// --- Solana-only mode (no [offchain] section) ---
+
+function createSolanaOnlyProject() {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-solana-only-'))
+
+  // Create Solana program directory only (no offchain)
+  const programDir = path.join(tmpDir, 'examples', 'escrow')
+  fs.mkdirSync(programDir, { recursive: true })
+
+  // geppetto.toml without [offchain] section
+  const toml = [
+    'schema_version = "0.1"',
+    '',
+    '[app]',
+    'name = "escrow-program"',
+    '',
+    '[solana]',
+    'cluster = "devnet"',
+    'program_path = "examples/escrow"',
+    'program_binary = "target/deploy/escrow.so"',
+    'keypair = "~/.config/solana/id.json"',
+    'program_id = ""',
+    '',
+    '[deploy]',
+    'mode = "solana"',
+    'output = "table"',
+  ].join('\n')
+  fs.writeFileSync(path.join(tmpDir, 'geppetto.toml'), toml)
+
+  return tmpDir
+}
+
+test('solana-only: pipeline runs build + deploy without offchain step', async () => {
+  const tmpDir = createSolanaOnlyProject()
+  const stepOrder = []
+
+  try {
+    await withMockedAdapters(
+      {
+        build: async () => { stepOrder.push('build') },
+        deploy: async () => {
+          stepOrder.push('deploy-solana')
+          return { program_id: 'SolanaOnlyProgId12345678901234567890123456', cluster: 'devnet' }
+        },
+      },
+      {
+        deploy: async () => { throw new Error('offchain should not be called') },
+      },
+      async () => {
+        let stdout = ''
+        let stderr = ''
+        const code = await runDeploy(
+          { options: { output: 'json', setValues: [], writeBack: false } },
+          {
+            stdout: { write: (s) => { stdout += s } },
+            stderr: { write: (s) => { stderr += s } },
+            cwd: tmpDir,
+          },
+        )
+
+        assert.equal(code, 0, `Expected exit 0, stderr: ${stderr}`)
+        assert.deepEqual(stepOrder, ['build', 'deploy-solana'], 'only build + solana deploy steps should run')
+
+        const parsed = JSON.parse(stdout)
+        assert.equal(parsed.app_name, 'escrow-program')
+        assert.equal(parsed.cluster, 'devnet')
+        assert.equal(parsed.program_id, 'SolanaOnlyProgId12345678901234567890123456')
+        assert.equal(parsed.service_url, null)
+        assert.equal(parsed.provider_deployment_id, null)
+        assert.equal(parsed.status, 'success')
+        assert.equal(parsed.failure_class, null)
+        assert.equal(parsed.steps.length, 2)
+        assert.equal(parsed.steps[0].name, 'buildProgram')
+        assert.equal(parsed.steps[1].name, 'deployProgram')
+      },
+    )
+  } finally {
+    removeDir(tmpDir)
+  }
+})
+
+test('solana-only: deploy mode inferred when [offchain] absent and mode omitted', async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-solana-infer-'))
+
+  // Create program dir
+  const programDir = path.join(tmpDir, 'examples', 'escrow')
+  fs.mkdirSync(programDir, { recursive: true })
+
+  // geppetto.toml without [offchain] and without deploy.mode
+  const toml = [
+    'schema_version = "0.1"',
+    '',
+    '[app]',
+    'name = "escrow-infer"',
+    '',
+    '[solana]',
+    'cluster = "devnet"',
+    'program_path = "examples/escrow"',
+    'program_binary = "target/deploy/escrow.so"',
+    'keypair = "~/.config/solana/id.json"',
+    'program_id = ""',
+    '',
+    '[deploy]',
+    'output = "json"',
+  ].join('\n')
+  fs.writeFileSync(path.join(tmpDir, 'geppetto.toml'), toml)
+
+  try {
+    await withMockedAdapters(
+      {
+        build: async () => {},
+        deploy: async () => ({ program_id: 'InferModeProgId12345678901234567890123456', cluster: 'devnet' }),
+      },
+      {
+        deploy: async () => { throw new Error('offchain should not be called') },
+      },
+      async () => {
+        let stdout = ''
+        let stderr = ''
+        const code = await runDeploy(
+          { options: { output: 'json', setValues: [], writeBack: false } },
+          {
+            stdout: { write: (s) => { stdout += s } },
+            stderr: { write: (s) => { stderr += s } },
+            cwd: tmpDir,
+          },
+        )
+
+        assert.equal(code, 0, `Expected exit 0, stderr: ${stderr}`)
+        const parsed = JSON.parse(stdout)
+        assert.equal(parsed.status, 'success')
+        assert.equal(parsed.steps.length, 2, 'should only have build + deploy steps')
+        assert.equal(parsed.service_url, null, 'no offchain service_url')
+      },
+    )
+  } finally {
+    removeDir(tmpDir)
+  }
+})
+
+test('solana-only: --write-back works without offchain', async () => {
+  const tmpDir = createSolanaOnlyProject()
+
+  try {
+    await withMockedAdapters(
+      {
+        build: async () => {},
+        deploy: async () => ({ program_id: 'WriteBackSolanaOnlyPid123456789012345678', cluster: 'devnet' }),
+      },
+      {
+        deploy: async () => { throw new Error('offchain should not be called') },
+      },
+      async () => {
+        let stderr = ''
+        const code = await runDeploy(
+          { options: { output: 'json', setValues: [], writeBack: true } },
+          {
+            stdout: { write: () => {} },
+            stderr: { write: (s) => { stderr += s } },
+            cwd: tmpDir,
+          },
+        )
+
+        assert.equal(code, 0, `Expected exit 0, stderr: ${stderr}`)
+
+        const manifest = fs.readFileSync(path.join(tmpDir, 'geppetto.toml'), 'utf8')
+        assert.ok(manifest.includes('program_id = "WriteBackSolanaOnlyPid123456789012345678"'),
+          'program_id should be written back in solana-only mode')
+      },
+    )
+  } finally {
+    removeDir(tmpDir)
+  }
+})
