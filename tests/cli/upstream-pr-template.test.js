@@ -22,7 +22,7 @@ const sampleResult = {
       summary: 'pinocchio 0.11.0 -> 0.11.2',
       rationale: 'Core SDK change can impact account model and CPI helpers.',
       reviewScope: ['src/schema.rs', 'src/guard.rs'],
-      requiredChecks: ['cargo test --all-features --locked', 'npm run docs:check'],
+      requiredChecks: ['cargo test --all-features', 'npm run docs:check'],
     },
     {
       name: 'litesvm',
@@ -61,7 +61,7 @@ test('buildSummaryStats and checks render sections', () => {
   assert.match(stats, /ℹ️ knowledge-source: 1/);
 
   const checks = buildRequiredChecks(sampleResult.entries);
-  assert.match(checks, /cargo test --all-features --locked/);
+  assert.match(checks, /cargo test --all-features/);
   assert.match(checks, /npm run docs:check/);
 });
 

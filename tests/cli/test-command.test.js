@@ -131,7 +131,7 @@ test('runTestPlan executes planned commands via injected runner', () => {
 
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0][0], 'cargo');
-    assert.deepEqual(calls[0][1], ['test', '--all-features', '--locked']);
+    assert.deepEqual(calls[0][1], ['test', '--all-features']);
   } finally {
     removeDir(tempDir);
   }
