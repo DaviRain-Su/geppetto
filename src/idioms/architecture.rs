@@ -2,7 +2,19 @@
 //!
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-14
 //!
-//! Patterns shared by ALL official Anza pinocchio programs (escrow, rewards, token).
+//! Patterns shared by official Anza pinocchio programs (escrow, rewards, token).
+//! Scalable for small to large programs — recommendations shift by codebase size.
+//!
+//! ## Program Size Tiers
+//!
+//! | Tier | Characteristics | Structure |
+//! |------|-----------------|-----------|
+//! | **Tiny** | 1–2 instructions, ~100 lines | Single `src/lib.rs` or minimal modules |
+//! | **Small** | 3–5 instructions, validation clear | Separate `entrypoint.rs`, `state.rs`, `errors.rs`; instructions in one module |
+//! | **Medium** | 6+ instructions, complex validation | `instructions/{create,exchange,close}/` with dedicated `accounts.rs` per instruction |
+//! | **Large** | Multiple feature gates, CPI, tokens | Full separation: `instructions/{*}/{mod,accounts,data,processor}.rs` + `state/`, `traits/`, `utils/` |
+//!
+//! **Key rule**: Validation (`accounts.rs`) and business logic (`processor.rs`) are **always** separate.
 //!
 //! ## File Structure Convention
 //!

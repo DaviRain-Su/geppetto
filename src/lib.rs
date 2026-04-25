@@ -22,11 +22,27 @@
 //! geppetto = { version = "0.1", features = ["system", "token-all"] }
 //! ```
 //!
+//! **Key pattern**: Implement `AccountSchema` with unit structs + offset constants,
+//! use `guard::*` helpers for security checks, and keep validation separate from
+//! business logic.
+//!
 //! ```rust,ignore
 //! use geppetto::*;
 //! use geppetto::guard;
-//! use geppetto::token;
+//! use geppetto::schema::AccountSchema;
+//!
+//! pub struct MyAccount;
+//! impl AccountSchema for MyAccount {
+//!     const LEN: usize = 74;
+//!     const DISCRIMINATOR: Option<u8> = Some(1);
+//!     fn layout() -> &'static [(&'static str, &'static str, usize, usize)] { &[] }
+//! }
+//! impl MyAccount {
+//!     pub const MAKER_OFFSET: usize = 2;
+//! }
 //! ```
+//!
+//! See `schema::AccountSchema` and `anti_patterns` for detailed patterns.
 //!
 //! ## Module Overview
 //!

@@ -1,10 +1,14 @@
-//! # Anti Patterns
+//! # Security Review Checklist
 //!
 //! > **Knowledge version**: geppetto 0.1.0 | pinocchio 0.11.x | 2026-04-14
 //! > **Verified against**: Solana 2.2.x
 //!
-//! This module is the reference map of high-impact mistakes.
-//! Each anti-pattern should be treated as an explicit guardrail during review.
+//! This module documents high-impact vulnerabilities and how to fix them.
+//! Use it as a **code review checklist**: before deployment, verify that your
+//! instruction handlers satisfy all these guardrails.
+//!
+//! Key insight: Each vulnerability has a simple, idiomatic fix that Geppetto's
+//! guard helpers enforce. This isn't optional polish — it's mandatory security.
 //!
 //! ---
 //!

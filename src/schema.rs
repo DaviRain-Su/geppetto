@@ -8,19 +8,14 @@
 //! - rewards' `assert_no_padding!` macro
 //! - escrow's zero-copy state structs
 //!
-//! ## How to implement
+//! ## How to implement (Recommended: Unit Struct + Offset Constants)
 //!
 //! ```rust,ignore
 //! use geppetto::schema::AccountSchema;
+//! use geppetto::address::Address;
 //!
-//! #[repr(C)]
-//! pub struct Escrow {
-//!     pub discriminator: u8,    // offset 0, 1 byte
-//!     pub status: u8,           // offset 1, 1 byte
-//!     pub maker: Address,       // offset 2, 32 bytes
-//!     pub taker: Address,       // offset 34, 32 bytes
-//!     pub amount: u64,          // offset 66, 8 bytes (LE)
-//! }
+//! // Unit struct — no fields, no alignment issues
+//! pub struct Escrow;
 //!
 //! impl AccountSchema for Escrow {
 //!     const LEN: usize = 74;       // 1 + 1 + 32 + 32 + 8
@@ -37,7 +32,7 @@
 //!     }
 //! }
 //!
-//! // Field offsets also as associated constants (for direct byte access)
+//! // Field offsets as associated constants — used for direct byte access
 //! impl Escrow {
 //!     pub const DISCRIMINATOR_OFFSET: usize = 0;
 //!     pub const STATUS_OFFSET: usize = 1;
@@ -46,8 +41,21 @@
 //!     pub const AMOUNT_OFFSET: usize = 66;
 //! }
 //!
-//! // Compile-time size check
-//! assert_account_size!(Escrow);
+//! // Example: read from account data
+//! pub fn read_escrow(data: &[u8]) -> Result<(u8, Address, Address, u64), ProgramError> {
+//!     Escrow::validate(data)?; // validates length + discriminator
+//!     let discriminator = data[Escrow::DISCRIMINATOR_OFFSET];
+//!     let maker = Address::new_from_array(
+//!         data[Escrow::MAKER_OFFSET..Escrow::MAKER_OFFSET + 32].try_into()?
+//!     );
+//!     let taker = Address::new_from_array(
+//!         data[Escrow::TAKER_OFFSET..Escrow::TAKER_OFFSET + 32].try_into()?
+//!     );
+//!     let amount = u64::from_le_bytes(
+//!         data[Escrow::AMOUNT_OFFSET..Escrow::AMOUNT_OFFSET + 8].try_into()?
+//!     );
+//!     Ok((discriminator, maker, taker, amount))
+//! }
 //! ```
 //!
 //! ## For AI agents
@@ -65,10 +73,40 @@ use pinocchio::error::ProgramError;
 
 /// Defines the on-chain memory layout of an account type.
 ///
-/// Implementors MUST be `#[repr(C)]` to guarantee field ordering
-/// matches the byte layout. Field offsets are expressed as
-/// associated constants on the implementing type (not on this trait),
-/// because each account has different fields.
+/// ## Recommended Implementation Path: Unit Struct + Offset Constants
+///
+/// For most programs, use a **unit struct** with `const` offset constants.
+/// This avoids alignment and padding issues entirely:
+///
+/// ```rust,ignore
+/// pub struct Escrow;
+///
+/// impl AccountSchema for Escrow {
+///     const LEN: usize = 74;
+///     const DISCRIMINATOR: Option<u8> = Some(1);
+///     fn layout() -> &'static [(&'static str, &'static str, usize, usize)] {
+///         &[("discriminator", "u8", 0, 1), ("status", "u8", 1, 1), ...]
+///     }
+/// }
+///
+/// impl Escrow {
+///     pub const DISCRIMINATOR_OFFSET: usize = 0;
+///     pub const STATUS_OFFSET: usize = 1;
+///     // ... etc
+/// }
+/// ```
+///
+/// Then read/write data using manual byte access:
+/// ```rust,ignore
+/// let discriminator = data[Escrow::DISCRIMINATOR_OFFSET];
+/// let status = data[Escrow::STATUS_OFFSET];
+/// ```
+///
+/// ## Advanced: #[repr(C)] with Explicit Padding
+///
+/// Only use `#[repr(C)]` if you need true struct field access AND you handle
+/// alignment explicitly. **This requires careful attention to padding.**
+/// See `anti_patterns` for common pitfalls and solutions.
 pub trait AccountSchema: Sized {
     /// Total size in bytes of the serialized account data.
     const LEN: usize;
@@ -107,13 +145,17 @@ pub trait AccountSchema: Sized {
         Ok(())
     }
 
-    /// Zero-copy cast from raw account data to &Self.
+    /// Advanced/Internal: Zero-copy cast from raw account data to &Self.
+    ///
+    /// **This is an escape hatch for performance-critical code only.**
+    /// For normal instruction processing, use manual byte reads with offset constants.
+    /// (See the recommended example in the module docs.)
     ///
     /// # Safety
     ///
     /// Caller MUST ensure:
     /// - `data.len() >= size_of::<Self>()` (not just `Self::LEN`)
-    /// - `Self` is `#[repr(C)]` with no padding bytes
+    /// - `Self` is `#[repr(C)]` with no padding bytes (use `assert_account_size!`)
     /// - Discriminator has been validated (if applicable)
     /// - Account owner is correct
     unsafe fn from_bytes_unchecked(data: &[u8]) -> &Self {
@@ -122,7 +164,11 @@ pub trait AccountSchema: Sized {
         unsafe { &*(data.as_ptr() as *const Self) }
     }
 
-    /// Validate an AccountView and return a zero-copy reference.
+    /// Advanced/Internal: Validate an AccountView and return a zero-copy reference.
+    ///
+    /// **This is an escape hatch for performance-critical code only.**
+    /// For normal instruction processing, use `validate()` followed by manual byte reads.
+    /// (See the recommended example in the module docs.)
     ///
     /// # Safety
     ///

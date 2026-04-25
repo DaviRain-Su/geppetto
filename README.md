@@ -103,11 +103,11 @@ Use `--skip-build-sbf` only when you intentionally only want core tests.
 
 | Module          | What it covers                                                                                                                   |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `schema`        | `AccountSchema` trait & account layout patterns (unit struct + offset constants recommended)                                     |
 | `guard`         | Security helpers: `assert_signer`, `assert_writable`, `assert_owner`, `assert_pda`, `assert_discriminator`, `assert_rent_exempt` |
-| `schema`        | `AccountSchema` trait — zero-copy account layouts with compile-time metadata                                                     |
 | `dispatch`      | Standard instruction-dispatch pattern for `process_instruction`                                                                  |
-| `idioms`        | Code + knowledge: PDA derivation, CPI calls, Token/Token-2022, self-CPI events, TLV extensions, helper functions                |
-| `anti_patterns` | Doc-only: common vulnerabilities and how to fix them                                                                             |
+| `idioms`        | Code + knowledge: PDA derivation, CPI calls, Token/Token-2022, self-CPI events, TLV extensions, program architecture           |
+| `anti_patterns` | Security review checklist: high-impact vulnerabilities and how to fix them                                                       |
 | `client`        | Doc-only: TypeScript client construction, PDA derivation, account deserialization                                                |
 | `testing`       | Code + knowledge: litesvm / mollusk-svm testing patterns, assertion helpers                                                      |
 
@@ -117,6 +117,26 @@ Use `--skip-build-sbf` only when you intentionally only want core tests.
 - **Zero external dependencies** — Only depends on the Pinocchio ecosystem crates
 - **Zero macros** — Explicit code agents can see, understand, and debug
 - **Agent-first** — If the agent can't see it, it can't respect it
+
+## Account Schema Best Practice
+
+Implement `AccountSchema` using **unit struct + offset constants** (avoids alignment pitfalls):
+
+```rust
+pub struct Escrow;
+impl AccountSchema for Escrow {
+    const LEN: usize = 74;
+    const DISCRIMINATOR: Option<u8> = Some(1);
+    fn layout() -> &'static [(&'static str, &'static str, usize, usize)] { ... }
+}
+impl Escrow {
+    pub const MAKER_OFFSET: usize = 2;
+    pub const AMOUNT_OFFSET: usize = 66;
+}
+// Read data: let maker = data[Escrow::MAKER_OFFSET..]; etc.
+```
+
+See `src/schema.rs` for detailed patterns and why `#[repr(C)]` with mixed-alignment fields is risky.
 
 ## How We Differ
 
