@@ -65,9 +65,11 @@ test('parseTestArgs supports test command flags', () => {
   })
 })
 
-test('parseAuditArgs supports strict mode', () => {
-  assert.deepEqual(parseAuditArgs([]), { strict: false })
-  assert.deepEqual(parseAuditArgs(['--strict']), { strict: true })
+test('parseAuditArgs supports strict mode and --locked', () => {
+  assert.deepEqual(parseAuditArgs([]), { strict: false, includeLocked: false })
+  assert.deepEqual(parseAuditArgs(['--strict']), { strict: true, includeLocked: false })
+  assert.deepEqual(parseAuditArgs(['--locked']), { strict: false, includeLocked: true })
+  assert.deepEqual(parseAuditArgs(['--strict', '--locked']), { strict: true, includeLocked: true })
   assert.deepEqual(parseAuditArgs(['--help']), { help: true })
   assert.deepEqual(parseAuditArgs(['--invalid']), { error: 'Unexpected arguments: --invalid' })
 })

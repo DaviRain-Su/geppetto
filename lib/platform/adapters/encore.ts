@@ -3,20 +3,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import type {
-  CreatePlatformErrorOptions,
   EncoreDeployResult,
   PipelineContext,
   PlatformConfig,
   PlatformError,
 } from '../types'
-
-const { createPlatformError } = require('../errors') as {
-  createPlatformError: (
-    code: string,
-    message?: string,
-    options?: CreatePlatformErrorOptions,
-  ) => PlatformError
-}
+import { createPlatformError } from '../errors'
 
 interface ExecResult {
   stdout: string

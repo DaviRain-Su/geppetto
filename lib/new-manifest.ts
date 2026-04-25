@@ -1,20 +1,11 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-interface TemplateEntry {
-  relativePath: string
-  sourcePath: string
-}
-
-const {
+import {
   assertTemplateManifest,
   getTemplateEntries,
-  getTemplateRoot: getCanonicalTemplateRoot,
-} = require('./templates') as {
-  assertTemplateManifest: (templateRoot?: string) => void
-  getTemplateEntries: (templateRoot?: string) => TemplateEntry[]
-  getTemplateRoot: () => string
-}
+  getTemplateRoot as getCanonicalTemplateRoot,
+} from './templates'
 
 export interface NewProjectTemplateEntry {
   relativePath: string
@@ -132,7 +123,7 @@ export function getTemplateRoot(): string {
   return getCanonicalTemplateRoot()
 }
 
-export function getCanonicalProjectTemplateEntries(templateRoot = getTemplateRoot()): NewProjectTemplateEntry[] {
+function getCanonicalProjectTemplateEntries(templateRoot = getTemplateRoot()): NewProjectTemplateEntry[] {
   const templateEntries = getTemplateEntries(templateRoot)
   const entries: NewProjectTemplateEntry[] = []
 

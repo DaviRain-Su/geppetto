@@ -207,7 +207,7 @@ export const UPSTREAM_IMPACT_MAP: readonly UpstreamImpactEntry[] = Object.freeze
   },
 ])
 
-export function getUpstreamImpactManifestRoot(): string {
+function getUpstreamImpactManifestRoot(): string {
   return path.resolve(__dirname, '..')
 }
 

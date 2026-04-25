@@ -6,3 +6,8 @@ Cargo.lock
 node_modules/
 dist/
 bun.lock
+
+# slidev build outputs
+docs/platform/.slidev-dist/
+docs/platform/docs/
+docs/platform/site/

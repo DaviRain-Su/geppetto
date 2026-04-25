@@ -1,7 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import {
-  TEMPLATE_FILES,
   assertTemplateManifest,
   getTemplateEntries,
   getTemplateRoot,
@@ -48,9 +47,4 @@ export function initProject(targetDir: string, options: InitProjectOptions = {})
   }
 
   return results
-}
-
-export {
-  TEMPLATE_FILES,
-  getTemplateRoot,
 }

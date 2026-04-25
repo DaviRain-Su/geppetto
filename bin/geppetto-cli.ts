@@ -2,26 +2,18 @@
 
 import * as path from 'node:path'
 
+import { initProject } from '../lib/init'
 import { createProject } from '../lib/new'
-import { buildTestPlan, runGeppettoTest } from '../lib/test'
+import { runGeppettoTest } from '../lib/test'
 import { runGeppettoAudit } from '../lib/audit'
 import { loadPlatformConfig } from '../lib/platform/config'
 import { parseSetValues, applyOverrides } from '../lib/platform/overrides'
 import { createDeployState } from '../lib/platform/state'
 import { runPipeline, bridgeOutputs } from '../lib/platform/deploy'
 import { renderDeployOutput, writeArtifacts, writeBackProgramId } from '../lib/platform/output'
-import type { DeployArgs, CLIio, DeployState, PlatformConfig, OutputFormat, PipelineContext } from '../lib/platform/types'
-
-// Non-TS modules (equivalent migration — minimal local types)
-const { initProject } = require('../lib/init') as { initProject: (targetDir: string, options: { dryRun?: boolean; log?: (line: string) => void; templateRoot?: string }) => Array<{ path: string; status: string }> }
-
-const solanaAdapter = require('../lib/platform/adapters/solana') as {
-  build: (ctx: PipelineContext, config: PlatformConfig) => Promise<void>
-  deploy: (ctx: PipelineContext, config: PlatformConfig) => Promise<{ program_id: string; cluster: string }>
-}
-const encoreAdapter = require('../lib/platform/adapters/encore') as {
-  deploy: (ctx: PipelineContext, config: PlatformConfig) => Promise<{ service_url: string; provider_deployment_id: string | null }>
-}
+import * as solanaAdapter from '../lib/platform/adapters/solana'
+import * as encoreAdapter from '../lib/platform/adapters/encore'
+import type { DeployArgs, CLIio, DeployState, OutputFormat, PipelineContext, PlatformConfig } from '../lib/platform/types'
 
 export const adapters = {
   solana: {
@@ -48,7 +40,9 @@ export function printUsage(stream: OutputStream): void {
   stream.write('  test [--skip-examples] [--build-sbf] [--skip-build-sbf]\n')
   stream.write('                      Run root tests and escrow example tests. Missing SBF artifact\n')
   stream.write('                      is auto-built unless --skip-build-sbf is passed.\n')
-  stream.write('  audit [--strict]    Run minimal static audit checks (fmt/check, optional clippy)\n')
+  stream.write('  audit [--strict] [--locked]\n')
+  stream.write('                      Run minimal static audit checks (fmt/check, optional clippy).\n')
+  stream.write('                      --locked enforces Cargo.lock reproducibility in cargo check.\n')
 }
 
 export function createLogger(stream: OutputStream): (line: string) => void {
@@ -287,9 +281,10 @@ export async function runDeploy(parsedArgs: { options: DeployArgs['options'] }, 
   return 0
 }
 
-export function parseAuditArgs(args: string[]): { help?: true; error?: string; strict?: boolean } {
+export function parseAuditArgs(args: string[]): { help?: true; error?: string; strict?: boolean; includeLocked?: boolean } {
   const options = {
     strict: false,
+    includeLocked: false,
   }
 
   for (const arg of args) {
@@ -299,6 +294,11 @@ export function parseAuditArgs(args: string[]): { help?: true; error?: string; s
 
     if (arg === '--strict') {
       options.strict = true
+      continue
+    }
+
+    if (arg === '--locked') {
+      options.includeLocked = true
       continue
     }
 
@@ -446,6 +446,7 @@ export function main(argv: string[] = process.argv.slice(2), io: Partial<CLIio> 
     try {
       runGeppettoAudit({
         strict: parsedArgs.strict,
+        includeLocked: parsedArgs.includeLocked,
       })
       stdout.write('done geppetto audit\n')
       return 0

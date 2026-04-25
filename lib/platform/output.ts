@@ -53,7 +53,7 @@ export function buildJsonOutput(state: DeployState): JsonOutput {
   }
 }
 
-export function buildTextOutput(state: DeployState): string {
+function buildTextOutput(state: DeployState): string {
   const lines: string[] = []
   lines.push(`Run ID:    ${state.run_id}`)
   lines.push(`App:       ${state.app_name}`)

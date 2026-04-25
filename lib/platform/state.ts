@@ -29,7 +29,7 @@ export function createDeployState(
   }
 }
 
-export function appendStepLog(state: DeployState, stepLog: StepLog): DeployState {
+function appendStepLog(state: DeployState, stepLog: StepLog): DeployState {
   state.steps.push(stepLog)
   return state
 }

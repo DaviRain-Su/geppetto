@@ -14,7 +14,8 @@ const { getTemplateEntries } = require('../../lib/templates') as {
 
 const repoRoot = path.resolve(__dirname, '..', '..')
 const cliPath = path.join(repoRoot, 'bin', 'geppetto-cli.ts')
-const tsxPath = require.resolve('tsx')
+const isBun = typeof (globalThis as { Bun?: unknown }).Bun !== 'undefined'
+const tsxPath = isBun ? '' : require.resolve('tsx')
 
 function createTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'geppetto-new-'))
@@ -25,7 +26,8 @@ function removeDir(directoryPath: string): void {
 }
 
 function runCli(cwd: string, args: string[] = []): string {
-  return execFileSync(process.execPath, ['--import', tsxPath, cliPath, ...args], {
+  const spawnArgs = isBun ? [cliPath, ...args] : ['--import', tsxPath, cliPath, ...args]
+  return execFileSync(process.execPath, spawnArgs, {
     cwd,
     encoding: 'utf8',
   })
@@ -235,7 +237,6 @@ test('new command fails when directory already has generated files', () => {
   const projectName = 'sample-program'
 
   try {
-    const projectDir = path.join(tempDir, projectName)
     const firstRun = runCli(tempDir, ['new', projectName])
     assert.match(firstRun, /done new sample-program created=15 skipped=0/)
 
