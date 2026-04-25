@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CLI 参考 — Geppetto 中文文档</title>
+  <meta name="description" content="面向 AI Agent 的 Solana 工程工作流。" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="alternate" hreflang="en" href="/" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/zh/">Geppetto</a><nav class="nav-links"><a href="/zh/docs/">文档</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/audit/">审查</a><a href="/zh/docs/deploy/">部署</a><a href="/">English</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>文档</strong><a href="/zh/docs/">概览</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/cli/">CLI 参考</a><a href="/zh/docs/audit/">Audit 与 Review</a><a href="/zh/docs/deploy/">部署</a><a href="/zh/docs/sdk/">SDK 概念</a><a href="/zh/docs/review/">Code Review 路线图</a></aside><article class="content panel">
+<h1>CLI 参考</h1>
+<p>CLI 暴露为 <code>geppetto-cli</code>。在本仓库内部可以使用 <code>bun ./bin/geppetto-cli.ts</code>。</p>
+<h2><code>init</code></h2>
+<pre><code>geppetto-cli init
+geppetto-cli init --dry-run</code></pre>
+<p>生成 canonical agent-entry 文件，不覆盖已有文件。</p>
+<h2><code>new</code></h2>
+<pre><code>geppetto-cli new my-program</code></pre>
+<p>创建最小 Pinocchio + Geppetto scaffold。</p>
+<h2><code>test</code></h2>
+<pre><code>geppetto-cli test
+geppetto-cli test --skip-examples
+geppetto-cli test --skip-build-sbf</code></pre>
+<p>运行 root checks 和 escrow 示例验证。缺失 SBF artifact 时默认自动构建。</p>
+<h2><code>audit</code></h2>
+<pre><code>geppetto-cli audit
+geppetto-cli audit --strict
+geppetto-cli audit --locked</code></pre>
+<p>运行静态 audit gate。</p>
+<h2><code>deploy</code></h2>
+<pre><code>geppetto-cli deploy --output json --write-back
+geppetto-cli deploy --set solana.cluster=devnet</code></pre>
+<p>运行配置好的 Solana 和可选 off-chain 部署工作流。</p>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — 面向 AI Agent 的 Solana 工程工作流。</span><span><a href="/zh/docs/">文档</a> · <a href="/">English</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

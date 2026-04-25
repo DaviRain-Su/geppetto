@@ -8,6 +8,8 @@ Geppetto helps AI code agents work safely in Solana/Pinocchio repositories by ma
 
 - Product home: https://geppetto-60k.pages.dev/
 - Docs overview: https://geppetto-60k.pages.dev/docs/
+- Chinese docs: https://geppetto-60k.pages.dev/zh/docs/
+- Chinese llms.txt: https://geppetto-60k.pages.dev/zh/llms.txt
 - Quickstart: https://geppetto-60k.pages.dev/docs/quickstart/
 - CLI reference: https://geppetto-60k.pages.dev/docs/cli/
 - Audit and review: https://geppetto-60k.pages.dev/docs/audit/

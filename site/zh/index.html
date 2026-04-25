@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Geppetto — 面向 AI Agent 的 Solana 工程工作流</title>
+  <meta name="description" content="面向 AI Agent 的 Solana 工程工作流。" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="alternate" hreflang="en" href="/" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/zh/">Geppetto</a><nav class="nav-links"><a href="/zh/docs/">文档</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/audit/">审查</a><a href="/zh/docs/deploy/">部署</a><a href="/">English</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+
+<main class="shell">
+  <section class="hero">
+    <div class="panel hero-copy">
+      <span class="eyebrow">Solana x Agents x Workflow Contracts</span>
+      <h1>用 Agent 真正能理解的方式构建 Solana 项目。</h1>
+      <p class="lead">Geppetto 把 <code>new</code>、<code>init</code>、<code>test</code>、<code>audit</code>、<code>deploy</code> 变成稳定的工作流契约，让开发者和 AI Agent 都能可靠执行。</p>
+      <div class="actions"><a class="button primary" href="/zh/docs/quickstart/">快速开始</a><a class="button" href="/zh/docs/deploy/">查看部署文档</a></div>
+    </div>
+    <div class="terminal panel"><pre><span class="muted"># 一个 repo-local 工作流契约</span>
+bun ./bin/geppetto-cli.ts deploy --output json --write-back
+
+{
+  "status": "success",
+  "cluster": "devnet",
+  "program_id": "...",
+  "steps": ["buildProgram", "deployProgram"]
+}</pre></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>不只是部署工具，而是工作流契约。</h2><p>很多 Solana 项目的关键流程藏在 shell history、本地状态和过期笔记里。Geppetto 让 repo 本身更清晰：配置、示例、检查、输出和 agent 指令都能对齐。</p></div>
+    <div class="grid cols-3">
+      <div class="card"><span class="badge">Repo</span><h3>Agent 可读的结构</h3><p>统一的 agent 入口文件、示例和知识模块，让 Agent 知道真相源在哪里。</p></div>
+      <div class="card"><span class="badge">CLI</span><h3>可执行的工程原语</h3><p><code>new</code>、<code>init</code>、<code>test</code>、<code>audit</code>、<code>deploy</code> 提供稳定命令面。</p></div>
+      <div class="card"><span class="badge">Artifacts</span><h3>结构化输出</h3><p>部署结果会写成机器可读 artifact，方便人和 Agent 从同一状态继续工作。</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>工作流表面</h2><p>Deploy 是第一个产品化路径，但 Geppetto 的产品形态更大：面向 Agent 的 Solana 工程工作流。</p></div>
+    <div class="grid cols-2">
+      <div class="card"><h3><code>geppetto new</code></h3><p>创建最小 Pinocchio + Geppetto 项目骨架，并带上 canonical agent guidance。</p></div>
+      <div class="card"><h3><code>geppetto init</code></h3><p>给已有项目补齐 agent 入口文件，让 repo 更容易被继续维护。</p></div>
+      <div class="card"><h3><code>geppetto test</code></h3><p>通过稳定命令契约运行约定好的验证面。</p></div>
+      <div class="card"><h3><code>geppetto audit</code></h3><p>运行格式、编译和可选 clippy 门禁，作为基础 review surface。</p></div>
+      <div class="card"><h3><code>geppetto deploy</code></h3><p>构建、部署、输出 artifact，并可把 <code>program_id</code> 写回配置。</p></div>
+      <div class="card"><h3>下一步：Review 报告</h3><p>把 audit 从静态门禁扩展成结构化 PR finding 和 anti-pattern 检查。</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>现在已经可用</h2><p>当前仓库已经包含 CLI、SDK 知识面、deploy pipeline、mock E2E、release checks，以及 Cloudflare-ready 的多语言站点。</p></div>
+    <div class="actions"><a class="button accent" href="/zh/docs/">打开文档</a><a class="button" href="https://github.com/DaviRain-Su/geppetto">查看源码</a></div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell"><span>Geppetto — 面向 AI Agent 的 Solana 工程工作流。</span><span><a href="/zh/docs/">文档</a> · <a href="/">English</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

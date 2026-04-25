@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Code Review 路线图 — Geppetto 中文文档</title>
+  <meta name="description" content="面向 AI Agent 的 Solana 工程工作流。" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="alternate" hreflang="en" href="/" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/zh/">Geppetto</a><nav class="nav-links"><a href="/zh/docs/">文档</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/audit/">审查</a><a href="/zh/docs/deploy/">部署</a><a href="/">English</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>文档</strong><a href="/zh/docs/">概览</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/cli/">CLI 参考</a><a href="/zh/docs/audit/">Audit 与 Review</a><a href="/zh/docs/deploy/">部署</a><a href="/zh/docs/sdk/">SDK 概念</a><a href="/zh/docs/review/">Code Review 路线图</a></aside><article class="content panel">
+<h1>Code Review 路线图</h1>
+<p>当前实现给 Geppetto 提供了可靠 audit baseline。下一步产品机会是把它扩展成结构化 review assistant。</p>
+<h2>现在</h2>
+<ul>
+  <li>format、compile、clippy gates</li>
+  <li><code>anti_patterns</code> 中的安全知识</li>
+  <li>上游依赖 impact map 和 PR body 生成</li>
+</ul>
+<h2>下一步</h2>
+<ul>
+  <li><code>geppetto audit --report json|md</code></li>
+  <li>为 signer、owner、PDA、discriminator、unchecked arithmetic、dispatch mistakes 增加 rule IDs</li>
+  <li>PR diff mode，输出 file、line、severity、rationale 和 suggested fix</li>
+  <li>Cloudflare-hosted docs page for every rule</li>
+</ul>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — 面向 AI Agent 的 Solana 工程工作流。</span><span><a href="/zh/docs/">文档</a> · <a href="/">English</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

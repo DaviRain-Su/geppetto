@@ -28,6 +28,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .nav-links { display: flex; align-items: center; gap: 16px; color: var(--muted); font-size: 14px; }
 .nav-links a { text-decoration: none; }
 .nav-links a:hover { color: var(--ink); }
+.lang-pill { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); text-decoration: none; font-weight: 700; }
 .button.primary { background: var(--ink); color: #fff9f0; border-color: var(--ink); }
 .button.accent { background: var(--accent); color: #fff9f0; border-color: var(--accent); }

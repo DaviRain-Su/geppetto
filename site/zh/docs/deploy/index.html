@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>部署工作流 — Geppetto 中文文档</title>
+  <meta name="description" content="面向 AI Agent 的 Solana 工程工作流。" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="alternate" hreflang="en" href="/" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/zh/">Geppetto</a><nav class="nav-links"><a href="/zh/docs/">文档</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/audit/">审查</a><a href="/zh/docs/deploy/">部署</a><a href="/">English</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>文档</strong><a href="/zh/docs/">概览</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/cli/">CLI 参考</a><a href="/zh/docs/audit/">Audit 与 Review</a><a href="/zh/docs/deploy/">部署</a><a href="/zh/docs/sdk/">SDK 概念</a><a href="/zh/docs/review/">Code Review 路线图</a></aside><article class="content panel">
+<h1>部署工作流</h1>
+<p><code>geppetto deploy</code> 是第一个产品化 workflow contract。它把 build、deploy、output rendering、artifact writing 和可选 write-back 串成一个可重复路径。</p>
+<h2>配置</h2>
+<p>repo root 里的 <code>geppetto.toml</code> 定义 Solana 和可选 off-chain 设置。</p>
+<pre><code>[solana]
+cluster = "devnet"
+program_path = "examples/escrow"
+program_binary = "target/deploy/geppetto_escrow.so"
+
+[deploy]
+mode = "hybrid"
+output = "table"</code></pre>
+<h2>运行</h2>
+<pre><code>bun ./bin/geppetto-cli.ts deploy --output json --write-back</code></pre>
+<h2>输出</h2>
+<ul>
+  <li><code>.geppetto/deploy-output.json</code></li>
+  <li><code>.geppetto/deploy-output.txt</code></li>
+  <li>可选把 <code>program_id</code> 写回 <code>geppetto.toml</code></li>
+</ul>
+<h2>状态</h2>
+<p>Platform MVP 已有 mock E2E 覆盖。剩余 operational gate 是用真实 operator credentials 跑一次 Solana devnet + Encore Cloud。</p>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — 面向 AI Agent 的 Solana 工程工作流。</span><span><a href="/zh/docs/">文档</a> · <a href="/">English</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

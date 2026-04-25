@@ -2,3 +2,7 @@
 /docs/code-review /docs/review/ 301
 /llms /llms.txt 301
 /llm /llm.txt 301
+/zh/llms /zh/llms.txt 301
+/zh/llm /zh/llm.txt 301
+/cn /zh/ 301
+/cn/* /zh/:splat 301

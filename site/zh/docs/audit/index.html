@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audit 与 Review — Geppetto 中文文档</title>
+  <meta name="description" content="面向 AI Agent 的 Solana 工程工作流。" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="alternate" hreflang="en" href="/" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/zh/">Geppetto</a><nav class="nav-links"><a href="/zh/docs/">文档</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/audit/">审查</a><a href="/zh/docs/deploy/">部署</a><a href="/">English</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>文档</strong><a href="/zh/docs/">概览</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/cli/">CLI 参考</a><a href="/zh/docs/audit/">Audit 与 Review</a><a href="/zh/docs/deploy/">部署</a><a href="/zh/docs/sdk/">SDK 概念</a><a href="/zh/docs/review/">Code Review 路线图</a></aside><article class="content panel">
+<h1>Audit 与 Review</h1>
+<p><code>geppetto audit</code> 当前是基础静态 review gate，目标是小而确定。</p>
+<h2>默认检查</h2>
+<pre><code>cargo fmt --check
+cargo check --all-features</code></pre>
+<h2>Strict 检查</h2>
+<pre><code>cargo clippy --all-targets --all-features -- -D warnings</code></pre>
+<h2>Review 知识</h2>
+<p>Rust crate 还在 <code>src/anti_patterns.rs</code> 中包含 review guidance，并在 <code>guard</code>、<code>schema</code>、<code>dispatch</code> 中提供可执行约束。</p>
+<h2>当前限制</h2>
+<p>它还不是完整 PR code review 产品。下一步是结构化 finding、report 输出和可执行 anti-pattern 检查。</p>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — 面向 AI Agent 的 Solana 工程工作流。</span><span><a href="/zh/docs/">文档</a> · <a href="/">English</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

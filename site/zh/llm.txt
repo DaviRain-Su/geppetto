@@ -1,0 +1,56 @@
+# Geppetto
+
+> 面向 AI Agent 的 Solana/Pinocchio 工程工作流：knowledge SDK、CLI workflow contracts、deploy bridge 和 audit baseline。
+
+Geppetto 通过显式项目知识、约定、验证命令和部署输出，帮助 AI code agent 更安全地处理 Solana/Pinocchio 仓库。
+
+## 主要链接
+
+- 中文首页: https://geppetto-60k.pages.dev/zh/
+- 中文文档: https://geppetto-60k.pages.dev/zh/docs/
+- 快速开始: https://geppetto-60k.pages.dev/zh/docs/quickstart/
+- CLI 参考: https://geppetto-60k.pages.dev/zh/docs/cli/
+- Audit 与 Review: https://geppetto-60k.pages.dev/zh/docs/audit/
+- 部署工作流: https://geppetto-60k.pages.dev/zh/docs/deploy/
+- SDK 概念: https://geppetto-60k.pages.dev/zh/docs/sdk/
+- Code Review 路线图: https://geppetto-60k.pages.dev/zh/docs/review/
+- 英文 llms.txt: https://geppetto-60k.pages.dev/llms.txt
+- 源码: https://github.com/DaviRain-Su/geppetto
+
+## 项目形态
+
+1. Rust crate：Pinocchio-focused knowledge 和 guardrail SDK。
+2. CLI：repo-local workflow contracts，覆盖 `init`、`new`、`test`、`audit`、`deploy`。
+3. Website/docs：面向人和 Agent 的产品解释与使用参考。
+
+## 核心命令
+
+```bash
+bun run docs:check
+bun run test
+bun run geppetto:audit:strict
+bun run site:preview
+bun run site:deploy
+```
+
+## Agent 编码规则
+
+- 从 `geppetto::*` 导入，不直接从 `pinocchio::*` 导入。
+- 所有账户访问和安全检查使用 `guard::*` helper。
+- 自定义 state account 实现 `AccountSchema`。
+- 使用 single-byte dispatch tag 和显式错误处理，不要让 unknown tag 静默成功。
+- 复制 source module 模式前先检查 knowledge version header。
+
+## 重要源码
+
+- `src/lib.rs`: crate map、feature matrix、上游版本 guidance。
+- `src/guard.rs`: signer、owner、PDA、writable、discriminator、rent checks。
+- `src/schema.rs`: `AccountSchema` layout contract。
+- `src/dispatch.rs`: canonical instruction dispatch pattern。
+- `src/anti_patterns.rs`: security review anti-patterns。
+- `src/idioms/*`: Pinocchio implementation idioms。
+- `src/testing/*`: litesvm 和 mollusk-svm testing guidance。
+- `bin/geppetto-cli.ts`: CLI entrypoint。
+- `lib/audit.ts`: static audit gate。
+- `lib/platform/*`: deploy workflow implementation。
+- `site/*`: Cloudflare Pages static product/docs site。

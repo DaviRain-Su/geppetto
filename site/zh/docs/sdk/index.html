@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SDK 概念 — Geppetto 中文文档</title>
+  <meta name="description" content="面向 AI Agent 的 Solana 工程工作流。" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="alternate" hreflang="en" href="/" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/zh/">Geppetto</a><nav class="nav-links"><a href="/zh/docs/">文档</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/audit/">审查</a><a href="/zh/docs/deploy/">部署</a><a href="/">English</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>文档</strong><a href="/zh/docs/">概览</a><a href="/zh/docs/quickstart/">快速开始</a><a href="/zh/docs/cli/">CLI 参考</a><a href="/zh/docs/audit/">Audit 与 Review</a><a href="/zh/docs/deploy/">部署</a><a href="/zh/docs/sdk/">SDK 概念</a><a href="/zh/docs/review/">Code Review 路线图</a></aside><article class="content panel">
+<h1>SDK 概念</h1>
+<p>Rust crate 把 Pinocchio 相关知识和约束打包起来，避免 AI Agent 依赖过期训练数据或错误 web 结果。</p>
+<h2>核心模块</h2>
+<ul>
+  <li><code>guard</code>：signer、writable、owner、PDA、discriminator 和 rent 检查。</li>
+  <li><code>schema</code>：用于 zero-copy account layout contract 的 <code>AccountSchema</code>。</li>
+  <li><code>dispatch</code>：single-byte instruction dispatch 和显式错误处理。</li>
+  <li><code>idioms</code>：account parsing、CPI、PDA、events、architecture 和 helpers。</li>
+  <li><code>testing</code>：litesvm 和 mollusk-svm 测试参考及 helper assertions。</li>
+  <li><code>anti_patterns</code>：常见 Solana/Pinocchio 安全反模式。</li>
+</ul>
+<h2>Agent 规则</h2>
+<p>项目规则要求从 <code>geppetto::*</code> 导入，使用 <code>guard::*</code> 做账户访问，实现 <code>AccountSchema</code>，并避免 unknown dispatch tag 被静默成功处理。</p>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — 面向 AI Agent 的 Solana 工程工作流。</span><span><a href="/zh/docs/">文档</a> · <a href="/">English</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>
