@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audit & Review — Geppetto Docs</title>
+  <meta name="description" content="Agent-native engineering workflow for Solana builders." />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/">Geppetto</a><nav class="nav-links"><a href="/docs/">Docs</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/audit/">Audit</a><a href="/docs/deploy/">Deploy</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>Docs</strong><a href="/docs/">Overview</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/cli/">CLI Reference</a><a href="/docs/audit/">Audit & Review</a><a href="/docs/deploy/">Deploy</a><a href="/docs/sdk/">SDK Concepts</a><a href="/docs/review/">Code Review Roadmap</a></aside><article class="content panel">
+<h1>Audit & Review</h1>
+<p><code>geppetto audit</code> is currently the baseline static review gate. It is intentionally small and deterministic.</p>
+<h2>Default checks</h2>
+<pre><code>cargo fmt --check
+cargo check --all-features</code></pre>
+<h2>Strict checks</h2>
+<pre><code>cargo clippy --all-targets --all-features -- -D warnings</code></pre>
+<h2>Review knowledge</h2>
+<p>The Rust crate also includes review guidance in <code>src/anti_patterns.rs</code>, plus enforceable helpers in <code>guard</code>, <code>schema</code>, and <code>dispatch</code>.</p>
+<h2>Current limitation</h2>
+<p>This is not yet a full PR code review product. The next step is structured findings, report output, and executable anti-pattern checks.</p>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — agent-native Solana engineering workflows.</span><span><a href="/docs/">Docs</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

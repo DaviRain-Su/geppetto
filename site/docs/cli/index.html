@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CLI Reference — Geppetto Docs</title>
+  <meta name="description" content="Agent-native engineering workflow for Solana builders." />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/">Geppetto</a><nav class="nav-links"><a href="/docs/">Docs</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/audit/">Audit</a><a href="/docs/deploy/">Deploy</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>Docs</strong><a href="/docs/">Overview</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/cli/">CLI Reference</a><a href="/docs/audit/">Audit & Review</a><a href="/docs/deploy/">Deploy</a><a href="/docs/sdk/">SDK Concepts</a><a href="/docs/review/">Code Review Roadmap</a></aside><article class="content panel">
+<h1>CLI Reference</h1>
+<p>The CLI is exposed as <code>geppetto-cli</code>. Inside this repository, use <code>bun ./bin/geppetto-cli.ts</code>.</p>
+<h2><code>init</code></h2>
+<pre><code>geppetto-cli init
+geppetto-cli init --dry-run</code></pre>
+<p>Generates canonical agent-entry files without overwriting existing files.</p>
+<h2><code>new</code></h2>
+<pre><code>geppetto-cli new my-program</code></pre>
+<p>Creates a minimal Pinocchio + Geppetto scaffold.</p>
+<h2><code>test</code></h2>
+<pre><code>geppetto-cli test
+geppetto-cli test --skip-examples
+geppetto-cli test --skip-build-sbf</code></pre>
+<p>Runs root checks and escrow example validation. Missing SBF artifacts are auto-built unless skipped.</p>
+<h2><code>audit</code></h2>
+<pre><code>geppetto-cli audit
+geppetto-cli audit --strict
+geppetto-cli audit --locked</code></pre>
+<p>Runs the static audit gate.</p>
+<h2><code>deploy</code></h2>
+<pre><code>geppetto-cli deploy --output json --write-back
+geppetto-cli deploy --set solana.cluster=devnet</code></pre>
+<p>Runs the configured Solana and optional off-chain deployment workflow.</p>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — agent-native Solana engineering workflows.</span><span><a href="/docs/">Docs</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

@@ -1,0 +1,86 @@
+# Geppetto
+
+> Agent-native Solana/Pinocchio engineering workflow: knowledge SDK, CLI workflow contracts, deploy bridge, and audit baseline.
+
+Geppetto helps AI code agents work safely in Solana/Pinocchio repositories by making project knowledge, conventions, validation commands, and deployment outputs explicit.
+
+## Primary Links
+
+- Product home: https://geppetto-60k.pages.dev/
+- Docs overview: https://geppetto-60k.pages.dev/docs/
+- Quickstart: https://geppetto-60k.pages.dev/docs/quickstart/
+- CLI reference: https://geppetto-60k.pages.dev/docs/cli/
+- Audit and review: https://geppetto-60k.pages.dev/docs/audit/
+- Deploy workflow: https://geppetto-60k.pages.dev/docs/deploy/
+- SDK concepts: https://geppetto-60k.pages.dev/docs/sdk/
+- Code review roadmap: https://geppetto-60k.pages.dev/docs/review/
+- Source repository: https://github.com/DaviRain-Su/geppetto
+
+## What This Project Is
+
+Geppetto has three product surfaces:
+
+1. Rust crate: Pinocchio-focused knowledge and guardrail SDK.
+2. CLI: repo-local workflow contracts for `init`, `new`, `test`, `audit`, and `deploy`.
+3. Website/docs: concise product explanation and usage reference for humans and agents.
+
+## Core Commands
+
+```bash
+# Validate the static website and project docs contract
+bun run docs:check
+
+# Run CLI tests
+bun run test
+
+# Run strict audit gate
+bun run geppetto:audit:strict
+
+# Preview the website locally
+bun run site:preview
+
+# Deploy the website to Cloudflare Pages
+bun run site:deploy
+```
+
+## CLI Surface
+
+```bash
+geppetto-cli init [--dry-run]
+geppetto-cli new <project-name>
+geppetto-cli test [--skip-examples] [--build-sbf] [--skip-build-sbf]
+geppetto-cli audit [--strict] [--locked]
+geppetto-cli deploy [--output table|json] [--set key=value] [--write-back]
+```
+
+## Agent Coding Rules
+
+When working in a Geppetto or Pinocchio program:
+
+- Import from `geppetto::*`, not directly from `pinocchio::*`.
+- Use `guard::*` helpers for all account access and security checks.
+- Implement `AccountSchema` for custom state accounts.
+- Use single-byte dispatch tags with explicit error handling; do not silently accept unknown tags.
+- Check knowledge version headers before copying patterns from source modules.
+
+## Important Source Files
+
+- `src/lib.rs`: crate map, feature matrix, upstream/version guidance.
+- `src/guard.rs`: signer, owner, PDA, writable, discriminator, and rent checks.
+- `src/schema.rs`: `AccountSchema` layout contract.
+- `src/dispatch.rs`: canonical instruction dispatch pattern.
+- `src/anti_patterns.rs`: security review anti-patterns.
+- `src/idioms/*`: Pinocchio implementation idioms.
+- `src/testing/*`: litesvm and mollusk-svm testing guidance.
+- `bin/geppetto-cli.ts`: CLI entrypoint.
+- `lib/audit.ts`: static audit gate.
+- `lib/platform/*`: deploy workflow implementation.
+- `site/*`: Cloudflare Pages static product/docs site.
+
+## Current Review Status
+
+`geppetto audit` is a deterministic static gate, not yet a full PR review bot. It currently runs format, compile, and optional clippy checks. The next product step is structured `json|md` findings and executable anti-pattern rules.
+
+## Deployment
+
+The public website is a static Cloudflare Pages site. The output directory is `site`, configured by `wrangler.toml`.

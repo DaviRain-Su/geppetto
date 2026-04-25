@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quickstart — Geppetto Docs</title>
+  <meta name="description" content="Agent-native engineering workflow for Solana builders." />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/">Geppetto</a><nav class="nav-links"><a href="/docs/">Docs</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/audit/">Audit</a><a href="/docs/deploy/">Deploy</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>Docs</strong><a href="/docs/">Overview</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/cli/">CLI Reference</a><a href="/docs/audit/">Audit & Review</a><a href="/docs/deploy/">Deploy</a><a href="/docs/sdk/">SDK Concepts</a><a href="/docs/review/">Code Review Roadmap</a></aside><article class="content panel">
+<h1>Quickstart</h1>
+<p>Use Geppetto either by adding the crate to an existing Pinocchio program or by generating a small starter project.</p>
+<h2>Add to an existing project</h2>
+<pre><code>cargo add geppetto
+npx geppetto-cli init</code></pre>
+<p>Then instruct your agent to import from <code>geppetto::*</code>, implement <code>AccountSchema</code> for state accounts, and use <code>guard::*</code> checks.</p>
+<h2>Create a new project</h2>
+<pre><code>npx geppetto-cli new my-program
+cd my-program
+cargo test</code></pre>
+<h2>Run local validation</h2>
+<pre><code>npx geppetto-cli test
+npx geppetto-cli audit --strict</code></pre>
+<h2>Repository demo path</h2>
+<pre><code>bun install
+bun run test
+bun run docs:check
+bun ./bin/geppetto-cli.ts deploy --output json --write-back</code></pre>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — agent-native Solana engineering workflows.</span><span><a href="/docs/">Docs</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

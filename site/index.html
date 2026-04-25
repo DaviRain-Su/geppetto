@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Geppetto — Agent-Native Workflow for Solana Builders</title>
+  <meta name="description" content="Agent-native engineering workflow for Solana builders." />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/">Geppetto</a><nav class="nav-links"><a href="/docs/">Docs</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/audit/">Audit</a><a href="/docs/deploy/">Deploy</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+
+<main class="shell">
+  <section class="hero">
+    <div class="panel hero-copy">
+      <span class="eyebrow">Solana x Agents x Workflow Contracts</span>
+      <h1>Build Solana projects the way agents actually work.</h1>
+      <p class="lead">Geppetto turns commands like <code>new</code>, <code>init</code>, <code>test</code>, <code>audit</code>, and <code>deploy</code> into stable workflow contracts that developers and AI agents can execute reliably.</p>
+      <div class="actions"><a class="button primary" href="/docs/quickstart/">Read the quickstart</a><a class="button" href="/docs/deploy/">See deploy docs</a></div>
+    </div>
+    <div class="terminal panel"><pre><span class="muted"># one repo-local contract</span>
+bun ./bin/geppetto-cli.ts deploy --output json --write-back
+
+{
+  "status": "success",
+  "cluster": "devnet",
+  "program_id": "...",
+  "steps": ["buildProgram", "deployProgram"]
+}</pre></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Not just deployment. A workflow contract.</h2><p>Most Solana repos hide critical process in shell history, local state, and stale notes. Geppetto makes the repo legible: config, examples, checks, outputs, and agent instructions all line up.</p></div>
+    <div class="grid cols-3">
+      <div class="card"><span class="badge">Repo</span><h3>Agent-readable structure</h3><p>Canonical agent entry files, examples, and knowledge modules tell an agent where the source of truth lives.</p></div>
+      <div class="card"><span class="badge">CLI</span><h3>Executable primitives</h3><p><code>new</code>, <code>init</code>, <code>test</code>, <code>audit</code>, and <code>deploy</code> give the workflow stable command surfaces.</p></div>
+      <div class="card"><span class="badge">Artifacts</span><h3>Structured outputs</h3><p>Deploy results are written as machine-readable artifacts so humans and agents can continue from the same state.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Workflow surface</h2><p>Deploy is the first productionized path, but the product shape is broader: agent-native Solana engineering workflows.</p></div>
+    <div class="grid cols-2">
+      <div class="card"><h3><code>geppetto new</code></h3><p>Create a minimal Pinocchio + Geppetto program scaffold with canonical agent guidance.</p></div>
+      <div class="card"><h3><code>geppetto init</code></h3><p>Add the repository guidance files that make an existing project easier for agents to continue.</p></div>
+      <div class="card"><h3><code>geppetto test</code></h3><p>Run the agreed validation surface through a stable local command contract.</p></div>
+      <div class="card"><h3><code>geppetto audit</code></h3><p>Run format, compile, and optional clippy gates as the baseline review surface.</p></div>
+      <div class="card"><h3><code>geppetto deploy</code></h3><p>Build, deploy, emit artifacts, and optionally write back the deployed <code>program_id</code>.</p></div>
+      <div class="card"><h3>Next: review reports</h3><p>Extend audit from a static gate into structured PR findings and anti-pattern checks.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Already real today</h2><p>The current repository ships the CLI, SDK knowledge surface, deploy pipeline, mock E2E coverage, release checks, and this Cloudflare-ready site.</p></div>
+    <div class="actions"><a class="button accent" href="/docs/">Open docs</a><a class="button" href="https://github.com/DaviRain-Su/geppetto">View source</a></div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell"><span>Geppetto — agent-native Solana engineering workflows.</span><span><a href="/docs/">Docs</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>

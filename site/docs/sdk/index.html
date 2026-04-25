@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SDK Concepts — Geppetto Docs</title>
+  <meta name="description" content="Agent-native engineering workflow for Solana builders." />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+<header class="shell nav"><a class="brand" href="/">Geppetto</a><nav class="nav-links"><a href="/docs/">Docs</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/audit/">Audit</a><a href="/docs/deploy/">Deploy</a><a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></nav></header>
+<main class="shell docs-layout"><aside class="sidebar panel"><strong>Docs</strong><a href="/docs/">Overview</a><a href="/docs/quickstart/">Quickstart</a><a href="/docs/cli/">CLI Reference</a><a href="/docs/audit/">Audit & Review</a><a href="/docs/deploy/">Deploy</a><a href="/docs/sdk/">SDK Concepts</a><a href="/docs/review/">Code Review Roadmap</a></aside><article class="content panel">
+<h1>SDK Concepts</h1>
+<p>The Rust crate packages Pinocchio-specific knowledge and constraints so AI agents do not rely on stale training data or web results.</p>
+<h2>Core modules</h2>
+<ul>
+  <li><code>guard</code>: signer, writable, owner, PDA, discriminator, and rent checks.</li>
+  <li><code>schema</code>: <code>AccountSchema</code> for zero-copy account layout contracts.</li>
+  <li><code>dispatch</code>: single-byte instruction dispatch with explicit error behavior.</li>
+  <li><code>idioms</code>: account parsing, CPI, PDA, events, architecture, and helpers.</li>
+  <li><code>testing</code>: litesvm and mollusk-svm testing references and helper assertions.</li>
+  <li><code>anti_patterns</code>: common Solana/Pinocchio vulnerabilities to review against.</li>
+</ul>
+<h2>Agent rules</h2>
+<p>Project guidance requires importing from <code>geppetto::*</code>, using <code>guard::*</code> for account access, implementing <code>AccountSchema</code>, and avoiding catch-all dispatch success.</p>
+</article></main>
+<footer class="footer"><div class="shell"><span>Geppetto — agent-native Solana engineering workflows.</span><span><a href="/docs/">Docs</a> · <a href="https://github.com/DaviRain-Su/geppetto">GitHub</a></span></div></footer>
+</body>
+</html>
